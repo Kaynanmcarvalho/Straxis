@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Plus } from 'lucide-react';
 import { EmpresaList } from './EmpresaList';
 import { EmpresaForm } from './EmpresaForm';
+import { UnassignedUsers } from './UnassignedUsers';
 import { EmpresaService } from '../../services/empresa.service';
 import { Company } from '../../types/empresa.types';
 import { Card } from '../ui/Card';
@@ -75,6 +76,9 @@ export const EmpresaManager: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {/* Usuários sem empresa */}
+      <UnassignedUsers onRefresh={() => setRefreshKey((prev) => prev + 1)} />
+
       {!showForm && (
         <div className="flex justify-end">
           <Button variant="primary" onClick={handleCreate}>

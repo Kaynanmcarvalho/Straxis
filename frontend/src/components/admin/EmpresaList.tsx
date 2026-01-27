@@ -26,13 +26,14 @@ export const EmpresaList: React.FC<EmpresaListProps> = ({ onEdit, onDelete, onTo
   const loadEmpresas = async () => {
     try {
       setLoading(true);
-      // TODO: Implementar chamada à API
-      // const response = await fetch('/api/empresas');
-      // const data = await response.json();
-      // setEmpresas(data.data);
-      setEmpresas([]);
+      setError(null);
+      const { EmpresaService } = await import('../../services/empresa.service');
+      const data = await EmpresaService.list();
+      setEmpresas(data);
     } catch (err: any) {
+      console.error('Error loading empresas:', err);
       setError(err.message || 'Erro ao carregar empresas');
+      setEmpresas([]);
     } finally {
       setLoading(false);
     }
