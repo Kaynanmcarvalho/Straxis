@@ -1,0 +1,13 @@
+{
+  "enabled": true,
+  "name": "Lembrete: Atualizar Versão",
+  "description": "Lembra o desenvolvedor de atualizar a versão no Sidebar.tsx antes de fazer commit ou push para o Git",
+  "version": "1",
+  "when": {
+    "type": "promptSubmit"
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "IMPORTANTE: Antes de fazer commit ou push, verifique se a versão foi atualizada no arquivo frontend/src/components/common/Sidebar.tsx. A versão atual é Alpha 0.7.8 e deve ser incrementada conforme o tipo de mudança (patch para bugs, minor para features, major para breaking changes). Também atualize a data no atributo title. Confirme se isso foi feito ou se precisa fazer agora."
+  }
+}
