@@ -21,9 +21,10 @@ export const AgendamentoCalendar: React.FC<AgendamentoCalendarProps> = ({ onEdit
       setLoading(true);
       setError(null);
       const data = await agendamentoService.list();
-      setAgendamentos(data);
+      setAgendamentos(Array.isArray(data) ? data : []);
     } catch (err: any) {
       setError(err.response?.data?.error || 'Erro ao carregar agendamentos');
+      setAgendamentos([]);
     } finally {
       setLoading(false);
     }
@@ -92,7 +93,7 @@ export const AgendamentoCalendar: React.FC<AgendamentoCalendarProps> = ({ onEdit
   };
 
   // Agrupar agendamentos por data
-  const agendamentosPorData = agendamentos.reduce((acc, agendamento) => {
+  const agendamentosPorData = (agendamentos || []).reduce((acc, agendamento) => {
     const dateKey = new Date(agendamento.data).toDateString();
     if (!acc[dateKey]) {
       acc[dateKey] = [];

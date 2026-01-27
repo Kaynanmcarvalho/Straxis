@@ -21,8 +21,8 @@ const MainLayout: React.FC = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const userRole = (localStorage.getItem('userRole') as 'admin_platform' | 'owner' | 'user') || 'admin_platform';
-  const userName = localStorage.getItem('userName') || 'Kaynan Moreira';
+  const userRole = (localStorage.getItem('userRole') as 'admin_platform' | 'owner' | 'user') || 'user';
+  const userName = localStorage.getItem('userName') || 'Usuário';
 
   return (
     <div className="main-layout">

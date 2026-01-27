@@ -9,15 +9,20 @@ interface PromptEditorProps {
   companyId?: string;
 }
 
-export const PromptEditor: React.FC<PromptEditorProps> = ({ companyId = 'default' }) => {
+export const PromptEditor: React.FC<PromptEditorProps> = ({ companyId }) => {
+  // Usa o companyId do usuário logado se não for passado
+  const userCompanyId = companyId || localStorage.getItem('companyId') || '';
+  
   const [prompt, setPrompt] = useState('');
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
   const [charCount, setCharCount] = useState(0);
 
   useEffect(() => {
-    loadPrompt();
-  }, [companyId]);
+    if (userCompanyId) {
+      loadPrompt();
+    }
+  }, [userCompanyId]);
 
   useEffect(() => {
     setCharCount(prompt.length);
@@ -25,7 +30,7 @@ export const PromptEditor: React.FC<PromptEditorProps> = ({ companyId = 'default
 
   const loadPrompt = async () => {
     try {
-      const response = await apiService.get(`/empresas/${companyId}`) as any;
+      const response = await apiService.get(`/empresas/${userCompanyId}`) as any;
       setPrompt(response.config?.iaPrompt || '');
     } catch (error) {
       console.error('Error loading prompt:', error);

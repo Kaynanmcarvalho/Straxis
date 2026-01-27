@@ -29,6 +29,7 @@ import agendamentoRoutes from './routes/agendamento.routes';
 import trabalhoRoutes from './routes/trabalho.routes';
 import relatorioRoutes from './routes/relatorio.routes';
 import whatsappRoutes from './routes/whatsapp.routes';
+import iaRoutes from './routes/ia.routes';
 
 app.use('/api/empresas', empresaRoutes);
 app.use('/api/funcionarios', funcionarioRoutes);
@@ -38,5 +39,6 @@ app.use('/api/agendamentos', agendamentoRoutes);
 app.use('/api/trabalhos', trabalhoRoutes);
 app.use('/api/relatorios', relatorioRoutes);
 app.use('/api/whatsapp', whatsappRoutes);
+app.use('/api/ia', iaRoutes);
 
 export default app;

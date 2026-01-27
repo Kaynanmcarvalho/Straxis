@@ -16,7 +16,10 @@ interface Config {
   iaCostLimitCentavos?: number;
 }
 
-export const IAConfig: React.FC<IAConfigProps> = ({ companyId = 'default' }) => {
+export const IAConfig: React.FC<IAConfigProps> = ({ companyId }) => {
+  // Usa o companyId do usuário logado se não for passado
+  const userCompanyId = companyId || localStorage.getItem('companyId') || '';
+  
   const [config, setConfig] = useState<Config>({
     iaEnabled: false,
     iaProvider: 'openai',
@@ -27,12 +30,14 @@ export const IAConfig: React.FC<IAConfigProps> = ({ companyId = 'default' }) => 
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    loadConfig();
-  }, [companyId]);
+    if (userCompanyId) {
+      loadConfig();
+    }
+  }, [userCompanyId]);
 
   const loadConfig = async () => {
     try {
-      const response = await apiService.get(`/empresas/${companyId}`) as any;
+      const response = await apiService.get(`/empresas/${userCompanyId}`) as any;
       if (response.config) {
         setConfig({
           iaEnabled: response.config.iaEnabled || false,

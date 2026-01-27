@@ -1,36 +1,29 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogIn, Sparkles } from 'lucide-react';
+import { LogIn, AlertCircle } from 'lucide-react';
+import { authService } from '../services/auth.service';
 
 const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setError('');
     
     try {
-      // MODO DESENVOLVIMENTO - Token fake
-      localStorage.setItem('authToken', 'dev-token-bypass');
-      localStorage.setItem('userRole', 'admin_platform');
-      localStorage.setItem('userName', 'Kaynan Moreira');
-      
+      await authService.signIn(email, password);
       navigate('/dashboard');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro no login:', error);
+      setError(error.message || 'Erro ao fazer login');
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleDevLogin = () => {
-    localStorage.setItem('authToken', 'dev-token-bypass');
-    localStorage.setItem('userRole', 'admin_platform');
-    localStorage.setItem('userName', 'Kaynan Moreira');
-    navigate('/dashboard');
   };
 
   return (
@@ -52,6 +45,13 @@ const LoginPage: React.FC = () => {
           
           {/* Form */}
           <form onSubmit={handleLogin} className="login-form">
+            {error && (
+              <div className="error-banner">
+                <AlertCircle className="w-5 h-5" />
+                <span>{error}</span>
+              </div>
+            )}
+            
             <div className="form-group">
               <label htmlFor="email">Email</label>
               <input
@@ -94,15 +94,6 @@ const LoginPage: React.FC = () => {
                   Entrar
                 </>
               )}
-            </button>
-
-            <button 
-              type="button"
-              onClick={handleDevLogin}
-              className="btn-dev"
-            >
-              <Sparkles className="w-5 h-5" />
-              Login Rápido (Dev)
             </button>
           </form>
         </div>
@@ -253,19 +244,17 @@ const LoginPage: React.FC = () => {
           cursor: not-allowed;
         }
 
-        .btn-dev {
-          background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
-          color: white;
-          box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
-        }
-
-        .btn-dev:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 6px 20px rgba(76, 175, 80, 0.5);
-        }
-
-        .btn-dev:active {
-          transform: translateY(0);
+        .error-banner {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          padding: 0.875rem 1rem;
+          background: #fee;
+          border: 1px solid #fcc;
+          border-radius: 12px;
+          color: #c33;
+          font-size: 0.875rem;
+          font-weight: 500;
         }
 
         .spinner {

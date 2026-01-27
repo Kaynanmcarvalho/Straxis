@@ -2,7 +2,7 @@ import { apiService } from './api.service';
 import { Funcionario, FuncionarioStats, FuncionarioFormData } from '../types/funcionario.types';
 
 class FuncionarioService {
-  private baseUrl = '/api/funcionarios';
+  private baseUrl = '/funcionarios';
 
   async list(): Promise<Funcionario[]> {
     const response = await apiService.get<Funcionario[]>(this.baseUrl);

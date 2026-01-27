@@ -1215,7 +1215,34 @@ Propriedade privada - Todos os direitos reservados.
 
 ## 📊 Histórico de Desenvolvimento
 
-### Tasks 1-5 (Concluídas)
+### 27/01/2026 - Correções de Rotas e Autenticação
+**Desenvolvedor:** Kaynan Moreira  
+**Mudanças:**
+- ✅ Corrigido duplicação de `/api` nas rotas do frontend
+  - Atualizado `trabalho.service.ts`, `agendamento.service.ts`, `funcionario.service.ts`
+  - Removido `/api` duplicado que causava erro 404
+- ✅ Implementado autenticação real com Firebase
+  - Criado `auth.service.ts` com login/logout real
+  - Integração com Firebase Authentication
+  - Busca dados do usuário no Firestore após login
+  - Salva dados reais no localStorage (role, companyId, etc)
+- ✅ Atualizado página de login
+  - Removido botão "Login Rápido (Dev)"
+  - Implementado validação de credenciais
+  - Mensagens de erro apropriadas
+- ✅ Corrigido componentes de IA
+  - `IAConfig` e `PromptEditor` agora usam companyId real do localStorage
+  - Não tentam mais buscar empresa "default"
+- ✅ Registrado rotas de IA no backend
+  - Adicionado `app.use('/api/ia', iaRoutes)` no `app.ts`
+- ✅ Criado script para criar usuário admin
+  - `backend/create-admin-user.js` para facilitar setup inicial
+  - Documentação completa em `SETUP_ADMIN.md`
+- ✅ Tratamento de erros em serviços
+  - Garantir que sempre retornam arrays válidos
+  - Prevenção de crashes por dados undefined
+
+### Tasks 1-5 (Pendentes)
 **Desenvolvedor:** Kaynan Moreira  
 **Data:** [Aguardando implementação]  
 **Mudanças:**
@@ -1237,8 +1264,8 @@ Propriedade privada - Todos os direitos reservados.
 
 ---
 
-**Status do Projeto:** ✅ Especificação Completa v1.1  
-**Próximo Passo:** Iniciar implementação seguindo tasks.md  
-**Desenvolvedor Atual:** Kaynan Moreira (Tasks 1-5)
+**Status do Projeto:** ✅ Especificação Completa v1.1 + Correções de Rotas e Auth  
+**Próximo Passo:** Criar usuário admin e iniciar implementação seguindo tasks.md  
+**Desenvolvedor Atual:** Kaynan Moreira
 
 **Nota:** Este README é atualizado automaticamente a cada 5 tasks concluídas durante a implementação.
