@@ -1,0 +1,473 @@
+import { Request, Response } from 'express';
+import { FirestoreService } from '../services/firestore.service';
+import { AgendamentoModel } from '../models/agendamento.model';
+import { Agendamento, Company } from '../types';
+
+export class AgendamentoController {
+  /**
+   * GET /agendamentos - Lista agendamentos da empresa
+   */
+  static async list(req: Request, res: Response): Promise<void> {
+    try {
+      const companyId = req.auth?.companyId;
+
+      if (!companyId) {
+        res.status(400).json({
+          success: false,
+          error: 'CompanyId é obrigatório',
+          code: 2001,
+        });
+        return;
+      }
+
+      // Buscar agendamentos da empresa
+      const agendamentos = await FirestoreService.querySubcollection<Agendamento>(
+        'companies',
+        companyId,
+        'agendamentos',
+        [{ field: 'deletedAt', operator: '==', value: null }],
+        { orderBy: { field: 'data', direction: 'desc' } }
+      );
+
+      res.json({
+        success: true,
+        data: agendamentos,
+        total: agendamentos.length,
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        success: false,
+        error: 'Erro ao listar agendamentos',
+        message: error.message,
+      });
+    }
+  }
+
+  /**
+   * GET /agendamentos/:id - Busca agendamento por ID
+   */
+  static async getById(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const companyId = req.auth?.companyId;
+
+      if (!companyId) {
+        res.status(400).json({
+          success: false,
+          error: 'CompanyId é obrigatório',
+          code: 2001,
+        });
+        return;
+      }
+
+      const agendamento = await FirestoreService.getSubcollectionDoc<Agendamento>(
+        'companies',
+        companyId,
+        'agendamentos',
+        id
+      );
+
+      if (!agendamento) {
+        res.status(404).json({
+          success: false,
+          error: 'Agendamento não encontrado',
+          code: 3003,
+        });
+        return;
+      }
+
+      res.json({
+        success: true,
+        data: agendamento,
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        success: false,
+        error: 'Erro ao buscar agendamento',
+        message: error.message,
+      });
+    }
+  }
+
+  /**
+   * POST /agendamentos - Cria novo agendamento
+   */
+  static async create(req: Request, res: Response): Promise<void> {
+    try {
+      const agendamentoData: Partial<Agendamento> = req.body;
+      const companyId = req.auth?.companyId;
+      const userId = req.auth?.userId;
+
+      if (!companyId || !userId) {
+        res.status(400).json({
+          success: false,
+          error: 'CompanyId e UserId são obrigatórios',
+          code: 2001,
+        });
+        return;
+      }
+
+      // Adicionar companyId e createdBy
+      agendamentoData.companyId = companyId;
+      agendamentoData.createdBy = userId;
+
+      // Buscar configuração da empresa para sugerir valor
+      const company = await FirestoreService.getById<Company>('companies', companyId);
+      if (company && agendamentoData.tonelagem) {
+        const valorPorTonelada = agendamentoData.tipo === 'carga'
+          ? company.config.valorCargaPorToneladaCentavos
+          : company.config.valorDescargaPorToneladaCentavos;
+        
+        // Se não foi fornecido valor, calcular sugestão
+        if (!agendamentoData.valorEstimadoCentavos) {
+          agendamentoData.valorEstimadoCentavos = Math.round(valorPorTonelada * agendamentoData.tonelagem);
+        }
+      }
+
+      // Validar dados
+      const errors = AgendamentoModel.validate(agendamentoData);
+      if (errors.length > 0) {
+        res.status(400).json({
+          success: false,
+          error: 'Dados inválidos',
+          details: errors,
+          code: 2001,
+        });
+        return;
+      }
+
+      // Criar agendamento
+      const agendamento = AgendamentoModel.create(agendamentoData);
+      const id = await FirestoreService.createSubcollectionDoc(
+        'companies',
+        companyId,
+        'agendamentos',
+        AgendamentoModel.toFirestore(agendamento)
+      );
+
+      res.status(201).json({
+        success: true,
+        data: { ...agendamento, id },
+        message: 'Agendamento criado com sucesso',
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        success: false,
+        error: 'Erro ao criar agendamento',
+        message: error.message,
+      });
+    }
+  }
+
+  /**
+   * PUT /agendamentos/:id - Atualiza agendamento
+   */
+  static async update(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const updates: Partial<Agendamento> = req.body;
+      const companyId = req.auth?.companyId;
+
+      if (!companyId) {
+        res.status(400).json({
+          success: false,
+          error: 'CompanyId é obrigatório',
+          code: 2001,
+        });
+        return;
+      }
+
+      // Verificar se agendamento existe
+      const agendamentoExistente = await FirestoreService.getSubcollectionDoc<Agendamento>(
+        'companies',
+        companyId,
+        'agendamentos',
+        id
+      );
+
+      if (!agendamentoExistente) {
+        res.status(404).json({
+          success: false,
+          error: 'Agendamento não encontrado',
+          code: 3003,
+        });
+        return;
+      }
+
+      // Não permitir alterar companyId e createdBy
+      delete updates.companyId;
+      delete updates.createdBy;
+
+      // Atualizar updatedAt
+      updates.updatedAt = new Date();
+
+      await FirestoreService.updateSubcollectionDoc(
+        'companies',
+        companyId,
+        'agendamentos',
+        id,
+        updates
+      );
+
+      res.json({
+        success: true,
+        message: 'Agendamento atualizado com sucesso',
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        success: false,
+        error: 'Erro ao atualizar agendamento',
+        message: error.message,
+      });
+    }
+  }
+
+  /**
+   * DELETE /agendamentos/:id - Deleta agendamento (soft delete)
+   */
+  static async delete(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const companyId = req.auth?.companyId;
+      const userId = req.auth?.userId;
+
+      if (!companyId) {
+        res.status(400).json({
+          success: false,
+          error: 'CompanyId é obrigatório',
+          code: 2001,
+        });
+        return;
+      }
+
+      // Verificar se agendamento existe
+      const agendamento = await FirestoreService.getSubcollectionDoc<Agendamento>(
+        'companies',
+        companyId,
+        'agendamentos',
+        id
+      );
+
+      if (!agendamento) {
+        res.status(404).json({
+          success: false,
+          error: 'Agendamento não encontrado',
+          code: 3003,
+        });
+        return;
+      }
+
+      // Soft delete
+      await FirestoreService.updateSubcollectionDoc(
+        'companies',
+        companyId,
+        'agendamentos',
+        id,
+        { deletedAt: new Date(), updatedAt: new Date() }
+      );
+
+      res.json({
+        success: true,
+        message: 'Agendamento deletado com sucesso',
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        success: false,
+        error: 'Erro ao deletar agendamento',
+        message: error.message,
+      });
+    }
+  }
+
+  /**
+   * PATCH /agendamentos/:id/restore - Restaura agendamento soft-deleted
+   */
+  static async restore(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const companyId = req.auth?.companyId;
+
+      if (!companyId) {
+        res.status(400).json({
+          success: false,
+          error: 'CompanyId é obrigatório',
+          code: 2001,
+        });
+        return;
+      }
+
+      const agendamento = await FirestoreService.getSubcollectionDoc<Agendamento>(
+        'companies',
+        companyId,
+        'agendamentos',
+        id
+      );
+
+      if (!agendamento) {
+        res.status(404).json({
+          success: false,
+          error: 'Agendamento não encontrado',
+          code: 3003,
+        });
+        return;
+      }
+
+      if (!agendamento.deletedAt) {
+        res.status(400).json({
+          success: false,
+          error: 'Agendamento não está deletado',
+          code: 2001,
+        });
+        return;
+      }
+
+      await FirestoreService.updateSubcollectionDoc(
+        'companies',
+        companyId,
+        'agendamentos',
+        id,
+        { deletedAt: null, updatedAt: new Date() }
+      );
+
+      res.json({
+        success: true,
+        message: 'Agendamento restaurado com sucesso',
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        success: false,
+        error: 'Erro ao restaurar agendamento',
+        message: error.message,
+      });
+    }
+  }
+
+  /**
+   * DELETE /agendamentos/:id/hard - Delete permanente (apenas Admin_Plataforma)
+   */
+  static async hardDelete(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const companyId = req.auth?.companyId;
+      const userRole = req.auth?.role;
+
+      if (userRole !== 'admin_platform') {
+        res.status(403).json({
+          success: false,
+          error: 'Apenas Admin da Plataforma pode fazer delete permanente',
+          code: 1003,
+        });
+        return;
+      }
+
+      if (!companyId) {
+        res.status(400).json({
+          success: false,
+          error: 'CompanyId é obrigatório',
+          code: 2001,
+        });
+        return;
+      }
+
+      const agendamento = await FirestoreService.getSubcollectionDoc<Agendamento>(
+        'companies',
+        companyId,
+        'agendamentos',
+        id
+      );
+
+      if (!agendamento) {
+        res.status(404).json({
+          success: false,
+          error: 'Agendamento não encontrado',
+          code: 3003,
+        });
+        return;
+      }
+
+      await FirestoreService.deleteSubcollectionDoc(
+        'companies',
+        companyId,
+        'agendamentos',
+        id
+      );
+
+      res.json({
+        success: true,
+        message: 'Agendamento deletado permanentemente',
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        success: false,
+        error: 'Erro ao deletar agendamento permanentemente',
+        message: error.message,
+      });
+    }
+  }
+
+  /**
+   * PATCH /agendamentos/:id/status - Atualiza status do agendamento
+   */
+  static async updateStatus(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const { status } = req.body;
+      const companyId = req.auth?.companyId;
+
+      if (!companyId) {
+        res.status(400).json({
+          success: false,
+          error: 'CompanyId é obrigatório',
+          code: 2001,
+        });
+        return;
+      }
+
+      if (!status || !['pendente', 'confirmado', 'cancelado', 'concluido'].includes(status)) {
+        res.status(400).json({
+          success: false,
+          error: 'Status inválido',
+          code: 2001,
+        });
+        return;
+      }
+
+      // Verificar se agendamento existe
+      const agendamento = await FirestoreService.getSubcollectionDoc<Agendamento>(
+        'companies',
+        companyId,
+        'agendamentos',
+        id
+      );
+
+      if (!agendamento) {
+        res.status(404).json({
+          success: false,
+          error: 'Agendamento não encontrado',
+          code: 3003,
+        });
+        return;
+      }
+
+      // Atualizar status
+      await FirestoreService.updateSubcollectionDoc(
+        'companies',
+        companyId,
+        'agendamentos',
+        id,
+        { status, updatedAt: new Date() }
+      );
+
+      res.json({
+        success: true,
+        message: 'Status atualizado com sucesso',
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        success: false,
+        error: 'Erro ao atualizar status',
+        message: error.message,
+      });
+    }
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "enabled": true,
+  "name": "Atualizar README a cada 5 tasks",
+  "description": "Atualiza automaticamente o README.md registrando o desenvolvedor (Kaynan ou Renier) e as mudanças implementadas a cada 5 tasks concluídas",
+  "version": "1",
+  "when": {
+    "type": "userTriggered"
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Verifique quantas tasks foram concluídas no arquivo .kiro/specs/straxis-saas/tasks.md. Se 5 ou mais tasks foram concluídas desde a última atualização do README, faça o seguinte:\n\n1. Identifique o desenvolvedor atual (Kaynan ou Renier)\n2. Liste as tasks concluídas e suas mudanças\n3. Atualize a seção \"📊 Histórico de Desenvolvimento\" no README.md com:\n   - Nome do desenvolvedor\n   - Data atual\n   - Lista de tasks concluídas com checkbox marcado\n   - Componentes criados ou modificados\n4. Pergunte ao desenvolvedor se há algo mais a adicionar antes de finalizar\n\nFormato esperado:\n### Tasks X-Y (Concluídas)\n**Desenvolvedor:** [Nome]\n**Data:** [Data]\n**Mudanças:**\n- [x] Task implementada\n- [x] Outra task implementada"
+  }
+}

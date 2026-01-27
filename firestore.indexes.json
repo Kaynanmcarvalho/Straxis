@@ -1,0 +1,61 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "trabalhos",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "companyId", "order": "ASCENDING" },
+        { "fieldPath": "data", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "trabalhos",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "companyId", "order": "ASCENDING" },
+        { "fieldPath": "deletedAt", "order": "ASCENDING" },
+        { "fieldPath": "data", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "agendamentos",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "companyId", "order": "ASCENDING" },
+        { "fieldPath": "data", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "logs",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "companyId", "order": "ASCENDING" },
+        { "fieldPath": "timestamp", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "iaUsage",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "companyId", "order": "ASCENDING" },
+        { "fieldPath": "timestamp", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "whatsappSessions",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "connected", "order": "ASCENDING" },
+        { "fieldPath": "lastActivity", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "whatsappMessages",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "timestamp", "order": "DESCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

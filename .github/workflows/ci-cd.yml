@@ -1,0 +1,288 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop, staging]
+  pull_request:
+    branches: [main, develop]
+
+env:
+  NODE_VERSION: '18.x'
+
+jobs:
+  # Job 1: Lint e validação de código
+  lint:
+    name: Lint & Code Quality
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      
+      - name: Install dependencies (Backend)
+        working-directory: ./backend
+        run: npm ci
+      
+      - name: Install dependencies (Frontend)
+        working-directory: ./frontend
+        run: npm ci
+      
+      - name: Run ESLint (Backend)
+        working-directory: ./backend
+        run: npm run lint
+      
+      - name: Run ESLint (Frontend)
+        working-directory: ./frontend
+        run: npm run lint
+      
+      - name: Run Prettier check
+        run: npx prettier --check "**/*.{ts,tsx,js,jsx,json,md}"
+
+  # Job 2: Testes Backend
+  test-backend:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+    needs: lint
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      
+      - name: Install dependencies
+        working-directory: ./backend
+        run: npm ci
+      
+      - name: Run unit tests
+        working-directory: ./backend
+        run: npm test -- --coverage
+        env:
+          NODE_ENV: test
+      
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./backend/coverage/lcov.info
+          flags: backend
+          name: backend-coverage
+
+  # Job 3: Testes Frontend
+  test-frontend:
+    name: Frontend Tests
+    runs-on: ubuntu-latest
+    needs: lint
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      
+      - name: Install dependencies
+        working-directory: ./frontend
+        run: npm ci
+      
+      - name: Run unit tests
+        working-directory: ./frontend
+        run: npm test -- --coverage
+        env:
+          NODE_ENV: test
+      
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./frontend/coverage/lcov.info
+          flags: frontend
+          name: frontend-coverage
+
+  # Job 4: Build Backend
+  build-backend:
+    name: Build Backend
+    runs-on: ubuntu-latest
+    needs: [test-backend]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      
+      - name: Install dependencies
+        working-directory: ./backend
+        run: npm ci
+      
+      - name: Build
+        working-directory: ./backend
+        run: npm run build
+      
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: backend-build
+          path: backend/dist
+
+  # Job 5: Build Frontend
+  build-frontend:
+    name: Build Frontend
+    runs-on: ubuntu-latest
+    needs: [test-frontend]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      
+      - name: Install dependencies
+        working-directory: ./frontend
+        run: npm ci
+      
+      - name: Build
+        working-directory: ./frontend
+        run: npm run build
+        env:
+          VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
+          VITE_FIREBASE_AUTH_DOMAIN: ${{ secrets.VITE_FIREBASE_AUTH_DOMAIN }}
+          VITE_FIREBASE_PROJECT_ID: ${{ secrets.VITE_FIREBASE_PROJECT_ID }}
+          VITE_FIREBASE_STORAGE_BUCKET: ${{ secrets.VITE_FIREBASE_STORAGE_BUCKET }}
+          VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID }}
+          VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+      
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: frontend-build
+          path: frontend/dist
+
+  # Job 6: Deploy para Staging
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [build-backend, build-frontend]
+    if: github.ref == 'refs/heads/staging' && github.event_name == 'push'
+    environment:
+      name: staging
+      url: https://staging.straxis.app
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Download backend artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: backend-build
+          path: backend/dist
+      
+      - name: Download frontend artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: frontend-build
+          path: frontend/dist
+      
+      - name: Setup Firebase CLI
+        run: npm install -g firebase-tools
+      
+      - name: Deploy Firestore Rules
+        run: firebase deploy --only firestore:rules --project staging --token ${{ secrets.FIREBASE_TOKEN }}
+      
+      - name: Deploy Firestore Indexes
+        run: firebase deploy --only firestore:indexes --project staging --token ${{ secrets.FIREBASE_TOKEN }}
+      
+      - name: Deploy Frontend to Firebase Hosting
+        run: firebase deploy --only hosting:staging --project staging --token ${{ secrets.FIREBASE_TOKEN }}
+      
+      - name: Deploy Backend (Cloud Run ou similar)
+        run: |
+          echo "Deploy backend to staging environment"
+          # Adicionar comandos específicos do seu provedor de cloud
+          # Exemplo: gcloud run deploy straxis-backend-staging --image gcr.io/...
+
+  # Job 7: Deploy para Produção
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [build-backend, build-frontend]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment:
+      name: production
+      url: https://app.straxis.app
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Download backend artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: backend-build
+          path: backend/dist
+      
+      - name: Download frontend artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: frontend-build
+          path: frontend/dist
+      
+      - name: Setup Firebase CLI
+        run: npm install -g firebase-tools
+      
+      - name: Deploy Firestore Rules
+        run: firebase deploy --only firestore:rules --project production --token ${{ secrets.FIREBASE_TOKEN }}
+      
+      - name: Deploy Firestore Indexes
+        run: firebase deploy --only firestore:indexes --project production --token ${{ secrets.FIREBASE_TOKEN }}
+      
+      - name: Deploy Frontend to Firebase Hosting
+        run: firebase deploy --only hosting:production --project production --token ${{ secrets.FIREBASE_TOKEN }}
+      
+      - name: Deploy Backend (Cloud Run ou similar)
+        run: |
+          echo "Deploy backend to production environment"
+          # Adicionar comandos específicos do seu provedor de cloud
+          # Exemplo: gcloud run deploy straxis-backend --image gcr.io/...
+      
+      - name: Create Release Tag
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          VERSION=$(date +%Y.%m.%d-%H%M%S)
+          git tag -a "v$VERSION" -m "Release v$VERSION"
+          git push origin "v$VERSION"
+
+  # Job 8: Notificação
+  notify:
+    name: Notify Deployment
+    runs-on: ubuntu-latest
+    needs: [deploy-staging, deploy-production]
+    if: always()
+    
+    steps:
+      - name: Send notification
+        run: |
+          echo "Deployment completed"
+          # Adicionar notificação via Slack, Discord, Email, etc.

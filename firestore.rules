@@ -1,0 +1,85 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+    
+    function isAdminPlatform() {
+      return isAuthenticated() && getUserData().role == 'admin_platform';
+    }
+    
+    function isOwner() {
+      return isAuthenticated() && getUserData().role == 'owner';
+    }
+    
+    function belongsToCompany(companyId) {
+      return isAuthenticated() && getUserData().companyId == companyId;
+    }
+    
+    function companyIsActive(companyId) {
+      let company = get(/databases/$(database)/documents/companies/$(companyId)).data;
+      return company.active == true && company.planEndDate.toMillis() > request.time.toMillis();
+    }
+    
+    // Companies collection
+    match /companies/{companyId} {
+      allow read: if isAdminPlatform() || (belongsToCompany(companyId) && companyIsActive(companyId));
+      allow create: if isAdminPlatform();
+      allow update: if isAdminPlatform() || (isOwner() && belongsToCompany(companyId) && companyIsActive(companyId));
+      allow delete: if isAdminPlatform();
+      
+      // Subcollections
+      match /trabalhos/{trabalhoId} {
+        allow read, write: if belongsToCompany(companyId) && companyIsActive(companyId);
+      }
+      
+      match /agendamentos/{agendamentoId} {
+        allow read, write: if belongsToCompany(companyId) && companyIsActive(companyId);
+      }
+      
+      match /funcionarios/{funcionarioId} {
+        allow read, write: if belongsToCompany(companyId) && companyIsActive(companyId);
+      }
+      
+      match /iaUsage/{usageId} {
+        allow read: if isAdminPlatform() || (belongsToCompany(companyId) && companyIsActive(companyId));
+        allow write: if belongsToCompany(companyId) && companyIsActive(companyId);
+      }
+      
+      match /whatsappSessions/{sessionId} {
+        allow read, write: if belongsToCompany(companyId) && companyIsActive(companyId);
+      }
+      
+      match /whatsappMessages/{messageId} {
+        allow read, write: if belongsToCompany(companyId) && companyIsActive(companyId);
+      }
+    }
+    
+    // Users collection
+    match /users/{userId} {
+      allow read: if isAuthenticated() && (isAdminPlatform() || request.auth.uid == userId);
+      allow create: if isAdminPlatform() || isOwner();
+      allow update: if isAuthenticated() && (isAdminPlatform() || request.auth.uid == userId);
+      allow delete: if isAdminPlatform();
+    }
+    
+    // Logs collection
+    match /logs/{logId} {
+      allow read: if isAdminPlatform() || (isAuthenticated() && resource.data.companyId == getUserData().companyId);
+      allow write: if isAuthenticated();
+    }
+    
+    // Global config
+    match /globalConfig/{doc} {
+      allow read: if isAuthenticated();
+      allow write: if isAdminPlatform();
+    }
+  }
+}
