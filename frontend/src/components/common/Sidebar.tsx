@@ -128,6 +128,23 @@ export const Sidebar: React.FC<SidebarProps> = ({ userRole, isOpen = false, onCl
             );
           })}
         </nav>
+
+        {/* Version Info */}
+        <div className="sidebar-footer">
+          <div 
+            className="version-info"
+            title="Última atualização: 27/01/2026"
+          >
+            {!isCollapsed ? (
+              <>
+                <span className="version-label">Versão</span>
+                <span className="version-number">Alpha 0.7.1</span>
+              </>
+            ) : (
+              <span className="version-number-collapsed">v0.7.1</span>
+            )}
+          </div>
+        </div>
       </aside>
 
       <style>{`
@@ -325,6 +342,58 @@ export const Sidebar: React.FC<SidebarProps> = ({ userRole, isOpen = false, onCl
           height: 60%;
           background: linear-gradient(180deg, #3b82f6 0%, #2563eb 100%);
           border-radius: 0 4px 4px 0;
+        }
+
+        .sidebar-footer {
+          padding: 0.75rem 1rem;
+          border-top: 1px solid var(--color-border, #e0e0e0);
+          background: var(--color-background, #fafafa);
+        }
+
+        .version-info {
+          display: flex;
+          flex-direction: column;
+          gap: 0.125rem;
+          cursor: help;
+          transition: all 0.2s ease;
+          padding: 0.375rem 0.5rem;
+          border-radius: 6px;
+        }
+
+        .version-info:hover {
+          background: var(--color-surface, #ffffff);
+          box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .version-label {
+          font-size: 0.625rem;
+          color: var(--color-textSecondary, #757575);
+          font-weight: 500;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+
+        .version-number {
+          font-size: 0.75rem;
+          color: var(--color-text, #212121);
+          font-weight: 600;
+          background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+        }
+
+        .version-number-collapsed {
+          font-size: 0.625rem;
+          color: var(--color-textSecondary, #757575);
+          font-weight: 600;
+          text-align: center;
+          display: block;
+        }
+
+        .sidebar.collapsed .sidebar-footer {
+          padding: 0.5rem 0.25rem;
+          text-align: center;
         }
 
         @media (max-width: 767px) {
