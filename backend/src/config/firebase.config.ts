@@ -10,7 +10,7 @@ let credential: admin.credential.Credential;
 
 try {
   // Caminho para o arquivo JSON do Firebase Admin SDK
-  const serviceAccountPath = path.join(__dirname, '../../straxis-6e4bc-firebase-adminsdk-fbsvc-363e5b92ed.json');
+  const serviceAccountPath = path.join(__dirname, '../../straxis-6e4bc-firebase-adminsdk-fbsvc-7e5474d6f1.json');
   const serviceAccount = require(serviceAccountPath);
   
   credential = admin.credential.cert(serviceAccount);

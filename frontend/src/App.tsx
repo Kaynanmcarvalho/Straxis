@@ -6,10 +6,12 @@ import './styles/straxis-tokens.css';
 import CoreLayout from './layouts/CoreLayout';
 import LoginPage from './pages/LoginPage';
 import DashboardPageCore from './pages/DashboardPageCore';
+import TestPage from './pages/TestPage';
 import TrabalhosPageCore from './pages/TrabalhosPageCore';
 import AgendamentosPageCore from './pages/AgendamentosPageCore';
 import FuncionariosPage from './pages/FuncionariosPage';
 import RelatoriosPage from './pages/RelatoriosPage';
+import ClientesPage from './pages/ClientesPage';
 import UsuariosPage from './pages/UsuariosPage';
 import EmpresasPage from './pages/EmpresasPage';
 import WhatsAppPageCore from './pages/WhatsAppPageCore';
@@ -29,10 +31,12 @@ function App() {
           <Route path="/" element={<CoreLayout />}>
             <Route index element={<Navigate to="/dashboard" replace />} />
             <Route path="dashboard" element={<DashboardPageCore />} />
+            <Route path="test" element={<TestPage />} />
             <Route path="trabalhos" element={<TrabalhosPageCore />} />
             <Route path="agendamentos" element={<AgendamentosPageCore />} />
             <Route path="funcionarios" element={<FuncionariosPage />} />
             <Route path="relatorios" element={<RelatoriosPage />} />
+            <Route path="clientes" element={<ClientesPage />} />
             <Route path="usuarios" element={<UsuariosPage />} />
             <Route path="empresas" element={<EmpresasPage />} />
             <Route path="whatsapp" element={<WhatsAppPageCore />} />

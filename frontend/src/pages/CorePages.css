@@ -20,9 +20,9 @@ html, body {
 .page-container {
   min-height: 100vh;
   max-width: 100vw;
-  background: var(--color-background);
+  background: transparent;
   padding: var(--space-4);
-  padding-bottom: 104px; /* Dock clearance */
+  padding-bottom: 60px; /* Dock clearance */
   overflow-x: hidden;
   box-sizing: border-box;
   transition: background-color var(--transition-base);
@@ -31,7 +31,7 @@ html, body {
 @media (min-width: 768px) {
   .page-container {
     padding: var(--space-6);
-    padding-bottom: 112px;
+    padding-bottom: 60px;
   }
 }
 

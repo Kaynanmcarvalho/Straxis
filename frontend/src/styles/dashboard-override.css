@@ -1,0 +1,17 @@
+/* DASHBOARD OVERRIDE - MÁXIMA PRIORIDADE */
+html,
+body,
+#root,
+.core-layout,
+.core-content {
+  background: linear-gradient(180deg, #E8E8ED 0%, #F2F2F7 100%) !important;
+}
+
+.radar {
+  min-height: 100vh !important;
+  padding: 20px 16px 80px !important;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif !important;
+  -webkit-font-smoothing: antialiased !important;
+  color: #1C1C1E !important;
+  background: linear-gradient(180deg, #E8E8ED 0%, #F2F2F7 100%) !important;
+}

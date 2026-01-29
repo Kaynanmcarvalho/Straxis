@@ -6,8 +6,13 @@
 .whatsapp-os-container {
   position: relative;
   min-height: 100vh;
-  background: linear-gradient(180deg, #F5F5F7 0%, #FAFAFA 100%);
-  padding-bottom: 180px;
+  background: #FFFFFF;
+  padding-bottom: 60px;
+}
+
+/* Override: WhatsApp precisa de fundo branco */
+.page-container.whatsapp-os-container {
+  background: #FFFFFF !important;
 }
 
 /* ============================================
@@ -28,6 +33,7 @@
   align-items: center;
   justify-content: center;
   animation: fadeIn 0.3s ease;
+  padding-bottom: 60px; /* Space for dock */
 }
 
 @keyframes fadeIn {
@@ -439,14 +445,16 @@
   align-items: center;
   gap: 12px;
   padding: 16px;
-  background: #F5F5F7;
+  background: #FFFFFF;
+  border: 1px solid #E5E5EA;
   border-radius: 14px;
   transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .stat-os-card:active {
   transform: scale(0.98);
-  background: #EBEBED;
+  background: #F9F9F9;
 }
 
 .stat-os-icon {
@@ -745,6 +753,7 @@
   box-shadow: 0 8px 24px rgba(255, 149, 0, 0.4);
   transition: all 0.2s ease;
   z-index: 50;
+  margin-bottom: 0; /* Remove extra margin */
 }
 
 .btn-intervencao-rapida:active {

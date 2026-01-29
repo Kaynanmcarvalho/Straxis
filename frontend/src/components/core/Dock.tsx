@@ -10,6 +10,7 @@ import {
   FileText,
   Building2,
   ScrollText,
+  UserCircle,
   LucideIcon
 } from 'lucide-react';
 import './Dock.css';
@@ -27,6 +28,7 @@ const dockItems: DockItem[] = [
   { id: 'agendamentos', label: 'Agenda', icon: Calendar, path: '/agendamentos' },
   { id: 'funcionarios', label: 'Equipe', icon: Users, path: '/funcionarios' },
   { id: 'relatorios', label: 'Relatórios', icon: FileText, path: '/relatorios' },
+  { id: 'clientes', label: 'Clientes', icon: UserCircle, path: '/clientes' },
   { id: 'whatsapp', label: 'WhatsApp', icon: MessageSquare, path: '/whatsapp' },
   { id: 'ia', label: 'IA', icon: Brain, path: '/ia-config' },
   { id: 'empresas', label: 'Empresas', icon: Building2, path: '/empresas' },
@@ -34,53 +36,85 @@ const dockItems: DockItem[] = [
 ];
 
 const VISIBLE_ITEMS = 5;
-const ITEM_WIDTH = 72; // Width of each dock item including gap
+const GAP = 4;
+const DRAG_THRESHOLD = 5; // Pixels to distinguish drag from click
+const VELOCITY_MULTIPLIER = 0.3; // Inertia factor
+const SNAP_DURATION = 350; // ms
 
 export const Dock: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const containerRef = useRef<HTMLDivElement>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
   const isDraggingRef = useRef(false);
+  const hasDraggedRef = useRef(false);
   const startXRef = useRef(0);
-  const currentXRef = useRef(0);
-  const velocityRef = useRef(0);
-  const lastTimeRef = useRef(0);
+  const startOffsetRef = useRef(0);
   const lastXRef = useRef(0);
+  const lastTimeRef = useRef(0);
+  const velocityRef = useRef(0);
   const animationFrameRef = useRef<number>();
 
   const [offset, setOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
+  const [itemWidth, setItemWidth] = useState(70);
+  const [containerWidth, setContainerWidth] = useState(0);
 
-  const maxOffset = Math.max(0, (dockItems.length - VISIBLE_ITEMS) * ITEM_WIDTH);
+  // Calculate dimensions based on window width
+  const updateDimensions = useCallback(() => {
+    const width = window.innerWidth;
+    let newItemWidth = 70;
+    
+    if (width < 360) {
+      newItemWidth = 54;
+    } else if (width < 400) {
+      newItemWidth = 62;
+    }
+    
+    setItemWidth(newItemWidth);
+    const newContainerWidth = (newItemWidth * VISIBLE_ITEMS) + (GAP * (VISIBLE_ITEMS - 1)) + 16;
+    setContainerWidth(newContainerWidth);
+  }, []);
+
+  // Calculate max offset
+  const getMaxOffset = useCallback(() => {
+    const totalWidth = (dockItems.length * itemWidth) + (GAP * (dockItems.length - 1));
+    const visibleWidth = (VISIBLE_ITEMS * itemWidth) + (GAP * (VISIBLE_ITEMS - 1));
+    return Math.max(0, totalWidth - visibleWidth);
+  }, [itemWidth]);
+
+  // Initialize and handle resize
+  useEffect(() => {
+    updateDimensions();
+    
+    const handleResize = () => {
+      updateDimensions();
+      const maxOffset = getMaxOffset();
+      if (offset > maxOffset) {
+        setOffset(maxOffset);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [updateDimensions, getMaxOffset, offset]);
 
   const isActive = (path: string) => location.pathname === path;
 
-  // Snap to nearest item
-  const snapToNearest = useCallback((currentOffset: number, velocity: number) => {
-    const inertia = velocity * 0.3; // Inertia factor
-    const targetOffset = currentOffset + inertia;
-    const snappedOffset = Math.round(targetOffset / ITEM_WIDTH) * ITEM_WIDTH;
-    const clampedOffset = Math.max(0, Math.min(maxOffset, snappedOffset));
-    
-    return clampedOffset;
-  }, [maxOffset]);
-
-  // Animate to target offset
+  // Animate to target with spring physics
   const animateToOffset = useCallback((targetOffset: number) => {
-    const startOffset = currentXRef.current;
+    const startOffset = offset;
     const distance = targetOffset - startOffset;
-    const duration = 300; // ms
     const startTime = performance.now();
 
     const animate = (currentTime: number) => {
       const elapsed = currentTime - startTime;
-      const progress = Math.min(elapsed / duration, 1);
+      const progress = Math.min(elapsed / SNAP_DURATION, 1);
       
-      // Ease out cubic
-      const easeProgress = 1 - Math.pow(1 - progress, 3);
+      // Spring easing - feels physical
+      const easeProgress = 1 - Math.pow(1 - progress, 4);
       
       const newOffset = startOffset + distance * easeProgress;
-      currentXRef.current = newOffset;
       setOffset(newOffset);
 
       if (progress < 1) {
@@ -92,13 +126,15 @@ export const Dock: React.FC = () => {
       cancelAnimationFrame(animationFrameRef.current);
     }
     animationFrameRef.current = requestAnimationFrame(animate);
-  }, []);
+  }, [offset]);
 
   // Handle drag start
   const handleDragStart = useCallback((clientX: number) => {
     isDraggingRef.current = true;
+    hasDraggedRef.current = false;
     startXRef.current = clientX;
     lastXRef.current = clientX;
+    startOffsetRef.current = offset;
     lastTimeRef.current = performance.now();
     velocityRef.current = 0;
     setIsDragging(true);
@@ -106,41 +142,65 @@ export const Dock: React.FC = () => {
     if (animationFrameRef.current) {
       cancelAnimationFrame(animationFrameRef.current);
     }
-  }, []);
+  }, [offset]);
 
-  // Handle drag move
+  // Handle drag move with velocity tracking
   const handleDragMove = useCallback((clientX: number) => {
     if (!isDraggingRef.current) return;
 
+    const deltaX = startXRef.current - clientX;
     const currentTime = performance.now();
-    const deltaX = clientX - lastXRef.current;
     const deltaTime = currentTime - lastTimeRef.current;
 
-    if (deltaTime > 0) {
-      velocityRef.current = deltaX / deltaTime;
+    // Track if user actually dragged (not just a tap)
+    if (Math.abs(deltaX) > DRAG_THRESHOLD) {
+      hasDraggedRef.current = true;
     }
 
-    const dragDistance = startXRef.current - clientX;
-    const newOffset = Math.max(0, Math.min(maxOffset, currentXRef.current + dragDistance));
+    // Calculate velocity for inertia
+    if (deltaTime > 0) {
+      const instantVelocity = (lastXRef.current - clientX) / deltaTime;
+      velocityRef.current = instantVelocity;
+    }
+
+    const newOffset = startOffsetRef.current + deltaX;
+    const maxOffset = getMaxOffset();
     
-    currentXRef.current = newOffset;
-    setOffset(newOffset);
+    // Rubber band effect at edges
+    let clampedOffset = newOffset;
+    if (newOffset < 0) {
+      clampedOffset = newOffset * 0.3; // Resistance
+    } else if (newOffset > maxOffset) {
+      clampedOffset = maxOffset + (newOffset - maxOffset) * 0.3;
+    }
     
-    startXRef.current = clientX;
+    setOffset(clampedOffset);
     lastXRef.current = clientX;
     lastTimeRef.current = currentTime;
-  }, [maxOffset]);
+  }, [getMaxOffset]);
 
-  // Handle drag end
+  // Handle drag end with inertia
   const handleDragEnd = useCallback(() => {
     if (!isDraggingRef.current) return;
-
+    
     isDraggingRef.current = false;
     setIsDragging(false);
 
-    const targetOffset = snapToNearest(currentXRef.current, velocityRef.current);
-    animateToOffset(targetOffset);
-  }, [snapToNearest, animateToOffset]);
+    const maxOffset = getMaxOffset();
+    
+    // Apply inertia
+    const inertia = velocityRef.current * VELOCITY_MULTIPLIER * 1000;
+    const targetOffset = offset + inertia;
+
+    // Snap to nearest group of 5
+    const groupWidth = (itemWidth * VISIBLE_ITEMS) + (GAP * (VISIBLE_ITEMS - 1));
+    const snappedOffset = Math.round(targetOffset / groupWidth) * groupWidth;
+    
+    // Clamp to valid range
+    const finalOffset = Math.max(0, Math.min(maxOffset, snappedOffset));
+    
+    animateToOffset(finalOffset);
+  }, [offset, getMaxOffset, itemWidth, animateToOffset]);
 
   // Mouse events
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
@@ -165,7 +225,7 @@ export const Dock: React.FC = () => {
 
   const handleTouchMove = useCallback((e: TouchEvent) => {
     if (e.touches.length === 1) {
-      e.preventDefault(); // Prevent scroll
+      e.preventDefault();
       handleDragMove(e.touches[0].clientX);
     }
   }, [handleDragMove]);
@@ -176,18 +236,15 @@ export const Dock: React.FC = () => {
 
   // Setup event listeners
   useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
-    container.addEventListener('touchmove', handleTouchMove, { passive: false });
+    document.addEventListener('touchmove', handleTouchMove, { passive: false });
     document.addEventListener('touchend', handleTouchEnd);
 
     return () => {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
-      container.removeEventListener('touchmove', handleTouchMove);
+      document.removeEventListener('touchmove', handleTouchMove);
       document.removeEventListener('touchend', handleTouchEnd);
       
       if (animationFrameRef.current) {
@@ -196,12 +253,14 @@ export const Dock: React.FC = () => {
     };
   }, [handleMouseMove, handleMouseUp, handleTouchMove, handleTouchEnd]);
 
-  // Handle item click (only if not dragging)
+  // Handle item click (only if not dragged)
   const handleItemClick = useCallback((path: string) => {
-    if (!isDraggingRef.current && Math.abs(velocityRef.current) < 0.1) {
+    if (!hasDraggedRef.current) {
       navigate(path);
     }
   }, [navigate]);
+
+  const maxOffset = getMaxOffset();
 
   return (
     <nav className="dock-container">
@@ -211,14 +270,16 @@ export const Dock: React.FC = () => {
         onMouseDown={handleMouseDown}
         onTouchStart={handleTouchStart}
         style={{
-          cursor: isDragging ? 'grabbing' : 'grab',
+          width: `${containerWidth}px`,
+          maxWidth: `${containerWidth}px`,
         }}
       >
         <div 
+          ref={trackRef}
           className="dock-track"
           style={{
             transform: `translateX(-${offset}px)`,
-            transition: isDragging ? 'none' : 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+            transition: isDragging ? 'none' : 'transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
           }}
         >
           {dockItems.map((item) => {
@@ -233,6 +294,9 @@ export const Dock: React.FC = () => {
                 onMouseDown={(e) => e.stopPropagation()}
                 aria-label={item.label}
                 style={{
+                  width: `${itemWidth}px`,
+                  minWidth: `${itemWidth}px`,
+                  maxWidth: `${itemWidth}px`,
                   pointerEvents: isDragging ? 'none' : 'auto',
                 }}
               >
@@ -247,11 +311,11 @@ export const Dock: React.FC = () => {
         </div>
       </div>
       
-      {/* Scroll indicators */}
+      {/* Scroll indicators - subtle visual feedback */}
       {offset > 0 && (
         <div className="dock-indicator dock-indicator-left" />
       )}
-      {offset < maxOffset && (
+      {offset < maxOffset && maxOffset > 0 && (
         <div className="dock-indicator dock-indicator-right" />
       )}
     </nav>

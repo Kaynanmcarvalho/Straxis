@@ -7,6 +7,26 @@
     <meta name="description" content="Sistema de gestão de operações de carga e descarga" />
     <meta name="theme-color" content="#667eea" />
     <title>Straxis SaaS</title>
+    <style>
+      /* CRITICAL: Dashboard Background Override - Highest Priority */
+      body:has(.radar),
+      html:has(.radar),
+      #root:has(.radar) {
+        background: linear-gradient(180deg, #E8E8ED 0%, #F2F2F7 100%) !important;
+      }
+      
+      .dashboard-active,
+      .dashboard-active body,
+      .dashboard-active html,
+      .dashboard-active #root {
+        background: linear-gradient(180deg, #E8E8ED 0%, #F2F2F7 100%) !important;
+      }
+      
+      .radar {
+        background: linear-gradient(180deg, #E8E8ED 0%, #F2F2F7 100%) !important;
+        min-height: 100vh !important;
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>

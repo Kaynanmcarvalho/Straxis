@@ -138,10 +138,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ userRole, isOpen = false, onCl
             {!isCollapsed ? (
               <>
                 <span className="version-label">Versão</span>
-                <span className="version-number">Alpha 2.3.0</span>
+                <span className="version-number">Alpha 4.1.0</span>
               </>
             ) : (
-              <span className="version-number-collapsed">v2.3.0</span>
+              <span className="version-number-collapsed">v4.1.0</span>
             )}
           </div>
         </div>

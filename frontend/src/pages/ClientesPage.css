@@ -1,0 +1,911 @@
+/* ============================================
+   HUB DE RELACIONAMENTO OPERACIONAL v4.1.0
+   SISTEMA PROPRIETÁRIO PREMIUM - FUNDO BRANCO
+   PROFUNDIDADE SOFISTICADA E ESTÉTICA SILENCIOSA
+   ============================================ */
+
+/* AMBIENTE PREMIUM - BRANCO CONTÍNUO */
+.clientes-hub {
+  background: #FFFFFF !important;
+  min-height: 100vh !important;
+  padding: 0 !important;
+  font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, sans-serif !important;
+  color: #1C1C1E !important;
+}
+
+.page-container.clientes-hub {
+  background: #FFFFFF !important;
+}
+
+/* ============================================
+   CABEÇALHO — SILENCIOSO E AUTORITATIVO
+   ============================================ */
+
+.clientes-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 32px 24px 24px !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.04) !important;
+  background: #FFFFFF !important;
+}
+
+.clientes-title-group {
+  display: flex !important;
+  align-items: baseline !important;
+  gap: 16px !important;
+}
+
+.clientes-title {
+  font-size: 32px !important;
+  font-weight: 600 !important;
+  color: #1C1C1E !important;
+  margin: 0 !important;
+  letter-spacing: -0.8px !important;
+  line-height: 1.1 !important;
+}
+
+.clientes-counter {
+  display: flex !important;
+  align-items: baseline !important;
+  gap: 4px !important;
+}
+
+.counter-number {
+  font-size: 16px !important;
+  font-weight: 500 !important;
+  color: #8E8E93 !important;
+  font-variant-numeric: tabular-nums !important;
+}
+
+.counter-label {
+  font-size: 16px !important;
+  font-weight: 400 !important;
+  color: #8E8E93 !important;
+}
+
+.btn-novo-cliente {
+  width: 40px !important;
+  height: 40px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: #F2F2F7 !important;
+  border: 1px solid rgba(0, 0, 0, 0.06) !important;
+  border-radius: 10px !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+}
+
+.btn-novo-cliente:hover {
+  background: #E5E5EA !important;
+  border-color: rgba(0, 0, 0, 0.1) !important;
+}
+
+.btn-novo-cliente .icon {
+  width: 20px !important;
+  height: 20px !important;
+  color: #1C1C1E !important;
+}
+
+/* ============================================
+   BUSCA — ESTILO SISTEMA OPERACIONAL
+   ============================================ */
+
+.search-container {
+  padding: 0 24px 20px !important;
+  background: #FFFFFF !important;
+}
+
+.search-wrapper {
+  position: relative !important;
+  display: flex !important;
+  align-items: center !important;
+  background: #FAFAFA !important;
+  border: 1px solid rgba(0, 0, 0, 0.04) !important;
+  border-radius: 10px !important;
+  padding: 12px 16px !important;
+  transition: all 0.2s ease !important;
+}
+
+.search-wrapper:focus-within {
+  background: #FFFFFF !important;
+  border-color: rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.02) !important;
+}
+
+.search-icon {
+  width: 16px !important;
+  height: 16px !important;
+  color: #8E8E93 !important;
+  margin-right: 10px !important;
+  flex-shrink: 0 !important;
+}
+
+.search-input {
+  flex: 1 !important;
+  border: none !important;
+  outline: none !important;
+  font-size: 16px !important;
+  font-weight: 400 !important;
+  color: #1C1C1E !important;
+  background: transparent !important;
+}
+
+.search-input::placeholder {
+  color: #8E8E93 !important;
+  font-weight: 400 !important;
+}
+
+.search-clear {
+  width: 20px !important;
+  height: 20px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: rgba(0, 0, 0, 0.06) !important;
+  border: none !important;
+  border-radius: 50% !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  flex-shrink: 0 !important;
+}
+
+.search-clear:hover {
+  background: rgba(0, 0, 0, 0.1) !important;
+}
+
+.search-clear .icon {
+  width: 12px !important;
+  height: 12px !important;
+  color: #8E8E93 !important;
+}
+
+/* ============================================
+   FILTROS — CONTROLE SILENCIOSO
+   ============================================ */
+
+.filtros-status {
+  display: flex !important;
+  gap: 0 !important;
+  padding: 0 24px 24px !important;
+  background: #FFFFFF !important;
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+
+.filtros-status::-webkit-scrollbar {
+  display: none !important;
+}
+
+.filtro-btn {
+  padding: 8px 16px !important;
+  background: transparent !important;
+  border: none !important;
+  font-size: 15px !important;
+  font-weight: 400 !important;
+  color: #8E8E93 !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+  border-radius: 6px !important;
+}
+
+.filtro-btn:hover {
+  color: #1C1C1E !important;
+  background: #F2F2F7 !important;
+}
+
+.filtro-btn.active {
+  color: #1C1C1E !important;
+  font-weight: 500 !important;
+  background: #F2F2F7 !important;
+}
+
+/* ============================================
+   GRID DE CLIENTES — OBJETOS DE SISTEMA
+   ============================================ */
+
+.clientes-grid {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 1px !important;
+  padding: 0 24px 120px !important;
+  background: #FFFFFF !important;
+}
+
+/* ============================================
+   CARD DE CLIENTE — REGISTRO VALIOSO
+   ============================================ */
+
+.cliente-card {
+  position: relative !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 16px !important;
+  padding: 20px !important;
+  background: #FFFFFF !important;
+  border: 1px solid rgba(0, 0, 0, 0.04) !important;
+  border-radius: 12px !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+}
+
+.cliente-card:hover {
+  border-color: rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+  transform: translateY(-1px) !important;
+}
+
+.cliente-card:active {
+  transform: translateY(0) !important;
+}
+
+/* AVATAR SIMPLES */
+.cliente-avatar {
+  width: 48px !important;
+  height: 48px !important;
+  border-radius: 12px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: #F2F2F7 !important;
+  flex-shrink: 0 !important;
+  border: 1px solid rgba(0, 0, 0, 0.06) !important;
+}
+
+.avatar-initials {
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  color: #1C1C1E !important;
+  letter-spacing: -0.3px !important;
+}
+
+/* INFORMAÇÕES PRINCIPAIS */
+.cliente-info {
+  flex: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 4px !important;
+  min-width: 0 !important;
+}
+
+.cliente-nome {
+  font-size: 17px !important;
+  font-weight: 500 !important;
+  color: #1C1C1E !important;
+  margin: 0 !important;
+  letter-spacing: -0.2px !important;
+  line-height: 1.2 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.cliente-telefone,
+.cliente-endereco {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  font-size: 13px !important;
+  font-weight: 400 !important;
+  color: #8E8E93 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.cliente-telefone .icon,
+.cliente-endereco .icon {
+  width: 12px !important;
+  height: 12px !important;
+  flex-shrink: 0 !important;
+  opacity: 0.7 !important;
+}
+
+/* ESTADO SILENCIOSO */
+.cliente-status-badge {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  padding: 4px 8px !important;
+  border-radius: 6px !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  background: transparent !important;
+  border: 1px solid rgba(0, 0, 0, 0.06) !important;
+  color: #8E8E93 !important;
+  flex-shrink: 0 !important;
+}
+
+.status-dot {
+  width: 4px !important;
+  height: 4px !important;
+  border-radius: 50% !important;
+  background: #8E8E93 !important;
+}
+
+/* Estados por temperatura sutil */
+.cliente-card[data-status="ativo"] .status-dot {
+  background: #34C759 !important;
+}
+
+.cliente-card[data-status="em_servico"] .status-dot {
+  background: #007AFF !important;
+}
+
+.cliente-card[data-status="agendado"] .status-dot {
+  background: #5856D6 !important;
+}
+
+.cliente-card[data-status="inativo"] .status-dot {
+  background: #8E8E93 !important;
+}
+
+/* MÉTRICAS COMPOSTAS */
+.cliente-stats {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 2px !important;
+  align-items: flex-end !important;
+  flex-shrink: 0 !important;
+}
+
+.stat-item {
+  display: flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+}
+
+.stat-item .icon {
+  width: 12px !important;
+  height: 12px !important;
+  color: #8E8E93 !important;
+  opacity: 0.6 !important;
+}
+
+.stat-value {
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  color: #1C1C1E !important;
+  font-variant-numeric: tabular-nums !important;
+}
+
+.stat-label {
+  font-size: 11px !important;
+  font-weight: 400 !important;
+  color: #8E8E93 !important;
+}
+
+/* ÚLTIMO CONTATO */
+.cliente-ultimo-contato {
+  display: flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  font-size: 11px !important;
+  font-weight: 400 !important;
+  color: #8E8E93 !important;
+  flex-shrink: 0 !important;
+}
+
+.cliente-ultimo-contato .icon {
+  width: 11px !important;
+  height: 11px !important;
+  opacity: 0.6 !important;
+}
+
+/* CHEVRON SILENCIOSO */
+.cliente-chevron {
+  width: 16px !important;
+  height: 16px !important;
+  color: #C7C7CC !important;
+  opacity: 0 !important;
+  transition: all 0.2s ease !important;
+  flex-shrink: 0 !important;
+}
+
+.cliente-card:hover .cliente-chevron {
+  opacity: 1 !important;
+  transform: translateX(2px) !important;
+}
+
+/* ============================================
+   ESTADO VAZIO — ELEGANTE
+   ============================================ */
+
+.empty-state-clientes {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 80px 24px !important;
+  text-align: center !important;
+}
+
+.empty-icon {
+  width: 64px !important;
+  height: 64px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: #F2F2F7 !important;
+  border-radius: 16px !important;
+  margin-bottom: 20px !important;
+  border: 1px solid rgba(0, 0, 0, 0.04) !important;
+}
+
+.empty-icon .icon {
+  width: 32px !important;
+  height: 32px !important;
+  color: #8E8E93 !important;
+}
+
+.empty-titulo {
+  font-size: 20px !important;
+  font-weight: 500 !important;
+  color: #1C1C1E !important;
+  margin: 0 0 8px 0 !important;
+  letter-spacing: -0.3px !important;
+}
+
+.empty-descricao {
+  font-size: 15px !important;
+  font-weight: 400 !important;
+  color: #8E8E93 !important;
+  margin: 0 0 24px 0 !important;
+  max-width: 300px !important;
+  line-height: 1.4 !important;
+}
+
+.btn-empty-action {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 12px 20px !important;
+  background: #1C1C1E !important;
+  color: #FFFFFF !important;
+  border: none !important;
+  border-radius: 8px !important;
+  font-size: 15px !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+}
+
+.btn-empty-action:hover {
+  background: #2C2C2E !important;
+  transform: translateY(-1px) !important;
+}
+
+.btn-empty-action .icon {
+  width: 16px !important;
+  height: 16px !important;
+}
+
+/* ============================================
+   MODAL — PROFUNDIDADE PREMIUM
+   ============================================ */
+
+.modal-overlay {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  background: rgba(0, 0, 0, 0.4) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  z-index: 2000 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 20px !important;
+  animation: fadeIn 0.2s ease !important;
+}
+
+.modal-content {
+  width: 100% !important;
+  max-width: 480px !important;
+  max-height: 90vh !important;
+  background: #FFFFFF !important;
+  border-radius: 16px !important;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2) !important;
+  overflow: hidden !important;
+  animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  border: 1px solid rgba(0, 0, 0, 0.06) !important;
+}
+
+.modal-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 24px 24px 20px !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.04) !important;
+}
+
+.modal-title {
+  font-size: 20px !important;
+  font-weight: 500 !important;
+  color: #1C1C1E !important;
+  margin: 0 !important;
+  letter-spacing: -0.3px !important;
+}
+
+.modal-close {
+  width: 32px !important;
+  height: 32px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: #F2F2F7 !important;
+  border: 1px solid rgba(0, 0, 0, 0.06) !important;
+  border-radius: 8px !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+}
+
+.modal-close:hover {
+  background: #E5E5EA !important;
+}
+
+.modal-close .icon {
+  width: 16px !important;
+  height: 16px !important;
+  color: #1C1C1E !important;
+}
+
+.modal-body {
+  padding: 24px !important;
+  overflow-y: auto !important;
+  max-height: calc(90vh - 80px) !important;
+}
+
+/* ============================================
+   PERFIL DO CLIENTE — REGISTRO PREMIUM
+   ============================================ */
+
+.cliente-perfil {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 24px !important;
+}
+
+.perfil-header {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 16px !important;
+  padding-bottom: 24px !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.04) !important;
+}
+
+.perfil-avatar-large {
+  width: 80px !important;
+  height: 80px !important;
+  border-radius: 20px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: #F2F2F7 !important;
+  border: 1px solid rgba(0, 0, 0, 0.06) !important;
+}
+
+.avatar-initials-large {
+  font-size: 28px !important;
+  font-weight: 600 !important;
+  color: #1C1C1E !important;
+  letter-spacing: -0.5px !important;
+}
+
+.perfil-status-badge {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 6px 12px !important;
+  border-radius: 8px !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  background: #F2F2F7 !important;
+  color: #1C1C1E !important;
+  border: 1px solid rgba(0, 0, 0, 0.06) !important;
+}
+
+/* INFORMAÇÕES DO PERFIL */
+.perfil-info-grid {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 16px !important;
+}
+
+.perfil-info-item {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  padding: 16px !important;
+  background: #FAFAFA !important;
+  border: 1px solid rgba(0, 0, 0, 0.04) !important;
+  border-radius: 10px !important;
+}
+
+.perfil-info-item .icon {
+  width: 16px !important;
+  height: 16px !important;
+  color: #8E8E93 !important;
+  flex-shrink: 0 !important;
+}
+
+.info-content {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 2px !important;
+}
+
+.info-label {
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  color: #8E8E93 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+}
+
+.info-value {
+  font-size: 15px !important;
+  font-weight: 400 !important;
+  color: #1C1C1E !important;
+}
+
+/* ESTATÍSTICAS DO PERFIL */
+.perfil-stats-grid {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 12px !important;
+}
+
+.perfil-stat-card {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 20px 16px !important;
+  background: #FAFAFA !important;
+  border: 1px solid rgba(0, 0, 0, 0.04) !important;
+  border-radius: 12px !important;
+  text-align: center !important;
+}
+
+.perfil-stat-card .icon {
+  width: 20px !important;
+  height: 20px !important;
+  color: #8E8E93 !important;
+  margin-bottom: 4px !important;
+}
+
+.stat-value-large {
+  font-size: 24px !important;
+  font-weight: 600 !important;
+  color: #1C1C1E !important;
+  font-variant-numeric: tabular-nums !important;
+  line-height: 1 !important;
+}
+
+.stat-label {
+  font-size: 12px !important;
+  font-weight: 400 !important;
+  color: #8E8E93 !important;
+  line-height: 1.2 !important;
+}
+
+/* AÇÕES DO PERFIL */
+.perfil-acoes {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 12px !important;
+  padding-top: 8px !important;
+}
+
+.btn-acao-perfil {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  padding: 14px 16px !important;
+  border: 1px solid rgba(0, 0, 0, 0.06) !important;
+  border-radius: 10px !important;
+  font-size: 15px !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  background: #FFFFFF !important;
+  color: #1C1C1E !important;
+}
+
+.btn-acao-perfil:hover {
+  background: #F2F2F7 !important;
+  border-color: rgba(0, 0, 0, 0.1) !important;
+  transform: translateY(-1px) !important;
+}
+
+.btn-acao-perfil.whatsapp {
+  background: #25D366 !important;
+  color: #FFFFFF !important;
+  border-color: #25D366 !important;
+}
+
+.btn-acao-perfil.whatsapp:hover {
+  background: #22C55E !important;
+  border-color: #22C55E !important;
+}
+
+.btn-acao-perfil.agendar {
+  background: #007AFF !important;
+  color: #FFFFFF !important;
+  border-color: #007AFF !important;
+}
+
+.btn-acao-perfil.agendar:hover {
+  background: #0056CC !important;
+  border-color: #0056CC !important;
+}
+
+.btn-acao-perfil .icon {
+  width: 16px !important;
+  height: 16px !important;
+}
+
+/* ============================================
+   FORMULÁRIO — ENTRADA PREMIUM
+   ============================================ */
+
+.cliente-form {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 20px !important;
+}
+
+.form-group {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+}
+
+.form-label {
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  color: #1C1C1E !important;
+  letter-spacing: -0.1px !important;
+}
+
+.form-input {
+  padding: 14px 16px !important;
+  background: #FAFAFA !important;
+  border: 1px solid rgba(0, 0, 0, 0.04) !important;
+  border-radius: 10px !important;
+  font-size: 16px !important;
+  font-weight: 400 !important;
+  color: #1C1C1E !important;
+  transition: all 0.2s ease !important;
+  outline: none !important;
+}
+
+.form-input:focus {
+  background: #FFFFFF !important;
+  border-color: rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.02) !important;
+}
+
+.form-input::placeholder {
+  color: #8E8E93 !important;
+  font-weight: 400 !important;
+}
+
+/* AVISO DO FORMULÁRIO */
+.form-aviso {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 12px 16px !important;
+  background: rgba(255, 149, 0, 0.05) !important;
+  border: 1px solid rgba(255, 149, 0, 0.1) !important;
+  border-radius: 8px !important;
+  font-size: 13px !important;
+  font-weight: 400 !important;
+  color: #FF9500 !important;
+}
+
+.form-aviso .icon {
+  width: 14px !important;
+  height: 14px !important;
+  flex-shrink: 0 !important;
+}
+
+/* BOTÃO SALVAR */
+.btn-salvar-cliente {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  padding: 16px 20px !important;
+  background: #1C1C1E !important;
+  color: #FFFFFF !important;
+  border: none !important;
+  border-radius: 10px !important;
+  font-size: 16px !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  margin-top: 8px !important;
+}
+
+.btn-salvar-cliente:hover {
+  background: #2C2C2E !important;
+  transform: translateY(-1px) !important;
+}
+
+.btn-salvar-cliente:active {
+  transform: translateY(0) !important;
+}
+
+.btn-salvar-cliente .icon {
+  width: 16px !important;
+  height: 16px !important;
+}
+
+/* ============================================
+   RESPONSIVIDADE PREMIUM
+   ============================================ */
+
+@media (max-width: 768px) {
+  .clientes-header {
+    padding: 24px 20px 20px !important;
+  }
+  
+  .search-container {
+    padding: 0 20px 16px !important;
+  }
+  
+  .filtros-status {
+    padding: 0 20px 20px !important;
+  }
+  
+  .clientes-grid {
+    padding: 0 20px 120px !important;
+  }
+  
+  .clientes-title {
+    font-size: 28px !important;
+  }
+  
+  .cliente-card {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 12px !important;
+  }
+  
+  .cliente-stats {
+    align-items: flex-start !important;
+    flex-direction: row !important;
+    gap: 16px !important;
+  }
+}
+
+/* ============================================
+   ANIMAÇÕES SILENCIOSAS
+   ============================================ */
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

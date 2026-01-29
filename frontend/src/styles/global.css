@@ -1,6 +1,24 @@
 /* Tailwind CSS */
 @import "./tailwind.css";
 
+/* CRITICAL: Dashboard Background Override */
+body:has(.radar),
+html:has(.radar),
+#root:has(.radar) {
+  background: linear-gradient(180deg, #E8E8ED 0%, #F2F2F7 100%) !important;
+}
+
+/* Fallback for browsers without :has() support */
+.dashboard-active {
+  background: linear-gradient(180deg, #E8E8ED 0%, #F2F2F7 100%) !important;
+}
+
+.dashboard-active body,
+.dashboard-active html,
+.dashboard-active #root {
+  background: linear-gradient(180deg, #E8E8ED 0%, #F2F2F7 100%) !important;
+}
+
 /* ============================================
    CRITICAL RESET - Box Sizing
    ============================================ */
@@ -200,7 +218,7 @@ body {
   line-height: 1.4;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: var(--color-background);
+  /* REMOVED: background: #FFFFFF; - Let pages control their own backgrounds */
   color: var(--color-text-primary);
   transition: background-color var(--transition-base), color var(--transition-base);
 }

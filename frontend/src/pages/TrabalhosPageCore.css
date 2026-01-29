@@ -5,7 +5,7 @@
 
 .trabalhos-operacional {
   padding: 16px;
-  padding-bottom: 100px;
+  padding-bottom: 60px;
 }
 
 /* ============================================
@@ -117,7 +117,7 @@
 }
 
 .trabalho-ativo-card {
-  background: var(--color-surface);
+  background: #FFFFFF;
   border: 2px solid var(--color-border);
   border-radius: 20px;
   padding: 20px;
@@ -317,7 +317,7 @@
   justify-content: space-between;
   gap: 12px;
   padding: 12px 16px;
-  background: var(--color-surface-elevated);
+  background: #FFFFFF;
   border-radius: 12px;
 }
 
@@ -365,7 +365,7 @@
 }
 
 .btn-expandir:active {
-  background: var(--color-surface);
+  background: #F5F5F7;
   transform: scale(0.95);
 }
 
@@ -377,7 +377,7 @@
 /* Painel de Equipe Expandido */
 .equipe-painel {
   padding: 16px;
-  background: var(--color-surface-elevated);
+  background: #FFFFFF;
   border-radius: 12px;
 }
 
@@ -601,7 +601,7 @@
 .btn-cancelar-finalizacao {
   flex: 1;
   padding: 16px;
-  background: var(--color-surface);
+  background: #FFFFFF;
   border: 3px solid var(--color-border);
   border-radius: 12px;
   cursor: pointer;
@@ -615,7 +615,7 @@
 
 .btn-cancelar-finalizacao:active {
   transform: scale(0.98);
-  background: var(--color-surface-elevated);
+  background: #F5F5F7;
 }
 
 .btn-confirmar-finalizacao {
@@ -675,7 +675,7 @@
   align-items: center;
   gap: 14px;
   padding: 16px;
-  background: var(--color-surface);
+  background: #FFFFFF;
   border: 3px solid transparent;
   border-radius: 14px;
   cursor: pointer;
@@ -715,7 +715,7 @@
 }
 
 .funcionario-item.ausente .funcionario-avatar {
-  background: var(--color-surface-elevated);
+  background: #F5F5F7;
   color: var(--color-text-tertiary);
 }
 
@@ -757,7 +757,7 @@
   justify-content: space-between;
   gap: 12px;
   padding: 16px;
-  background: var(--color-surface);
+  background: #FFFFFF;
   border: 1px solid var(--color-border);
   border-radius: 16px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
@@ -924,7 +924,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--color-surface-elevated);
+  background: #F5F5F7;
   border-radius: 20px;
   margin-bottom: 20px;
 }
@@ -975,4 +975,10 @@
 .btn-empty-action .icon {
   width: 20px;
   height: 20px;
+}
+
+
+/* Override: Trabalhos precisa de fundo branco */
+.page-container.trabalhos-operacional {
+  background: #FFFFFF !important;
 }

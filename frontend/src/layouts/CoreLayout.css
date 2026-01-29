@@ -7,7 +7,7 @@
   width: 100%;
   max-width: 100vw;
   overflow-x: hidden;
-  background: var(--color-background);
+  background: transparent;
   transition: background-color var(--transition-base);
 }
 
@@ -16,7 +16,33 @@
   max-width: 100vw;
   min-height: 100vh;
   overflow-x: hidden;
-  padding-bottom: 6rem; /* Space for dock */
+  padding-bottom: 3.75rem; /* Space for dock - 60px */
+  background: transparent;
+}
+
+/* SPECIFIC PAGE BACKGROUNDS */
+.core-content:has([class*="radar"]) {
+  background: linear-gradient(180deg, #E8E8ED 0%, #F2F2F7 100%) !important;
+}
+
+.core-content:has([class*="trabalhos-operacional"]) {
+  background: #FFFFFF !important;
+}
+
+.core-content:has([class*="clientes-hub"]) {
+  background: #FFFFFF !important;
+}
+
+.core-content:has([class*="agendamentos-coordenacao"]) {
+  background: #FFFFFF !important;
+}
+
+.core-content:has([class*="equipe-container"]) {
+  background: #FFFFFF !important;
+}
+
+.core-content:has([class*="whatsapp-os-container"]) {
+  background: #FFFFFF !important;
 }
 
 /* Smooth rendering */

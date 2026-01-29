@@ -122,313 +122,243 @@ const AgendamentosPageCore: React.FC = () => {
     alert(`Iniciando trabalho a partir do agendamento ${id}. Transição para /trabalhos...`);
   };
 
-  const getOrigemIcon = (origem: OrigemAgendamento) => {
+  const getOrigemIndicator = (origem: OrigemAgendamento) => {
     switch (origem) {
-      case 'ia': return <Bot className="icon" />;
-      case 'manual': return <User className="icon" />;
-      case 'ajustado': return <Edit3 className="icon" />;
-      case 'reagendado': return <Clock className="icon" />;
+      case 'ia': return '◉';
+      case 'manual': return '◎';
+      case 'ajustado': return '◐';
+      case 'reagendado': return '◑';
     }
   };
 
-  const getOrigemLabel = (origem: OrigemAgendamento) => {
-    switch (origem) {
-      case 'ia': return 'IA (WhatsApp)';
-      case 'manual': return 'Manual';
-      case 'ajustado': return 'Ajustado';
-      case 'reagendado': return 'Reagendado';
-    }
-  };
+  const totalConfirmados = agendamentosHoje.filter(a => a.status === 'confirmado').length;
+  const totalPendentes = agendamentosHoje.filter(a => a.status === 'pendente').length;
+  const totalConflitos = agendamentosHoje.filter(a => a.conflitos && a.conflitos.length > 0).length;
 
   return (
     <>
-      <div className="page-container agendamentos-coordenacao">
-        {/* Header com Data Atual */}
-        <header className="coordenacao-header">
-          <div className="coordenacao-data">
-            <Calendar className="icon" />
-            <div className="data-info">
-              <h1 className="data-titulo">Hoje</h1>
-              <p className="data-completa">
-                {dataAtual.toLocaleDateString('pt-BR', {
-                  weekday: 'long',
-                  day: 'numeric',
-                  month: 'long',
-                })}
-              </p>
-            </div>
+      <div className="coordination-system">
+        {/* CONTEXTO DO DIA */}
+        <div className="temporal-context">
+          <div className="context-primary">
+            <span className="context-state">HOJE</span>
+            <span className="context-date">
+              {dataAtual.toLocaleDateString('pt-BR', {
+                day: '2-digit',
+                month: 'short',
+              }).toUpperCase()}
+            </span>
           </div>
-          <button 
-            className="btn-novo-agendamento"
-            onClick={() => alert('Criar novo agendamento')}
-          >
-            <Plus className="icon" />
-          </button>
-        </header>
-
-        {/* Resumo Rápido */}
-        <div className="resumo-rapido">
-          <div className="resumo-item">
-            <span className="resumo-numero">{agendamentosHoje.filter(a => a.status === 'confirmado').length}</span>
-            <span className="resumo-label">Confirmados</span>
+          <div className="context-metrics">
+            <span className="metric-value">{agendamentosHoje.length}</span>
+            <span className="metric-label">COMPROMISSOS</span>
           </div>
-          <div className="resumo-item">
-            <span className="resumo-numero">{agendamentosHoje.filter(a => a.status === 'pendente').length}</span>
-            <span className="resumo-label">Pendentes</span>
-          </div>
-          <div className="resumo-item">
-            <span className="resumo-numero">{agendamentosHoje.filter(a => a.origem === 'ia').length}</span>
-            <span className="resumo-label">Via IA</span>
-          </div>
-          <div className="resumo-item alerta">
-            <span className="resumo-numero">{agendamentosHoje.filter(a => a.conflitos && a.conflitos.length > 0).length}</span>
-            <span className="resumo-label">Conflitos</span>
+          <div className="context-action" onClick={() => alert('Criar novo agendamento')}>
+            <Plus size={20} />
           </div>
         </div>
 
-        {/* Conteúdo por Período */}
-        <div className="periodos-container">
+        {/* INTERRUPÇÃO DE SISTEMA - CONFLITOS */}
+        {totalConflitos > 0 && (
+          <div className="system-interrupt">
+            <div className="interrupt-signal">
+              <AlertTriangle size={18} />
+            </div>
+            <div className="interrupt-message">
+              {totalConflitos} conflito{totalConflitos > 1 ? 's' : ''} de horário detectado{totalConflitos > 1 ? 's' : ''}
+            </div>
+          </div>
+        )}
+
+        {/* VISÃO DE CAPACIDADE */}
+        <div className="capacity-overview">
+          <div className="capacity-segment confirmed">
+            <span className="segment-value">{totalConfirmados}</span>
+            <span className="segment-context">CONFIRMADOS</span>
+          </div>
+          <div className="capacity-segment pending">
+            <span className="segment-value">{totalPendentes}</span>
+            <span className="segment-context">PENDENTES</span>
+          </div>
+          <div className="capacity-segment risks">
+            <span className="segment-value">{totalConflitos}</span>
+            <span className="segment-context">RISCOS</span>
+          </div>
+        </div>
+
+        {/* LINHA TEMPORAL OPERACIONAL */}
+        <div className="temporal-flow">
           {/* MANHÃ */}
           {agendamentosPorPeriodo.manha.length > 0 && (
-            <section className="periodo-secao">
-              <div className="periodo-header">
-                <h2 className="periodo-titulo">Manhã</h2>
-                <span className="periodo-contador">{agendamentosPorPeriodo.manha.length}</span>
-              </div>
-              <div className="agendamentos-lista">
+            <div className="temporal-anchor">
+              <div className="anchor-label">MANHÃ</div>
+              <div className="temporal-stream">
                 {agendamentosPorPeriodo.manha.map((agendamento) => {
                   const temConflito = agendamento.conflitos && agendamento.conflitos.length > 0;
-
+                  
                   return (
                     <div 
                       key={agendamento.id} 
-                      className={`agendamento-card-coord ${agendamento.status} ${temConflito ? 'com-conflito' : ''}`}
+                      className={`operational-promise ${agendamento.status} ${temConflito ? 'conflict' : ''}`}
                     >
-                      {/* Header do Card */}
-                      <div className="agendamento-card-header">
-                        <div className="agendamento-horario">
-                          <Clock className="icon" />
-                          <span>{agendamento.periodoInicio}–{agendamento.periodoFim}</span>
-                        </div>
-                        <div className={`agendamento-origem ${agendamento.origem}`}>
-                          {getOrigemIcon(agendamento.origem)}
-                          <span>{getOrigemLabel(agendamento.origem)}</span>
-                        </div>
+                      {/* CONTEXTO TEMPORAL */}
+                      <div className="promise-temporal">
+                        <span className="temporal-span">{agendamento.periodoInicio}–{agendamento.periodoFim}</span>
+                        <span className="temporal-origin">{getOrigemIndicator(agendamento.origem)}</span>
                       </div>
 
-                      {/* Info Principal */}
-                      <div className="agendamento-card-body">
-                        <h3 className="agendamento-cliente">{agendamento.cliente}</h3>
-                        <div className="agendamento-detalhes">
-                          <div className="detalhe-item">
-                            <MapPin className="icon" />
-                            <span>{agendamento.local}</span>
-                          </div>
-                          <div className="detalhe-item">
-                            <Truck className="icon" />
-                            <span className={`tipo-badge ${agendamento.tipo}`}>
-                              {agendamento.tipo === 'carga' ? 'Carga' : 'Descarga'}
-                            </span>
-                          </div>
-                          <div className="detalhe-item">
-                            <Package className="icon" />
-                            <span>{agendamento.volumeEstimado}t</span>
-                          </div>
+                      {/* IDENTIDADE PRINCIPAL */}
+                      <div className="promise-identity">
+                        <div className="identity-primary">{agendamento.cliente}</div>
+                        <div className="identity-context">
+                          <span className="context-location">{agendamento.local}</span>
+                          <span className="context-operation">{agendamento.tipo === 'carga' ? 'CARGA' : 'DESCARGA'}</span>
+                          <span className="context-volume">{agendamento.volumeEstimado}t</span>
                         </div>
                       </div>
 
-                      {/* Status Visual */}
-                      <div className={`agendamento-status-visual ${agendamento.status}`}>
-                        {agendamento.status === 'confirmado' && (
-                          <>
-                            <CheckCircle2 className="icon" />
-                            <span>Confirmado</span>
-                          </>
-                        )}
-                        {agendamento.status === 'pendente' && (
-                          <>
-                            <Clock className="icon" />
-                            <span>Aguardando Confirmação</span>
-                          </>
-                        )}
-                        {agendamento.status === 'em_risco' && (
-                          <>
-                            <AlertTriangle className="icon" />
-                            <span>Em Risco</span>
-                          </>
-                        )}
+                      {/* ESTADO IMPLÍCITO */}
+                      <div className={`promise-state ${agendamento.status}`}>
+                        {agendamento.status === 'confirmado' && <CheckCircle2 size={16} />}
+                        {agendamento.status === 'pendente' && <Clock size={16} />}
+                        {agendamento.status === 'em_risco' && <AlertTriangle size={16} />}
                       </div>
 
-                      {/* Conflitos (se houver) */}
+                      {/* INTERRUPÇÃO DE CONFLITO */}
                       {temConflito && (
-                        <div className="agendamento-conflitos">
-                          <AlertTriangle className="icon" />
-                          <div className="conflitos-lista">
-                            {agendamento.conflitos!.map((conflito, idx) => (
-                              <span key={idx} className="conflito-texto">{conflito}</span>
-                            ))}
-                          </div>
+                        <div className="conflict-interrupt">
+                          <AlertTriangle size={14} />
+                          <span>CONFLITO DE HORÁRIO</span>
                         </div>
                       )}
 
-                      {/* Ações */}
-                      <div className="agendamento-acoes">
+                      {/* DECISÕES DE SISTEMA */}
+                      <div className="promise-decisions">
                         {agendamento.status === 'pendente' && (
                           <>
-                            <button 
-                              className="btn-acao confirmar"
+                            <div 
+                              className="decision confirm"
                               onClick={() => confirmarAgendamento(agendamento.id)}
                             >
-                              <CheckCircle2 className="icon" />
-                              <span>Confirmar</span>
-                            </button>
-                            <button 
-                              className="btn-acao cancelar"
+                              CONFIRMAR
+                            </div>
+                            <div 
+                              className="decision reject"
                               onClick={() => cancelarAgendamento(agendamento.id)}
                             >
-                              <X className="icon" />
-                              <span>Cancelar</span>
-                            </button>
+                              CANCELAR
+                            </div>
                           </>
                         )}
                         {agendamento.status === 'confirmado' && (
-                          <button 
-                            className="btn-acao iniciar"
+                          <div 
+                            className="decision execute"
                             onClick={() => iniciarTrabalho(agendamento.id)}
                           >
-                            <Play className="icon" />
-                            <span>Iniciar Trabalho</span>
-                          </button>
+                            INICIAR EXECUÇÃO
+                          </div>
                         )}
                       </div>
                     </div>
                   );
                 })}
               </div>
-            </section>
+            </div>
           )}
 
           {/* TARDE */}
           {agendamentosPorPeriodo.tarde.length > 0 && (
-            <section className="periodo-secao">
-              <div className="periodo-header">
-                <h2 className="periodo-titulo">Tarde</h2>
-                <span className="periodo-contador">{agendamentosPorPeriodo.tarde.length}</span>
-              </div>
-              <div className="agendamentos-lista">
+            <div className="temporal-anchor">
+              <div className="anchor-label">TARDE</div>
+              <div className="temporal-stream">
                 {agendamentosPorPeriodo.tarde.map((agendamento) => {
                   const temConflito = agendamento.conflitos && agendamento.conflitos.length > 0;
-
+                  
                   return (
                     <div 
                       key={agendamento.id} 
-                      className={`agendamento-card-coord ${agendamento.status} ${temConflito ? 'com-conflito' : ''}`}
+                      className={`operational-promise ${agendamento.status} ${temConflito ? 'conflict' : ''}`}
                     >
-                      <div className="agendamento-card-header">
-                        <div className="agendamento-horario">
-                          <Clock className="icon" />
-                          <span>{agendamento.periodoInicio}–{agendamento.periodoFim}</span>
-                        </div>
-                        <div className={`agendamento-origem ${agendamento.origem}`}>
-                          {getOrigemIcon(agendamento.origem)}
-                          <span>{getOrigemLabel(agendamento.origem)}</span>
+                      <div className="promise-temporal">
+                        <span className="temporal-span">{agendamento.periodoInicio}–{agendamento.periodoFim}</span>
+                        <span className="temporal-origin">{getOrigemIndicator(agendamento.origem)}</span>
+                      </div>
+
+                      <div className="promise-identity">
+                        <div className="identity-primary">{agendamento.cliente}</div>
+                        <div className="identity-context">
+                          <span className="context-location">{agendamento.local}</span>
+                          <span className="context-operation">{agendamento.tipo === 'carga' ? 'CARGA' : 'DESCARGA'}</span>
+                          <span className="context-volume">{agendamento.volumeEstimado}t</span>
                         </div>
                       </div>
 
-                      <div className="agendamento-card-body">
-                        <h3 className="agendamento-cliente">{agendamento.cliente}</h3>
-                        <div className="agendamento-detalhes">
-                          <div className="detalhe-item">
-                            <MapPin className="icon" />
-                            <span>{agendamento.local}</span>
-                          </div>
-                          <div className="detalhe-item">
-                            <Truck className="icon" />
-                            <span className={`tipo-badge ${agendamento.tipo}`}>
-                              {agendamento.tipo === 'carga' ? 'Carga' : 'Descarga'}
-                            </span>
-                          </div>
-                          <div className="detalhe-item">
-                            <Package className="icon" />
-                            <span>{agendamento.volumeEstimado}t</span>
-                          </div>
-                        </div>
+                      <div className={`promise-state ${agendamento.status}`}>
+                        {agendamento.status === 'confirmado' && <CheckCircle2 size={16} />}
+                        {agendamento.status === 'pendente' && <Clock size={16} />}
+                        {agendamento.status === 'em_risco' && <AlertTriangle size={16} />}
                       </div>
 
-                      <div className={`agendamento-status-visual ${agendamento.status}`}>
-                        {agendamento.status === 'confirmado' && (
-                          <>
-                            <CheckCircle2 className="icon" />
-                            <span>Confirmado</span>
-                          </>
-                        )}
+                      {temConflito && (
+                        <div className="conflict-interrupt">
+                          <AlertTriangle size={14} />
+                          <span>CONFLITO DE HORÁRIO</span>
+                        </div>
+                      )}
+
+                      <div className="promise-decisions">
                         {agendamento.status === 'pendente' && (
                           <>
-                            <Clock className="icon" />
-                            <span>Aguardando Confirmação</span>
-                          </>
-                        )}
-                      </div>
-
-                      <div className="agendamento-acoes">
-                        {agendamento.status === 'pendente' && (
-                          <>
-                            <button 
-                              className="btn-acao confirmar"
+                            <div 
+                              className="decision confirm"
                               onClick={() => confirmarAgendamento(agendamento.id)}
                             >
-                              <CheckCircle2 className="icon" />
-                              <span>Confirmar</span>
-                            </button>
-                            <button 
-                              className="btn-acao cancelar"
+                              CONFIRMAR
+                            </div>
+                            <div 
+                              className="decision reject"
                               onClick={() => cancelarAgendamento(agendamento.id)}
                             >
-                              <X className="icon" />
-                              <span>Cancelar</span>
-                            </button>
+                              CANCELAR
+                            </div>
                           </>
                         )}
                         {agendamento.status === 'confirmado' && (
-                          <button 
-                            className="btn-acao iniciar"
+                          <div 
+                            className="decision execute"
                             onClick={() => iniciarTrabalho(agendamento.id)}
                           >
-                            <Play className="icon" />
-                            <span>Iniciar Trabalho</span>
-                          </button>
+                            INICIAR EXECUÇÃO
+                          </div>
                         )}
                       </div>
                     </div>
                   );
                 })}
               </div>
-            </section>
+            </div>
           )}
 
           {/* NOITE */}
           {agendamentosPorPeriodo.noite.length > 0 && (
-            <section className="periodo-secao">
-              <div className="periodo-header">
-                <h2 className="periodo-titulo">Noite</h2>
-                <span className="periodo-contador">{agendamentosPorPeriodo.noite.length}</span>
-              </div>
-              <div className="agendamentos-lista">
+            <div className="temporal-anchor">
+              <div className="anchor-label">NOITE</div>
+              <div className="temporal-stream">
                 {agendamentosPorPeriodo.noite.map((agendamento) => (
-                  <div key={agendamento.id} className={`agendamento-card-coord ${agendamento.status}`}>
-                    {/* Mesmo layout dos anteriores */}
+                  <div key={agendamento.id} className={`operational-promise ${agendamento.status}`}>
+                    {/* Mesmo layout */}
                   </div>
                 ))}
               </div>
-            </section>
+            </div>
           )}
 
-          {/* Empty State */}
+          {/* ESTADO VAZIO */}
           {agendamentosHoje.length === 0 && (
-            <div className="empty-state-coord">
-              <Calendar className="icon" />
-              <h3 className="empty-titulo">Nenhum agendamento hoje</h3>
-              <p className="empty-descricao">Sua agenda está livre</p>
+            <div className="temporal-void">
+              <Calendar size={32} />
+              <span className="void-message">NENHUMA PROMESSA REGISTRADA</span>
+              <span className="void-context">Agenda livre para coordenação</span>
             </div>
           )}
         </div>

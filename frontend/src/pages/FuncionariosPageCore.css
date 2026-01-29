@@ -43,6 +43,13 @@
   .funcionario-detalhe-container,
   .ponto-virtual-container {
     padding: 12px;
-    padding-bottom: 100px;
+    padding-bottom: 60px;
   }
+}
+
+/* Override: Funcionários precisa de fundo branco */
+.page-container.equipe-container,
+.page-container.funcionario-detalhe-container,
+.page-container.ponto-virtual-container {
+  background: #FFFFFF !important;
 }
