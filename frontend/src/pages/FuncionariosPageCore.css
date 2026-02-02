@@ -1,26 +1,20 @@
 /* ============================================
-   EQUIPE - CENTRO OPERACIONAL DE PÁTIO
-   Sistema premium Apple-like para uso real
+   FUNCIONÁRIOS LUXURY REDESIGN
+   Sistema Premium de Gestão Humana
    ============================================ */
 
-.equipe-container,
+.funcionarios-container,
 .funcionario-detalhe-container,
 .ponto-virtual-container {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background: #FFFFFF;
+  min-height: 100vh;
 }
 
-/* Animações suaves */
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
+/* ============================================
+   ANIMAÇÕES
+   ============================================ */
 
 @keyframes fadeIn {
   from {
@@ -42,34 +36,340 @@
   }
 }
 
-/* Hover states para cards */
-.equipe-container > div > div:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1) !important;
-}
-
-.equipe-container > div > div:active {
-  transform: translateY(0);
-}
-
-/* Botões de ponto - feedback tátil */
-.btn-ponto:active {
-  transform: scale(0.98);
-}
-
-/* Responsividade */
-@media (max-width: 380px) {
-  .equipe-container,
-  .funcionario-detalhe-container,
-  .ponto-virtual-container {
-    padding: 12px;
-    padding-bottom: 60px;
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
   }
 }
 
-/* Override: Funcionários precisa de fundo branco */
-.page-container.equipe-container,
-.page-container.funcionario-detalhe-container,
-.page-container.ponto-virtual-container {
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.05);
+  }
+}
+
+@keyframes pulse-status {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
+  }
+}
+
+@keyframes successPulse {
+  0% {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes highlightFade {
+  0% {
+    background: #ECFDF5;
+    border-color: #10B981;
+  }
+  100% {
+    background: #FFFFFF;
+    border-color: #F0F0F0;
+  }
+}
+
+@keyframes shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-4px);
+  }
+  75% {
+    transform: translateX(4px);
+  }
+}
+
+/* ============================================
+   CARDS DE FUNCIONÁRIO LUXURY
+   ============================================ */
+
+.employee-card-luxury {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  will-change: transform, box-shadow;
+}
+
+.employee-card-luxury:hover {
+  transform: translateY(-4px) scale(1.01);
+  box-shadow: 
+    0 16px 48px rgba(0, 0, 0, 0.12), 
+    0 8px 16px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9) !important;
+}
+
+.employee-card-luxury:active {
+  transform: translateY(-2px) scale(1.005);
+  transition: all 0.1s ease;
+}
+
+.employee-card {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+}
+
+.employee-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06), 0 2px 4px rgba(0, 0, 0, 0.03) !important;
+}
+
+.employee-card:active {
+  transform: translateY(0);
+}
+
+.employee-card.updating {
+  animation: pulse 1s ease-in-out;
+}
+
+.employee-card.highlight {
+  animation: highlightFade 2s ease-out;
+}
+
+/* ============================================
+   STATUS INDICATORS
+   ============================================ */
+
+.status-indicator {
+  transition: all 0.3s ease-in-out;
+}
+
+.status-indicator.updating {
+  animation: pulse 1s ease-in-out;
+}
+
+/* ============================================
+   SKELETON LOADING
+   ============================================ */
+
+.skeleton-card {
+  background: linear-gradient(
+    90deg,
+    #F8FAFC 0%,
+    #F1F5F9 50%,
+    #F8FAFC 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: 16px;
+  height: 120px;
+  margin-bottom: 12px;
+}
+
+/* ============================================
+   BOTÕES
+   ============================================ */
+
+.btn-primary {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(0, 122, 255, 0.4) !important;
+}
+
+.btn-primary:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.btn-secondary {
+  transition: all 0.2s ease;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: #F0F0F0 !important;
+}
+
+.btn-secondary:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.btn-danger {
+  transition: all 0.2s ease;
+}
+
+.btn-danger:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(255, 59, 48, 0.4) !important;
+}
+
+.btn-danger:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+/* ============================================
+   MODAIS
+   ============================================ */
+
+.modal-overlay {
+  animation: fadeIn 0.2s ease;
+}
+
+.modal-content {
+  animation: slideUp 0.3s ease;
+}
+
+.modal-content.critical {
+  animation: shake 0.5s ease-in-out;
+}
+
+/* ============================================
+   INPUTS
+   ============================================ */
+
+input:focus,
+textarea:focus,
+select:focus {
+  border-color: #007AFF !important;
+  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1) !important;
+}
+
+input.error {
+  border-color: #FF3B30 !important;
+  background: #FFF5F5 !important;
+}
+
+input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ============================================
+   BADGES
+   ============================================ */
+
+.permission-badge {
+  transition: all 0.2s ease;
+}
+
+.permission-badge:hover {
+  transform: scale(1.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* ============================================
+   PULL TO REFRESH
+   ============================================ */
+
+.refresh-indicator {
+  transition: transform 0.2s ease-out;
+}
+
+.refresh-indicator.pulling {
+  transform: rotate(180deg);
+}
+
+.refresh-indicator.refreshing {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ============================================
+   RESPONSIVIDADE
+   ============================================ */
+
+@media (max-width: 768px) {
+  .funcionarios-container,
+  .funcionario-detalhe-container,
+  .ponto-virtual-container {
+    padding: 16px;
+    padding-bottom: 100px;
+  }
+}
+
+@media (max-width: 380px) {
+  .funcionarios-container,
+  .funcionario-detalhe-container,
+  .ponto-virtual-container {
+    padding: 12px;
+    padding-bottom: 100px;
+  }
+}
+
+/* ============================================
+   ACESSIBILIDADE
+   ============================================ */
+
+*:focus-visible {
+  outline: 2px solid #007AFF;
+  outline-offset: 2px;
+}
+
+button:focus-visible {
+  outline: 2px solid #007AFF;
+  outline-offset: 2px;
+}
+
+/* ============================================
+   DARK MODE OVERRIDE (Forçar Light)
+   ============================================ */
+
+.funcionarios-container,
+.funcionario-detalhe-container,
+.ponto-virtual-container {
   background: #FFFFFF !important;
+  color: #000000 !important;
+}
+
+/* ============================================
+   PRINT STYLES
+   ============================================ */
+
+@media print {
+  .funcionarios-container {
+    background: white !important;
+  }
+  
+  .btn-primary,
+  .btn-secondary,
+  .btn-danger {
+    display: none !important;
+  }
+  
+  .modal-overlay {
+    display: none !important;
+  }
 }

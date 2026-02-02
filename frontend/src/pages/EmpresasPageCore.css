@@ -1,0 +1,543 @@
+/* ============================================
+   EMPRESAS PAGE CORE - GOVERNANCE PANEL
+   Straxis SaaS Platform | Alpha 18.0.0
+   Design: Premium Administrative Interface
+   ============================================ */
+
+.empresas-governance-container {
+  min-height: 100vh;
+  background: #FAFAFA;
+  padding: 0 0 80px 0;
+}
+
+/* ============================================
+   TOPO EDITORIAL
+   ============================================ */
+
+.empresas-header {
+  background: #FFFFFF;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  padding: 32px 40px;
+  position: relative;
+}
+
+.empresas-header-content {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.empresas-title-group {
+  flex: 1;
+}
+
+.empresas-title {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+  font-size: 32px;
+  font-weight: 600;
+  color: #000000;
+  letter-spacing: -0.5px;
+  margin: 0 0 4px 0;
+  line-height: 1.2;
+}
+
+.empresas-subtitle {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
+  font-size: 15px;
+  font-weight: 400;
+  color: #666666;
+  margin: 0;
+  letter-spacing: 0;
+}
+
+.empresas-admin-badge {
+  position: absolute;
+  top: 32px;
+  right: 200px;
+  background: rgba(0, 0, 0, 0.04);
+  color: #666666;
+  padding: 5px 12px;
+  border-radius: 6px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  transition: all 0.2s ease;
+}
+
+.empresas-admin-badge:hover {
+  background: rgba(0, 0, 0, 0.06);
+  border-color: rgba(0, 0, 0, 0.12);
+}
+
+.empresas-btn-create {
+  background: #000000;
+  color: #FFFFFF;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 10px;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.empresas-btn-create:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.empresas-btn-create:active {
+  transform: translateY(0);
+}
+
+/* ============================================
+   CONTEÚDO PRINCIPAL
+   ============================================ */
+
+.empresas-content {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 32px 40px;
+}
+
+/* ============================================
+   ALERTA DE GOVERNANÇA
+   ============================================ */
+
+.governance-alert {
+  background: linear-gradient(135deg, #FFF5E6 0%, #FFE8CC 100%);
+  border: 1px solid rgba(255, 152, 0, 0.2);
+  border-radius: 16px;
+  padding: 24px 28px;
+  margin-bottom: 32px;
+  box-shadow: 
+    0 2px 8px rgba(255, 152, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.governance-alert-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.governance-alert-icon {
+  color: #FF9800;
+  flex-shrink: 0;
+}
+
+.governance-alert-title {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
+  font-size: 17px;
+  font-weight: 600;
+  color: #000000;
+  margin: 0;
+}
+
+.governance-alert-description {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  color: #333333;
+  line-height: 1.6;
+  margin: 0 0 16px 0;
+  max-width: 600px;
+}
+
+.governance-alert-count {
+  font-weight: 700;
+  color: #FF9800;
+}
+
+.governance-alert-action {
+  background: #FF9800;
+  color: #FFFFFF;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  float: right;
+}
+
+.governance-alert-action:hover {
+  background: #F57C00;
+  transform: translateY(-1px);
+}
+
+/* ============================================
+   SEÇÃO DE USUÁRIOS ÓRFÃOS
+   ============================================ */
+
+.orphan-users-section {
+  margin-bottom: 48px;
+}
+
+.section-title {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+  font-size: 20px;
+  font-weight: 600;
+  color: #000000;
+  margin: 0 0 20px 0;
+  letter-spacing: -0.3px;
+}
+
+.orphan-users-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ============================================
+   CARD DE USUÁRIO ÓRFÃO
+   ============================================ */
+
+.orphan-user-card {
+  background: #FFFFFF;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 14px;
+  padding: 20px 24px;
+  position: relative;
+  box-shadow: 
+    0 1px 3px rgba(0, 0, 0, 0.04),
+    0 4px 12px rgba(0, 0, 0, 0.02);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.orphan-user-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+.orphan-user-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.orphan-user-info {
+  flex: 1;
+}
+
+.orphan-user-name {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  color: #000000;
+  margin: 0 0 4px 0;
+}
+
+.orphan-user-email {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  color: #666666;
+  margin: 0;
+}
+
+.orphan-user-role-badge {
+  background: #F5F5F5;
+  color: #666666;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.orphan-user-status {
+  display: inline-block;
+  background: rgba(255, 152, 0, 0.1);
+  color: #FF9800;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 16px;
+}
+
+.orphan-user-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.orphan-user-btn-assign {
+  background: #007AFF;
+  color: #FFFFFF;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.orphan-user-btn-assign:hover {
+  background: #0051D5;
+  transform: translateY(-1px);
+}
+
+/* ============================================
+   GRID DE EMPRESAS
+   ============================================ */
+
+.companies-section {
+  margin-top: 48px;
+}
+
+.companies-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 24px;
+  margin-top: 24px;
+}
+
+/* ============================================
+   CARD DE EMPRESA
+   ============================================ */
+
+.company-card {
+  background: #FFFFFF;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.04),
+    0 8px 24px rgba(0, 0, 0, 0.03);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+}
+
+.company-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+}
+
+.company-card-name {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+  font-size: 18px;
+  font-weight: 600;
+  color: #000000;
+  margin: 0 0 16px 0;
+  letter-spacing: -0.3px;
+}
+
+.company-card-users {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #666666;
+  margin-bottom: 8px;
+}
+
+.company-card-status {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.company-card-status.active {
+  background: rgba(52, 199, 89, 0.1);
+  color: #34C759;
+  border: 1px solid rgba(52, 199, 89, 0.2);
+}
+
+.company-card-status.suspended {
+  background: rgba(255, 59, 48, 0.1);
+  color: #FF3B30;
+  border: 1px solid rgba(255, 59, 48, 0.2);
+}
+
+.company-card-date {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 400;
+  color: #999999;
+  margin-bottom: 20px;
+}
+
+.company-card-btn {
+  width: 100%;
+  background: #F5F5F5;
+  color: #000000;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.company-card-btn:hover {
+  background: #E8E8E8;
+  transform: translateY(-1px);
+}
+
+.company-card-btn.reactivate {
+  background: #34C759;
+  color: #FFFFFF;
+}
+
+.company-card-btn.reactivate:hover {
+  background: #28A745;
+}
+
+/* ============================================
+   ESTADO VAZIO
+   ============================================ */
+
+.empresas-empty-state {
+  text-align: center;
+  padding: 80px 40px;
+}
+
+.empresas-empty-icon {
+  color: #CCCCCC;
+  margin-bottom: 24px;
+}
+
+.empresas-empty-title {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+  font-size: 20px;
+  font-weight: 600;
+  color: #000000;
+  margin: 0 0 12px 0;
+}
+
+.empresas-empty-description {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
+  font-size: 15px;
+  font-weight: 400;
+  color: #666666;
+  line-height: 1.6;
+  max-width: 400px;
+  margin: 0 auto 32px auto;
+}
+
+.empresas-empty-btn {
+  background: #007AFF;
+  color: #FFFFFF;
+  border: none;
+  padding: 12px 28px;
+  border-radius: 10px;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.empresas-empty-btn:hover {
+  background: #0051D5;
+  transform: translateY(-1px);
+}
+
+/* ============================================
+   LOADING STATE
+   ============================================ */
+
+.empresas-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+}
+
+.empresas-spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+
+@media (max-width: 1024px) {
+  .empresas-header {
+    padding: 24px 24px;
+  }
+
+  .empresas-content {
+    padding: 24px 24px;
+  }
+
+  .empresas-admin-badge {
+    position: static;
+    margin-bottom: 16px;
+  }
+
+  .empresas-header-content {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .companies-grid {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+  }
+}
+
+@media (max-width: 768px) {
+  .empresas-title {
+    font-size: 28px;
+  }
+
+  .empresas-subtitle {
+    font-size: 14px;
+  }
+
+  .companies-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .governance-alert {
+    padding: 20px;
+  }
+
+  .governance-alert-action {
+    float: none;
+    width: 100%;
+    margin-top: 12px;
+  }
+}

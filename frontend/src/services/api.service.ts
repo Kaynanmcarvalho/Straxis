@@ -30,6 +30,23 @@ class ApiService {
     this.api.interceptors.response.use(
       (response) => response,
       (error) => {
+        // Suprimir COMPLETAMENTE erro 404 da API de decisões (ainda não implementada)
+        if (error.response?.status === 404 && error.config?.url?.includes('/decisoes')) {
+          // Retornar promise resolvida com estrutura correta
+          return Promise.resolve({
+            data: { 
+              success: true,
+              data: { 
+                data: [] 
+              }
+            },
+            status: 200,
+            statusText: 'OK',
+            headers: {},
+            config: error.config
+          });
+        }
+
         if (error.response?.status === 401) {
           // Token expirado ou inválido
           localStorage.removeItem('authToken');

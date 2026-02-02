@@ -20,6 +20,8 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { Dock } from '../components/core/Dock';
+import { AutocompleteCliente } from '../components/common/AutocompleteCliente';
+import { trabalhoService } from '../services/trabalho.service';
 import './TrabalhosPageCore.css';
 
 interface Funcionario {
@@ -47,29 +49,31 @@ interface HistoricoAlteracao {
   timestamp: Date;
 }
 
-interface Trabalho {
+interface Pausa {
+  inicio: Date;
+  fim?: Date;
+  motivo: string;
+}
+
+// Interface local para trabalhos operacionais (diferente do Firebase)
+interface TrabalhoLocal {
   id: string;
   tipo: 'carga' | 'descarga';
   cliente: string;
   local: string;
   toneladas: number;
   toneladasParciais: number;
+  status: 'planejado' | 'em_execucao' | 'pausado' | 'finalizado' | 'cancelado';
   funcionarios: Funcionario[];
   registrosPresenca: RegistroPresenca[];
   historico: HistoricoAlteracao[];
-  status: 'planejado' | 'em_execucao' | 'pausado' | 'finalizado' | 'cancelado';
-  observacoes?: string;
+  pausas?: Pausa[];
   dataInicio?: Date;
   dataFim?: Date;
-  pausas?: Array<{
-    inicio: Date;
-    fim?: Date;
-    motivo: string;
-  }>;
 }
 
 const TrabalhosPageCore: React.FC = () => {
-  const [trabalhos, setTrabalhos] = useState<Trabalho[]>([]);
+  const [trabalhos, setTrabalhos] = useState<TrabalhoLocal[]>([]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [trabalhoParaFinalizar, setTrabalhoParaFinalizar] = useState<string | null>(null);
   const [feedbackSalvo, setFeedbackSalvo] = useState<{ [key: string]: boolean }>({});
@@ -99,72 +103,43 @@ const TrabalhosPageCore: React.FC = () => {
     observacao: '',
   });
 
-  // Mock de funcionários disponíveis
-  const [funcionariosDisponiveis] = useState<Funcionario[]>([
-    { id: 'f1', nome: 'João Silva', presente: false },
-    { id: 'f2', nome: 'Pedro Santos', presente: false },
-    { id: 'f3', nome: 'Carlos Lima', presente: false },
-    { id: 'f4', nome: 'Ana Costa', presente: false },
-    { id: 'f5', nome: 'Maria Souza', presente: false },
-    { id: 'f6', nome: 'Roberto Alves', presente: false },
-    { id: 'f7', nome: 'Lucas Martins', presente: false },
-    { id: 'f8', nome: 'Fernando Dias', presente: false },
-  ]);
+  // Funcionários disponíveis - carregar do Firebase
+  const [funcionariosDisponiveis] = useState<Funcionario[]>([]);
+  const [loading, setLoading] = useState(true);
   
-  // Mock data para demonstração
+  // Carregar trabalhos do Firebase
   useEffect(() => {
-    setTrabalhos([
-      {
-        id: '1',
-        tipo: 'descarga',
-        cliente: 'Armazém Central',
-        local: 'Galpão 3 - Setor B',
-        toneladas: 45,
-        toneladasParciais: 28.5,
-        status: 'em_execucao',
-        funcionarios: [
-          { id: 'f1', nome: 'João Silva', presente: true },
-          { id: 'f2', nome: 'Pedro Santos', presente: true },
-          { id: 'f3', nome: 'Carlos Lima', presente: false },
-        ],
-        registrosPresenca: [],
-        historico: [],
-        dataInicio: new Date(),
-      },
-      {
-        id: '2',
-        tipo: 'carga',
-        cliente: 'Distribuidora Norte',
-        local: 'Pátio A',
-        toneladas: 30,
-        toneladasParciais: 30,
-        status: 'em_execucao',
-        funcionarios: [
-          { id: 'f4', nome: 'Ana Costa', presente: true },
-          { id: 'f5', nome: 'Maria Souza', presente: true },
-        ],
-        registrosPresenca: [],
-        historico: [],
-        dataInicio: new Date(),
-      },
-      {
-        id: '3',
-        tipo: 'descarga',
-        cliente: 'Logística Sul',
-        local: 'Terminal 5',
-        toneladas: 60,
-        toneladasParciais: 0,
-        status: 'planejado',
-        funcionarios: [
-          { id: 'f6', nome: 'Roberto Alves', presente: false },
-          { id: 'f7', nome: 'Lucas Martins', presente: false },
-          { id: 'f8', nome: 'Fernando Dias', presente: false },
-        ],
-        registrosPresenca: [],
-        historico: [],
-      },
-    ]);
+    loadTrabalhos();
   }, []);
+
+  const loadTrabalhos = async () => {
+    try {
+      setLoading(true);
+      const data = await trabalhoService.list();
+      
+      // Converter trabalhos do Firebase para formato local
+      const trabalhosLocais: TrabalhoLocal[] = data.map(t => ({
+        id: t.id,
+        tipo: t.tipo,
+        cliente: '', // TODO: adicionar campo cliente no backend
+        local: '', // TODO: adicionar campo local no backend
+        toneladas: t.tonelagem,
+        toneladasParciais: 0, // TODO: adicionar campo no backend
+        status: 'planejado', // TODO: adicionar campo status no backend
+        funcionarios: [], // TODO: mapear de t.funcionarios
+        registrosPresenca: [],
+        historico: [],
+        pausas: [],
+      }));
+      
+      setTrabalhos(trabalhosLocais);
+    } catch (error) {
+      console.error('Erro ao carregar trabalhos:', error);
+      alert('Erro ao carregar trabalhos');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Função para adicionar entrada no histórico
   const adicionarHistorico = (
@@ -662,13 +637,13 @@ const TrabalhosPageCore: React.FC = () => {
     setTrabalhoParaFinalizar(null);
   };
 
-  const funcionariosPresentes = (trabalho: Trabalho) => 
+  const funcionariosPresentes = (trabalho: TrabalhoLocal) => 
     trabalho.funcionarios.filter(f => f.presente).length;
   
-  const funcionariosFaltaram = (trabalho: Trabalho) => 
+  const funcionariosFaltaram = (trabalho: TrabalhoLocal) => 
     trabalho.funcionarios.filter(f => !f.presente).length;
 
-  const criarNovoTrabalho = () => {
+  const criarNovoTrabalho = async () => {
     if (!novoTrabalho.cliente || !novoTrabalho.local || !novoTrabalho.toneladas) {
       alert('⚠️ Preencha todos os campos obrigatórios');
       return;
@@ -685,27 +660,50 @@ const TrabalhosPageCore: React.FC = () => {
       return;
     }
 
-    const novo: Trabalho = {
-      id: Date.now().toString(),
-      tipo: novoTrabalho.tipo,
-      cliente: novoTrabalho.cliente,
-      local: novoTrabalho.local,
-      toneladas: toneladas,
-      toneladasParciais: 0,
-      status: 'planejado',
-      funcionarios: [],
-      registrosPresenca: [],
-      historico: [],
-    };
+    try {
+      // Criar trabalho no Firebase
+      const trabalhoData = {
+        tipo: novoTrabalho.tipo,
+        tonelagem: toneladas,
+        valorRecebidoCentavos: 0, // TODO: adicionar campo no form
+        funcionarios: [],
+        totalPagoCentavos: 0,
+        lucroCentavos: 0,
+        observacoes: `Cliente: ${novoTrabalho.cliente} | Local: ${novoTrabalho.local}`,
+      };
 
-    setTrabalhos(prev => [...prev, novo]);
-    setMostrarNovoTrabalho(false);
-    setNovoTrabalho({
-      cliente: '',
-      tipo: 'descarga',
-      local: '',
-      toneladas: '',
-    });
+      const novoTrabalhoCriado = await trabalhoService.create(trabalhoData);
+      
+      // Converter para formato local
+      const trabalhoLocal: TrabalhoLocal = {
+        id: novoTrabalhoCriado.id,
+        tipo: novoTrabalhoCriado.tipo,
+        cliente: novoTrabalho.cliente,
+        local: novoTrabalho.local,
+        toneladas: novoTrabalhoCriado.tonelagem,
+        toneladasParciais: 0,
+        status: 'planejado',
+        funcionarios: [],
+        registrosPresenca: [],
+        historico: [],
+        pausas: [],
+      };
+      
+      // Atualizar estado local
+      setTrabalhos(prev => [...prev, trabalhoLocal]);
+      setMostrarNovoTrabalho(false);
+      setNovoTrabalho({
+        cliente: '',
+        tipo: 'descarga',
+        local: '',
+        toneladas: '',
+      });
+      
+      alert('✅ Trabalho criado com sucesso!');
+    } catch (error) {
+      console.error('Erro ao criar trabalho:', error);
+      alert('❌ Erro ao criar trabalho. Tente novamente.');
+    }
   };
 
   const cancelarNovoTrabalho = () => {
@@ -737,6 +735,14 @@ const TrabalhosPageCore: React.FC = () => {
             <Plus className="icon" />
           </button>
         </header>
+
+        {/* Loading State */}
+        {loading && (
+          <div className="loading-state">
+            <div className="loading-spinner"></div>
+            <p>Carregando operações...</p>
+          </div>
+        )}
 
         {/* Modal Seletor de Equipe */}
         {mostrarSeletorEquipe && (
@@ -990,17 +996,23 @@ const TrabalhosPageCore: React.FC = () => {
             <div className="modal-novo-trabalho" onClick={(e) => e.stopPropagation()}>
               <div className="modal-header">
                 <h3 className="modal-titulo">Nova Operação</h3>
+                <button 
+                  className="modal-close-btn"
+                  onClick={cancelarNovoTrabalho}
+                  aria-label="Fechar"
+                >
+                  ×
+                </button>
               </div>
               
               <div className="modal-body">
                 <div className="form-group">
                   <label className="form-label">Cliente *</label>
-                  <input
-                    type="text"
-                    className="form-input"
-                    placeholder="Nome do cliente"
+                  <AutocompleteCliente
                     value={novoTrabalho.cliente}
-                    onChange={(e) => setNovoTrabalho(prev => ({ ...prev, cliente: e.target.value }))}
+                    onChange={(value) => setNovoTrabalho(prev => ({ ...prev, cliente: value }))}
+                    placeholder="Nome do cliente"
+                    className="form-input"
                     autoFocus
                   />
                 </div>
@@ -1388,7 +1400,7 @@ const TrabalhosPageCore: React.FC = () => {
         )}
 
         {/* Empty State */}
-        {trabalhos.length === 0 && (
+        {!loading && trabalhos.length === 0 && (
           <div className="empty-state-operacional">
             <div className="empty-icon">
               <Package className="icon" />

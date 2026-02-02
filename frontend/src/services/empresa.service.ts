@@ -66,4 +66,33 @@ export class EmpresaService {
   static async deactivate(id: string): Promise<void> {
     await apiService.patch<ApiResponse<void>>(`/empresas/${id}/deactivate`);
   }
+
+  /**
+   * Lista usuários sem empresa vinculada
+   */
+  static async listarUsuariosSemEmpresa(): Promise<any[]> {
+    try {
+      const response = await apiService.get<ApiResponse<any[]>>('/usuarios/unassigned/list');
+      return response.data || [];
+    } catch (error) {
+      console.error('Erro ao listar usuários órfãos:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Reativa empresa suspensa
+   */
+  static async reativar(id: string): Promise<void> {
+    await apiService.patch<ApiResponse<void>>(`/empresas/${id}/activate`);
+  }
+
+  /**
+   * Lista todas as empresas (alias para list)
+   */
+  static async listar(): Promise<Company[]> {
+    return this.list();
+  }
 }
+
+export const empresaService = EmpresaService;

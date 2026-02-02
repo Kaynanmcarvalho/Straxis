@@ -55,68 +55,11 @@ const AgendaPage: React.FC = () => {
   const [formLocal, setFormLocal] = useState('');
   const [formTonelagem, setFormTonelagem] = useState('');
 
-  // Mock data para demonstração
+  // Carregar agendamentos reais do Firebase
   useEffect(() => {
-    const hoje = new Date();
-    setAgendamentos([
-      {
-        id: '1',
-        cliente: 'Armazém Central',
-        local: 'Galpão 3 - Setor B',
-        data: hoje,
-        periodoInicio: '08:00',
-        periodoFim: '11:00',
-        periodo: 'manha',
-        tipo: 'descarga',
-        volumeEstimado: 45,
-        origem: 'ia',
-        status: 'pendente',
-        criadoEm: new Date(hoje.getTime() - 3600000),
-      },
-      {
-        id: '2',
-        cliente: 'Distribuidora Norte',
-        local: 'Pátio A - Zona Industrial',
-        data: hoje,
-        periodoInicio: '09:00',
-        periodoFim: '12:00',
-        periodo: 'manha',
-        tipo: 'carga',
-        volumeEstimado: 30,
-        origem: 'ia',
-        status: 'pendente',
-        conflitos: [{ id: '1', cliente: 'Armazém Central' }],
-        criadoEm: new Date(hoje.getTime() - 1800000),
-      },
-      {
-        id: '3',
-        cliente: 'Logística Sul',
-        local: 'Terminal 5',
-        data: hoje,
-        periodoInicio: '14:00',
-        periodoFim: '17:00',
-        periodo: 'tarde',
-        tipo: 'descarga',
-        volumeEstimado: 60,
-        origem: 'manual',
-        status: 'confirmado',
-        criadoEm: new Date(hoje.getTime() - 7200000),
-      },
-      {
-        id: '4',
-        cliente: 'Transportes Rápidos',
-        local: 'Doca 2',
-        data: hoje,
-        periodoInicio: '15:30',
-        periodoFim: '18:00',
-        periodo: 'tarde',
-        tipo: 'carga',
-        volumeEstimado: 25,
-        origem: 'manual',
-        status: 'em_execucao',
-        criadoEm: new Date(hoje.getTime() - 9000000),
-      },
-    ]);
+    // TODO: Implementar carregamento de agendamentos do Firebase
+    // Por enquanto, inicializa vazio
+    setAgendamentos([]);
   }, []);
 
   // Filtrar e ordenar agendamentos

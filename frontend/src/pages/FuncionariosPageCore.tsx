@@ -60,6 +60,7 @@ const FuncionariosPageCore: React.FC = () => {
   const [mostrarModalGestao, setMostrarModalGestao] = useState(false);
   const [funcionarioEdicao, setFuncionarioEdicao] = useState<Funcionario | null>(null);
   const [loading, setLoading] = useState(false);
+  const [loadingInicial, setLoadingInicial] = useState(true);
   const [localizacaoAtual, setLocalizacaoAtual] = useState<Localizacao | null>(null);
   const [erroLocalizacao, setErroLocalizacao] = useState<string | null>(null);
 
@@ -126,8 +127,10 @@ const FuncionariosPageCore: React.FC = () => {
 
   // Carregar funcionários do Firebase
   useEffect(() => {
-    carregarFuncionarios();
-  }, []);
+    if (companyId && user) {
+      carregarFuncionarios();
+    }
+  }, [companyId, user]);
 
   // Obter localização atual
   useEffect(() => {
@@ -186,6 +189,7 @@ const FuncionariosPageCore: React.FC = () => {
 
   const carregarFuncionarios = async () => {
     try {
+      setLoadingInicial(true);
       const funcionariosRef = collection(db, `companies/${companyId}/funcionarios`);
       const q = query(funcionariosRef, where('deletedAt', '==', null));
       const snapshot = await getDocs(q);
@@ -226,6 +230,8 @@ const FuncionariosPageCore: React.FC = () => {
         title: 'Erro',
         message: 'Erro ao carregar funcionários. Verifique a conexão.',
       });
+    } finally {
+      setLoadingInicial(false);
     }
   };
 
@@ -338,8 +344,8 @@ const FuncionariosPageCore: React.FC = () => {
     try {
       // Validar ponto usando pontoValidation.ts
       const validacao = validarPonto(
-        tipo,
         funcionario.pontosHoje,
+        tipo,
         localizacaoAtual
       );
 
@@ -356,11 +362,10 @@ const FuncionariosPageCore: React.FC = () => {
 
       // Registrar ponto usando pontoService.ts
       await registrarPonto(
-        companyId,
         funcId,
-        user?.uid || 'system',
         tipo,
-        localizacaoAtual
+        localizacaoAtual,
+        companyId
       );
 
       // Recarregar funcionários
@@ -999,383 +1004,538 @@ const FuncionariosPageCore: React.FC = () => {
         <div
           className="funcionario-detalhe-container"
           style={{
-            padding: '20px',
-            paddingBottom: '120px',
-            background: '#FFFFFF',
+            padding: '0',
+            paddingBottom: '100px',
+            background: 'linear-gradient(180deg, #F8F9FA 0%, #FFFFFF 100%)',
             minHeight: '100vh',
           }}
         >
+          {/* Header com Botão Voltar */}
           <header
             style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              marginBottom: '20px',
-              paddingBottom: '16px',
+              position: 'sticky',
+              top: 0,
+              zIndex: 10,
+              padding: '16px 20px',
+              background: 'rgba(255, 255, 255, 0.95)',
+              backdropFilter: 'blur(20px)',
               borderBottom: '1px solid rgba(0, 0, 0, 0.06)',
             }}
           >
             <button
               onClick={() => setFuncionarioSelecionado(null)}
               style={{
-                padding: '10px 16px',
-                background: '#F8F8F8',
-                border: '1px solid rgba(0, 0, 0, 0.06)',
-                borderRadius: '10px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '8px 14px',
+                background: 'transparent',
+                border: 'none',
                 cursor: 'pointer',
                 fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif',
-                fontSize: '14px',
+                fontSize: '16px',
                 fontWeight: 600,
                 color: '#007AFF',
               }}
             >
-              ← Voltar
+              <ChevronRight style={{ width: '18px', height: '18px', transform: 'rotate(180deg)' }} />
+              <span>Equipe</span>
             </button>
           </header>
 
-          {/* Card do Funcionário */}
+          {/* Hero Card - Avatar e Info Principal */}
           <div
             style={{
-              padding: '20px',
-              background: '#FFFFFF',
-              border: '1px solid rgba(0, 0, 0, 0.08)',
-              borderRadius: '16px',
-              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
-              marginBottom: '16px',
+              padding: '24px 20px',
+              background: 'linear-gradient(145deg, #FFFFFF 0%, #FAFAFA 100%)',
+              borderBottom: '1px solid rgba(0, 0, 0, 0.06)',
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '16px' }}>
-              <div
-                style={{
-                  width: '56px',
-                  height: '56px',
-                  borderRadius: '50%',
-                  background: 'linear-gradient(135deg, #007AFF, #0051D5)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: 'white',
-                  fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif',
-                  fontSize: '22px',
-                  fontWeight: 700,
-                }}
-              >
-                {funcionarioAtual.nome.charAt(0)}
-              </div>
-              <div style={{ flex: 1 }}>
-                <h2
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+              {/* Avatar Grande Premium */}
+              <div style={{ position: 'relative', marginBottom: '16px' }}>
+                <div
                   style={{
-                    fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif',
-                    fontSize: '22px',
-                    fontWeight: 700,
-                    color: '#000000',
-                    margin: '0 0 4px 0',
-                    letterSpacing: '-0.5px',
+                    width: '96px',
+                    height: '96px',
+                    borderRadius: '50%',
+                    background: `linear-gradient(135deg, ${getStatusColor(funcionarioAtual.status)}15 0%, ${getStatusColor(funcionarioAtual.status)}08 100%)`,
+                    padding: '5px',
+                    boxShadow: `0 8px 24px ${getStatusColor(funcionarioAtual.status)}20`,
                   }}
                 >
-                  {funcionarioAtual.nome}
-                </h2>
-                <p
+                  <div
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      borderRadius: '50%',
+                      background: 'linear-gradient(135deg, #1A1A1A 0%, #2D2D2D 100%)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#FFFFFF',
+                      fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif',
+                      fontSize: '38px',
+                      fontWeight: 700,
+                      letterSpacing: '-1.5px',
+                      boxShadow: 'inset 0 2px 8px rgba(0, 0, 0, 0.3)',
+                    }}
+                  >
+                    {funcionarioAtual.nome.charAt(0)}
+                  </div>
+                </div>
+                
+                {/* Status Indicator Grande */}
+                <div
+                  style={{
+                    position: 'absolute',
+                    bottom: '2px',
+                    right: '2px',
+                    width: '28px',
+                    height: '28px',
+                    borderRadius: '50%',
+                    background: getStatusColor(funcionarioAtual.status),
+                    border: '4px solid #FFFFFF',
+                    boxShadow: `0 3px 12px ${getStatusColor(funcionarioAtual.status)}60`,
+                    animation: 'pulse-status 2s ease-in-out infinite',
+                  }}
+                />
+              </div>
+
+              {/* Nome e Cargo */}
+              <h1
+                style={{
+                  fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif',
+                  fontSize: '28px',
+                  fontWeight: 700,
+                  color: '#000000',
+                  margin: '0 0 6px 0',
+                  letterSpacing: '-0.8px',
+                }}
+              >
+                {funcionarioAtual.nome}
+              </h1>
+              <p
+                style={{
+                  fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif',
+                  fontSize: '16px',
+                  fontWeight: 500,
+                  color: '#666666',
+                  margin: '0 0 12px 0',
+                }}
+              >
+                {funcionarioAtual.funcao}
+              </p>
+
+              {/* Status Badge */}
+              <div
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '8px 16px',
+                  background: `linear-gradient(135deg, ${getStatusColor(funcionarioAtual.status)}12 0%, ${getStatusColor(funcionarioAtual.status)}08 100%)`,
+                  borderRadius: '20px',
+                  border: `1px solid ${getStatusColor(funcionarioAtual.status)}20`,
+                }}
+              >
+                <div
+                  style={{
+                    width: '8px',
+                    height: '8px',
+                    borderRadius: '50%',
+                    background: getStatusColor(funcionarioAtual.status),
+                    boxShadow: `0 0 8px ${getStatusColor(funcionarioAtual.status)}60`,
+                  }}
+                />
+                <span
                   style={{
                     fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif',
                     fontSize: '14px',
-                    fontWeight: 500,
-                    color: '#666666',
-                    margin: 0,
+                    fontWeight: 600,
+                    color: getStatusColor(funcionarioAtual.status),
                   }}
                 >
-                  {funcionarioAtual.funcao}
-                </p>
+                  {getStatusLabel(funcionarioAtual.status)}
+                </span>
               </div>
             </div>
+          </div>
 
+          {/* Métricas em Grid */}
+          <div
+            style={{
+              padding: '20px',
+              display: 'grid',
+              gridTemplateColumns: 'repeat(2, 1fr)',
+              gap: '12px',
+            }}
+          >
+            {/* Horas Trabalhadas */}
             <div
               style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-                padding: '12px',
-                background: '#F8F8F8',
-                borderRadius: '10px',
+                padding: '20px 16px',
+                background: 'linear-gradient(145deg, #FFFFFF 0%, #FAFAFA 100%)',
+                borderRadius: '16px',
+                border: '1px solid rgba(0, 0, 0, 0.06)',
+                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
+                textAlign: 'center',
               }}
             >
               <div
                 style={{
-                  width: '10px',
-                  height: '10px',
-                  borderRadius: '50%',
-                  background: getStatusColor(funcionarioAtual.status),
-                }}
-              />
-              <span
-                style={{
-                  fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif',
-                  fontSize: '14px',
-                  fontWeight: 600,
-                  color: '#000000',
+                  width: '40px',
+                  height: '40px',
+                  margin: '0 auto 12px auto',
+                  borderRadius: '12px',
+                  background: 'linear-gradient(135deg, rgba(0, 122, 255, 0.12) 0%, rgba(0, 122, 255, 0.08) 100%)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                 }}
               >
-                {getStatusLabel(funcionarioAtual.status)}
-              </span>
-            </div>
-          </div>
-
-          {/* Horas Trabalhadas */}
-          <div
-            style={{
-              padding: '16px',
-              background: '#FFFFFF',
-              border: '1px solid rgba(0, 0, 0, 0.08)',
-              borderRadius: '14px',
-              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
-              marginBottom: '16px',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <Clock style={{ width: '18px', height: '18px', color: '#007AFF' }} />
-                <span
-                  style={{
-                    fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif',
-                    fontSize: '14px',
-                    fontWeight: 600,
-                    color: '#000000',
-                  }}
-                >
-                  Horas Trabalhadas
-                </span>
+                <Clock style={{ width: '20px', height: '20px', color: '#007AFF' }} />
               </div>
-              <span
+              <div
                 style={{
                   fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif',
-                  fontSize: '20px',
-                  fontWeight: 700,
+                  fontSize: '28px',
+                  fontWeight: 800,
                   color: '#007AFF',
+                  marginBottom: '4px',
                   fontVariantNumeric: 'tabular-nums',
+                  letterSpacing: '-1px',
                 }}
               >
                 {horasTrabalhadas.toFixed(1)}h
-              </span>
-            </div>
-          </div>
-
-          {/* Diária */}
-          <div
-            style={{
-              padding: '16px',
-              background: '#FFFFFF',
-              border: '1px solid rgba(0, 0, 0, 0.08)',
-              borderRadius: '14px',
-              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
-              marginBottom: '16px',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <DollarSign style={{ width: '18px', height: '18px', color: '#34C759' }} />
-                <span
-                  style={{
-                    fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif',
-                    fontSize: '14px',
-                    fontWeight: 600,
-                    color: '#000000',
-                  }}
-                >
-                  Diária de Hoje
-                </span>
               </div>
-              <span
+              <div
+                style={{
+                  fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  color: '#666666',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px',
+                }}
+              >
+                Trabalhadas
+              </div>
+            </div>
+
+            {/* Diária */}
+            <div
+              style={{
+                padding: '20px 16px',
+                background: funcionarioAtual.pagoDia
+                  ? 'linear-gradient(145deg, rgba(16, 185, 129, 0.08) 0%, rgba(16, 185, 129, 0.04) 100%)'
+                  : 'linear-gradient(145deg, rgba(245, 158, 11, 0.08) 0%, rgba(245, 158, 11, 0.04) 100%)',
+                borderRadius: '16px',
+                border: funcionarioAtual.pagoDia
+                  ? '1px solid rgba(16, 185, 129, 0.2)'
+                  : '1px solid rgba(245, 158, 11, 0.2)',
+                boxShadow: funcionarioAtual.pagoDia
+                  ? '0 2px 12px rgba(16, 185, 129, 0.1)'
+                  : '0 2px 12px rgba(245, 158, 11, 0.1)',
+                textAlign: 'center',
+              }}
+            >
+              <div
+                style={{
+                  width: '40px',
+                  height: '40px',
+                  margin: '0 auto 12px auto',
+                  borderRadius: '12px',
+                  background: funcionarioAtual.pagoDia ? '#10B981' : '#F59E0B',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: funcionarioAtual.pagoDia
+                    ? '0 4px 12px rgba(16, 185, 129, 0.3)'
+                    : '0 4px 12px rgba(245, 158, 11, 0.3)',
+                }}
+              >
+                <DollarSign style={{ width: '20px', height: '20px', color: '#FFFFFF' }} />
+              </div>
+              <div
                 style={{
                   fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif',
-                  fontSize: '22px',
+                  fontSize: '24px',
                   fontWeight: 800,
-                  color: '#34C759',
+                  color: funcionarioAtual.pagoDia ? '#10B981' : '#F59E0B',
+                  marginBottom: '4px',
                   fontVariantNumeric: 'tabular-nums',
+                  letterSpacing: '-0.8px',
                 }}
               >
                 R$ {diariaCalculada.toFixed(2)}
-              </span>
+              </div>
+              <div
+                style={{
+                  fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif',
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  color: funcionarioAtual.pagoDia ? '#059669' : '#D97706',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px',
+                }}
+              >
+                {funcionarioAtual.pagoDia ? 'PAGO' : 'PENDENTE'}
+              </div>
             </div>
+          </div>
 
-            {!funcionarioAtual.pagoDia ? (
+          {/* Botão Marcar como Pago */}
+          {!funcionarioAtual.pagoDia && (
+            <div style={{ padding: '0 20px 20px 20px' }}>
               <button
                 onClick={() => handleMarcarPago(funcionarioAtual.id)}
                 disabled={loading}
                 style={{
                   width: '100%',
-                  padding: '14px',
+                  padding: '16px',
                   background: 'linear-gradient(135deg, #34C759, #30D158)',
                   border: 'none',
-                  borderRadius: '11px',
+                  borderRadius: '14px',
                   cursor: loading ? 'not-allowed' : 'pointer',
                   fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif',
-                  fontSize: '15px',
+                  fontSize: '16px',
                   fontWeight: 700,
                   color: 'white',
-                  boxShadow: '0 3px 10px rgba(52, 199, 89, 0.3)',
-                }}
-              >
-                {loading ? 'Processando...' : 'Marcar como Pago'}
-              </button>
-            ) : (
-              <div
-                style={{
+                  boxShadow: '0 4px 16px rgba(52, 199, 89, 0.3)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: '8px',
-                  padding: '14px',
-                  background: 'rgba(52, 199, 89, 0.1)',
-                  borderRadius: '11px',
                 }}
               >
-                <CheckCircle2 style={{ width: '18px', height: '18px', color: '#34C759' }} />
-                <span
-                  style={{
-                    fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif',
-                    fontSize: '14px',
-                    fontWeight: 600,
-                    color: '#34C759',
-                  }}
-                >
-                  Pago
-                </span>
-              </div>
-            )}
-          </div>
+                <CheckCircle2 style={{ width: '20px', height: '20px' }} />
+                <span>{loading ? 'Processando...' : 'Marcar como Pago'}</span>
+              </button>
+            </div>
+          )}
 
-          {/* Pontos de Hoje */}
-          <div
-            style={{
-              padding: '16px',
-              background: '#FFFFFF',
-              border: '1px solid rgba(0, 0, 0, 0.08)',
-              borderRadius: '14px',
-              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
-              marginBottom: '16px',
-            }}
-          >
+          {/* Timeline de Pontos */}
+          <div style={{ padding: '0 20px 20px 20px' }}>
             <h3
               style={{
                 fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif',
-                fontSize: '16px',
+                fontSize: '20px',
                 fontWeight: 700,
                 color: '#000000',
-                margin: '0 0 14px 0',
+                margin: '0 0 16px 0',
+                letterSpacing: '-0.5px',
               }}
             >
               Registro de Pontos
             </h3>
+
             {funcionarioAtual.pontosHoje.length > 0 ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                {funcionarioAtual.pontosHoje.map((ponto) => (
-                  <div
-                    key={ponto.id}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'flex-start',
-                      gap: '12px',
-                      padding: '12px',
-                      background: '#F8F8F8',
-                      borderRadius: '10px',
-                    }}
-                  >
-                    <div style={{ flex: 1 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-                        <Clock style={{ width: '14px', height: '14px', color: '#666666' }} />
-                        <span
-                          style={{
-                            fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif',
-                            fontSize: '14px',
-                            fontWeight: 600,
-                            color: '#000000',
-                          }}
-                        >
-                          {ponto.timestamp.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                        </span>
-                        <span
-                          style={{
-                            fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif',
-                            fontSize: '12px',
-                            fontWeight: 600,
-                            color: '#666666',
-                          }}
-                        >
-                          • {getTipoPontoLabel(ponto.tipo)}
-                        </span>
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '6px' }}>
-                        <MapPin style={{ width: '12px', height: '12px', color: '#999999', marginTop: '2px', flexShrink: 0 }} />
-                        <span
-                          style={{
-                            fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif',
-                            fontSize: '12px',
-                            fontWeight: 500,
-                            color: '#666666',
-                            lineHeight: '1.3',
-                          }}
-                        >
-                          {ponto.localizacao.endereco}
-                        </span>
+              <div style={{ position: 'relative' }}>
+                {/* Linha Vertical da Timeline */}
+                <div
+                  style={{
+                    position: 'absolute',
+                    left: '19px',
+                    top: '20px',
+                    bottom: '20px',
+                    width: '2px',
+                    background: 'linear-gradient(180deg, #007AFF 0%, rgba(0, 122, 255, 0.2) 100%)',
+                  }}
+                />
+
+                {/* Pontos da Timeline */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  {funcionarioAtual.pontosHoje.map((ponto) => (
+                    <div
+                      key={ponto.id}
+                      style={{
+                        position: 'relative',
+                        paddingLeft: '52px',
+                      }}
+                    >
+                      {/* Dot da Timeline */}
+                      <div
+                        style={{
+                          position: 'absolute',
+                          left: '12px',
+                          top: '8px',
+                          width: '16px',
+                          height: '16px',
+                          borderRadius: '50%',
+                          background: '#007AFF',
+                          border: '3px solid #FFFFFF',
+                          boxShadow: '0 2px 8px rgba(0, 122, 255, 0.4)',
+                          zIndex: 1,
+                        }}
+                      />
+
+                      {/* Card do Ponto */}
+                      <div
+                        style={{
+                          padding: '14px 16px',
+                          background: '#FFFFFF',
+                          borderRadius: '12px',
+                          border: '1px solid rgba(0, 0, 0, 0.06)',
+                          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
+                        }}
+                      >
+                        {/* Hora e Tipo */}
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <Clock style={{ width: '16px', height: '16px', color: '#007AFF' }} />
+                            <span
+                              style={{
+                                fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif',
+                                fontSize: '18px',
+                                fontWeight: 700,
+                                color: '#000000',
+                                fontVariantNumeric: 'tabular-nums',
+                              }}
+                            >
+                              {ponto.timestamp.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                          </div>
+                          <span
+                            style={{
+                              padding: '4px 10px',
+                              background: 'rgba(0, 122, 255, 0.1)',
+                              borderRadius: '8px',
+                              fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif',
+                              fontSize: '11px',
+                              fontWeight: 600,
+                              color: '#007AFF',
+                              textTransform: 'uppercase',
+                              letterSpacing: '0.3px',
+                            }}
+                          >
+                            {getTipoPontoLabel(ponto.tipo)}
+                          </span>
+                        </div>
+
+                        {/* Localização */}
+                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '6px' }}>
+                          <MapPin style={{ width: '14px', height: '14px', color: '#999999', marginTop: '2px', flexShrink: 0 }} />
+                          <span
+                            style={{
+                              fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif',
+                              fontSize: '13px',
+                              fontWeight: 500,
+                              color: '#666666',
+                              lineHeight: '1.4',
+                            }}
+                          >
+                            {ponto.localizacao.endereco}
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             ) : (
               <div
                 style={{
-                  padding: '20px',
+                  padding: '40px 20px',
                   textAlign: 'center',
-                  color: '#999999',
-                  fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif',
-                  fontSize: '13px',
+                  background: '#FFFFFF',
+                  borderRadius: '16px',
+                  border: '1px solid rgba(0, 0, 0, 0.06)',
                 }}
               >
-                Nenhum ponto registrado hoje
+                <div
+                  style={{
+                    width: '56px',
+                    height: '56px',
+                    margin: '0 auto 16px auto',
+                    borderRadius: '50%',
+                    background: '#F8F8F8',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <Clock style={{ width: '28px', height: '28px', color: '#CCCCCC' }} />
+                </div>
+                <p
+                  style={{
+                    fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif',
+                    fontSize: '15px',
+                    fontWeight: 500,
+                    color: '#999999',
+                    margin: 0,
+                  }}
+                >
+                  Nenhum ponto registrado hoje
+                </p>
               </div>
             )}
           </div>
 
-          {/* Ações de Gestão (apenas admin_platform e owner) */}
+          {/* Ações de Gestão */}
           {podeGerenciar && (
-            <div style={{ display: 'flex', gap: '10px' }}>
-              <button
-                onClick={() => abrirModalEdicao(funcionarioAtual)}
-                disabled={loading}
+            <div style={{ padding: '0 20px 20px 20px' }}>
+              <div
                 style={{
-                  flex: 1,
-                  padding: '14px',
-                  background: '#F8F8F8',
-                  border: '1px solid rgba(0, 0, 0, 0.08)',
-                  borderRadius: '11px',
-                  cursor: loading ? 'not-allowed' : 'pointer',
-                  fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif',
-                  fontSize: '14px',
-                  fontWeight: 600,
-                  color: '#007AFF',
+                  padding: '16px',
+                  background: '#FFFFFF',
+                  borderRadius: '16px',
+                  border: '1px solid rgba(0, 0, 0, 0.06)',
+                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
                 }}
               >
-                Editar
-              </button>
-              <button
-                onClick={() => desativarFuncionario(funcionarioAtual.id)}
-                disabled={loading}
-                style={{
-                  flex: 1,
-                  padding: '14px',
-                  background: '#F8F8F8',
-                  border: '1px solid rgba(0, 0, 0, 0.08)',
-                  borderRadius: '11px',
-                  cursor: loading ? 'not-allowed' : 'pointer',
-                  fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif',
-                  fontSize: '14px',
-                  fontWeight: 600,
-                  color: '#FF3B30',
-                }}
-              >
-                Desativar
-              </button>
+                <h4
+                  style={{
+                    fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    color: '#666666',
+                    margin: '0 0 12px 0',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
+                  }}
+                >
+                  Ações de Gestão
+                </h4>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <button
+                    onClick={() => abrirModalEdicao(funcionarioAtual)}
+                    disabled={loading}
+                    style={{
+                      flex: 1,
+                      padding: '14px',
+                      background: '#F8F8F8',
+                      border: '1px solid rgba(0, 0, 0, 0.08)',
+                      borderRadius: '11px',
+                      cursor: loading ? 'not-allowed' : 'pointer',
+                      fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif',
+                      fontSize: '14px',
+                      fontWeight: 600,
+                      color: '#007AFF',
+                    }}
+                  >
+                    Editar
+                  </button>
+                  <button
+                    onClick={() => desativarFuncionario(funcionarioAtual.id)}
+                    disabled={loading}
+                    style={{
+                      flex: 1,
+                      padding: '14px',
+                      background: '#F8F8F8',
+                      border: '1px solid rgba(0, 0, 0, 0.08)',
+                      borderRadius: '11px',
+                      cursor: loading ? 'not-allowed' : 'pointer',
+                      fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif',
+                      fontSize: '14px',
+                      fontWeight: 600,
+                      color: '#FF3B30',
+                    }}
+                  >
+                    Desativar
+                  </button>
+                </div>
+              </div>
             </div>
           )}
         </div>
@@ -1478,7 +1638,7 @@ const FuncionariosPageCore: React.FC = () => {
         </header>
 
         {/* Cards de Funcionários */}
-        {loading && funcionarios.length === 0 ? (
+        {loadingInicial ? (
           <div
             style={{
               display: 'flex',
@@ -1490,7 +1650,7 @@ const FuncionariosPageCore: React.FC = () => {
             <Loader className="animate-spin" style={{ width: '32px', height: '32px', color: '#007AFF' }} />
           </div>
         ) : funcionarios.length > 0 ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {funcionarios.map((funcionario) => {
               const diariaCalculada = calcularDiaria(funcionario);
               
@@ -1498,126 +1658,259 @@ const FuncionariosPageCore: React.FC = () => {
                 <div
                   key={funcionario.id}
                   onClick={() => setFuncionarioSelecionado(funcionario.id)}
+                  className="employee-card-luxury"
                   style={{
-                    padding: '16px',
-                    background: '#FFFFFF',
-                    borderRadius: '14px',
-                    border: '1px solid rgba(0, 0, 0, 0.08)',
-                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
+                    position: 'relative',
+                    padding: '0',
+                    background: 'linear-gradient(145deg, #FFFFFF 0%, #FAFAFA 100%)',
+                    borderRadius: '20px',
+                    border: '1px solid rgba(0, 0, 0, 0.06)',
+                    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.06), 0 1px 4px rgba(0, 0, 0, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
                     cursor: 'pointer',
-                    transition: 'all 0.2s ease',
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    overflow: 'hidden',
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                    <div
-                      style={{
-                        width: '52px',
-                        height: '52px',
-                        borderRadius: '50%',
-                        background: 'linear-gradient(135deg, #007AFF, #0051D5)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: 'white',
-                        fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif',
-                        fontSize: '19px',
-                        fontWeight: 700,
-                        flexShrink: 0,
-                      }}
-                    >
-                      {funcionario.nome.charAt(0)}
-                    </div>
+                  {/* Barra de Status Lateral */}
+                  <div
+                    style={{
+                      position: 'absolute',
+                      left: 0,
+                      top: 0,
+                      bottom: 0,
+                      width: '4px',
+                      background: `linear-gradient(180deg, ${getStatusColor(funcionario.status)} 0%, ${getStatusColor(funcionario.status)}CC 100%)`,
+                      boxShadow: `0 0 12px ${getStatusColor(funcionario.status)}40`,
+                      borderTopLeftRadius: '20px',
+                      borderBottomLeftRadius: '20px',
+                    }}
+                  />
 
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <h3
-                        style={{
-                          fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif',
-                          fontSize: '16px',
-                          fontWeight: 700,
-                          color: '#000000',
-                          margin: '0 0 4px 0',
-                          letterSpacing: '-0.3px',
-                        }}
-                      >
-                        {funcionario.nome}
-                      </h3>
-                      <p
-                        style={{
-                          fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif',
-                          fontSize: '13px',
-                          fontWeight: 500,
-                          color: '#666666',
-                          margin: '0 0 8px 0',
-                        }}
-                      >
-                        {funcionario.funcao}
-                      </p>
+                  {/* Shimmer Effect */}
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: '-100%',
+                      width: '100%',
+                      height: '100%',
+                      background: 'linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.2) 50%, transparent 100%)',
+                      animation: 'shimmer 3s infinite',
+                      pointerEvents: 'none',
+                    }}
+                  />
 
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <div style={{ padding: '16px 16px 16px 20px', position: 'relative' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                      {/* Avatar Compacto Premium */}
+                      <div style={{ position: 'relative', flexShrink: 0 }}>
+                        <div
+                          style={{
+                            width: '56px',
+                            height: '56px',
+                            borderRadius: '50%',
+                            background: `linear-gradient(135deg, ${getStatusColor(funcionario.status)}12 0%, ${getStatusColor(funcionario.status)}06 100%)`,
+                            padding: '3px',
+                            boxShadow: `0 2px 12px ${getStatusColor(funcionario.status)}20`,
+                          }}
+                        >
                           <div
                             style={{
-                              width: '8px',
-                              height: '8px',
+                              width: '100%',
+                              height: '100%',
                               borderRadius: '50%',
-                              background: getStatusColor(funcionario.status),
-                              flexShrink: 0,
-                            }}
-                          />
-                          <span
-                            style={{
-                              fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif',
-                              fontSize: '12px',
-                              fontWeight: 600,
-                              color: getStatusColor(funcionario.status),
+                              background: 'linear-gradient(135deg, #1A1A1A 0%, #2D2D2D 100%)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              color: '#FFFFFF',
+                              fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif',
+                              fontSize: '22px',
+                              fontWeight: 700,
+                              letterSpacing: '-0.5px',
+                              boxShadow: 'inset 0 1px 4px rgba(0, 0, 0, 0.3)',
                             }}
                           >
-                            {getStatusLabel(funcionario.status)}
-                          </span>
+                            {funcionario.nome.charAt(0)}
+                          </div>
                         </div>
+                        
+                        {/* Status Indicator */}
+                        <div
+                          style={{
+                            position: 'absolute',
+                            bottom: '0px',
+                            right: '0px',
+                            width: '16px',
+                            height: '16px',
+                            borderRadius: '50%',
+                            background: getStatusColor(funcionario.status),
+                            border: '2.5px solid #FFFFFF',
+                            boxShadow: `0 2px 6px ${getStatusColor(funcionario.status)}50`,
+                            animation: 'pulse-status 2s ease-in-out infinite',
+                          }}
+                        />
+                      </div>
 
-                        {funcionario.ultimoPonto && (
-                          <>
-                            <span style={{ color: '#CCCCCC' }}>•</span>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                              <Clock style={{ width: '12px', height: '12px', color: '#999999' }} />
-                              <span
-                                style={{
-                                  fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif',
-                                  fontSize: '12px',
-                                  fontWeight: 500,
-                                  color: '#999999',
-                                  fontVariantNumeric: 'tabular-nums',
-                                }}
-                              >
-                                {funcionario.ultimoPonto.timestamp.toLocaleTimeString('pt-BR', { 
-                                  hour: '2-digit', 
-                                  minute: '2-digit' 
-                                })}
-                              </span>
-                            </div>
-                          </>
-                        )}
+                      {/* Informações Compactas */}
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        {/* Nome e Cargo */}
+                        <h3
+                          style={{
+                            fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif',
+                            fontSize: '17px',
+                            fontWeight: 700,
+                            color: '#000000',
+                            margin: '0 0 3px 0',
+                            letterSpacing: '-0.4px',
+                            lineHeight: '1.2',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          {funcionario.nome}
+                        </h3>
+                        <p
+                          style={{
+                            fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif',
+                            fontSize: '13px',
+                            fontWeight: 500,
+                            color: '#666666',
+                            margin: '0 0 8px 0',
+                            letterSpacing: '-0.1px',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          {funcionario.funcao}
+                        </p>
 
-                        <span style={{ color: '#CCCCCC' }}>•</span>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                          <DollarSign style={{ width: '12px', height: '12px', color: funcionario.pagoDia ? '#34C759' : '#FF9500' }} />
-                          <span
+                        {/* Métricas Inline */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                          {/* Status Badge Compacto */}
+                          <div
+                            style={{
+                              padding: '4px 10px',
+                              background: `linear-gradient(135deg, ${getStatusColor(funcionario.status)}10 0%, ${getStatusColor(funcionario.status)}06 100%)`,
+                              borderRadius: '8px',
+                              border: `1px solid ${getStatusColor(funcionario.status)}18`,
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '5px',
+                            }}
+                          >
+                            <div
+                              style={{
+                                width: '6px',
+                                height: '6px',
+                                borderRadius: '50%',
+                                background: getStatusColor(funcionario.status),
+                                boxShadow: `0 0 6px ${getStatusColor(funcionario.status)}50`,
+                              }}
+                            />
+                            <span
+                              style={{
+                                fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif',
+                                fontSize: '11px',
+                                fontWeight: 600,
+                                color: getStatusColor(funcionario.status),
+                                letterSpacing: '-0.1px',
+                              }}
+                            >
+                              {getStatusLabel(funcionario.status)}
+                            </span>
+                          </div>
+
+                          {/* Último Ponto Compacto */}
+                          {funcionario.ultimoPonto && (
+                            <>
+                              <span style={{ color: '#DDDDDD', fontSize: '10px' }}>•</span>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                <Clock style={{ width: '11px', height: '11px', color: '#007AFF', opacity: 0.7 }} />
+                                <span
+                                  style={{
+                                    fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif',
+                                    fontSize: '11px',
+                                    fontWeight: 600,
+                                    color: '#007AFF',
+                                    fontVariantNumeric: 'tabular-nums',
+                                  }}
+                                >
+                                  {funcionario.ultimoPonto.timestamp.toLocaleTimeString('pt-BR', { 
+                                    hour: '2-digit', 
+                                    minute: '2-digit' 
+                                  })}
+                                </span>
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Valor e Chevron */}
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px', flexShrink: 0 }}>
+                        {/* Valor Compacto */}
+                        <div
+                          style={{
+                            padding: '6px 10px',
+                            background: funcionario.pagoDia 
+                              ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(16, 185, 129, 0.08) 100%)'
+                              : 'linear-gradient(135deg, rgba(245, 158, 11, 0.12) 0%, rgba(245, 158, 11, 0.08) 100%)',
+                            borderRadius: '10px',
+                            border: funcionario.pagoDia 
+                              ? '1px solid rgba(16, 185, 129, 0.2)'
+                              : '1px solid rgba(245, 158, 11, 0.2)',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'flex-end',
+                          }}
+                        >
+                          <div
                             style={{
                               fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif',
-                              fontSize: '12px',
+                              fontSize: '9px',
                               fontWeight: 600,
-                              color: funcionario.pagoDia ? '#34C759' : '#FF9500',
+                              color: funcionario.pagoDia ? '#059669' : '#D97706',
+                              textTransform: 'uppercase',
+                              letterSpacing: '0.3px',
+                              marginBottom: '2px',
+                            }}
+                          >
+                            {funcionario.pagoDia ? 'PAGO' : 'PEND'}
+                          </div>
+                          <div
+                            style={{
+                              fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif',
+                              fontSize: '15px',
+                              fontWeight: 800,
+                              color: funcionario.pagoDia ? '#10B981' : '#F59E0B',
                               fontVariantNumeric: 'tabular-nums',
+                              letterSpacing: '-0.5px',
+                              lineHeight: '1',
                             }}
                           >
                             R$ {diariaCalculada.toFixed(2)}
-                          </span>
+                          </div>
+                        </div>
+
+                        {/* Chevron */}
+                        <div
+                          style={{
+                            width: '24px',
+                            height: '24px',
+                            borderRadius: '6px',
+                            background: 'rgba(0, 0, 0, 0.03)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}
+                        >
+                          <ChevronRight style={{ width: '14px', height: '14px', color: '#999999' }} />
                         </div>
                       </div>
                     </div>
-
-                    <ChevronRight style={{ width: '18px', height: '18px', color: '#CCCCCC', flexShrink: 0 }} />
                   </div>
                 </div>
               );

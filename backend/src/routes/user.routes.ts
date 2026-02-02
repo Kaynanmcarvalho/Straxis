@@ -31,6 +31,13 @@ const requireAdminOrOwner = (req: any, res: any, next: any) => {
 router.get('/unassigned/list', requireAdminPlatform, UserController.listUnassigned);
 
 /**
+ * GET /api/usuarios/check-email/:email
+ * Verifica se email já existe
+ * IMPORTANTE: Esta rota deve vir ANTES de /:id
+ */
+router.get('/check-email/:email', requireAdminOrOwner, UserController.checkEmail);
+
+/**
  * POST /api/usuarios/create-funcionario
  * Cria funcionário com login Firebase Auth
  * IMPORTANTE: Esta rota deve vir ANTES de /:id

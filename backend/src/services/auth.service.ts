@@ -89,7 +89,21 @@ export class AuthService {
 
       return user;
     } catch (error: any) {
-      throw new Error(`Erro ao criar usuário: ${error.message}`);
+      // Tratar erros específicos do Firebase Auth
+      const errorCode = error.code || '';
+      const errorMessage = error.message || '';
+      
+      if (errorCode === 'auth/email-already-exists' || 
+          errorMessage.includes('already in use') ||
+          errorMessage.includes('already exists')) {
+        throw new Error('Este email já está cadastrado no sistema');
+      } else if (errorCode === 'auth/invalid-email' || errorMessage.includes('invalid-email')) {
+        throw new Error('Email inválido');
+      } else if (errorCode === 'auth/weak-password' || errorMessage.includes('weak-password')) {
+        throw new Error('Senha muito fraca. Use no mínimo 6 caracteres');
+      } else {
+        throw new Error(`Erro ao criar usuário: ${errorMessage}`);
+      }
     }
   }
 

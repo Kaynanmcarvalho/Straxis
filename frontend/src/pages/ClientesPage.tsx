@@ -304,6 +304,7 @@ const ClientesPage: React.FC = () => {
       const clientesRef = collection(db, `companies/${companyId}/clientes`);
       await addDoc(clientesRef, {
         nome: formNome.trim(),
+        nomeLower: formNome.trim().toLowerCase(), // Para busca case-insensitive
         telefone: formTelefone.trim(),
         email: formEmail.trim() || null,
         endereco: formEndereco.trim() || null,
@@ -384,6 +385,7 @@ const ClientesPage: React.FC = () => {
       const clienteRef = doc(db, `companies/${companyId}/clientes`, clienteSelecionado.id);
       await updateDoc(clienteRef, {
         nome: formNome.trim(),
+        nomeLower: formNome.trim().toLowerCase(), // Para busca case-insensitive
         telefone: formTelefone.trim(),
         email: formEmail.trim() || null,
         endereco: formEndereco.trim() || null,

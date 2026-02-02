@@ -108,6 +108,11 @@ export const decisaoService = {
 
     const response = await apiService.get('/decisoes', { params });
 
+    // Validar se response.data.data existe
+    if (!response.data?.data || !Array.isArray(response.data.data)) {
+      return [];
+    }
+
     return response.data.data.map((decisao: any) => ({
       ...decisao,
       timestamp: new Date(decisao.timestamp),

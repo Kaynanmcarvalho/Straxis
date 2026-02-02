@@ -14,10 +14,10 @@ const IAConfigPageCore: React.FC = () => {
   });
 
   const [usage] = useState({
-    requestsToday: 47,
-    costToday: 2.35,
-    requestsMonth: 1240,
-    costMonth: 67.80,
+    requestsToday: 0,
+    costToday: 0,
+    requestsMonth: 0,
+    costMonth: 0,
   });
 
   const toggleSetting = (key: keyof typeof config) => {

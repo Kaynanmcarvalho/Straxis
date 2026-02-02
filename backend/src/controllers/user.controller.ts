@@ -372,6 +372,56 @@ export class UserController {
   }
 
   /**
+   * GET /usuarios/check-email/:email - Verifica se email já existe
+   */
+  static async checkEmail(req: Request, res: Response): Promise<void> {
+    try {
+      const { email } = req.params;
+
+      if (!email) {
+        res.status(400).json({
+          success: false,
+          error: 'Email é obrigatório',
+          code: 2001,
+        });
+        return;
+      }
+
+      // Importar AuthService
+      const { auth } = require('../config/firebase.config');
+
+      try {
+        // Tentar buscar usuário por email no Firebase Auth
+        await auth.getUserByEmail(email);
+        
+        // Se chegou aqui, email existe
+        res.json({
+          success: true,
+          exists: true,
+          message: 'Email já está cadastrado',
+        });
+      } catch (error: any) {
+        // Se erro for "user not found", email não existe
+        if (error.code === 'auth/user-not-found') {
+          res.json({
+            success: true,
+            exists: false,
+            message: 'Email disponível',
+          });
+        } else {
+          throw error;
+        }
+      }
+    } catch (error: any) {
+      res.status(500).json({
+        success: false,
+        error: 'Erro ao verificar email',
+        message: error.message,
+      });
+    }
+  }
+
+  /**
    * POST /usuarios/create-funcionario - Cria funcionário com login Firebase Auth
    */
   static async createFuncionario(req: Request, res: Response): Promise<void> {
@@ -453,20 +503,22 @@ export class UserController {
     } catch (error: any) {
       console.error('Erro ao criar funcionário:', error);
       
-      // Mensagens de erro específicas do Firebase
-      let errorMessage = 'Erro ao criar funcionário';
-      if (error.message?.includes('email-already-in-use') || error.message?.includes('already exists')) {
-        errorMessage = 'Este email já está cadastrado no sistema';
-      } else if (error.message?.includes('invalid-email')) {
-        errorMessage = 'Email inválido';
-      } else if (error.message?.includes('weak-password')) {
-        errorMessage = 'Senha muito fraca';
+      // Capturar mensagem de erro do AuthService
+      const errorMsg = error.message || 'Erro ao criar funcionário';
+      let statusCode = 500;
+      
+      // Se a mensagem não contém "Erro ao criar usuário:", é um erro tratado do AuthService
+      // Esses erros devem retornar 400 (Bad Request)
+      if (!errorMsg.includes('Erro ao criar usuário:') && 
+          (errorMsg.includes('email já está cadastrado') || 
+           errorMsg.includes('Email inválido') || 
+           errorMsg.includes('Senha muito fraca'))) {
+        statusCode = 400;
       }
 
-      res.status(500).json({
+      res.status(statusCode).json({
         success: false,
-        error: errorMessage,
-        message: error.message,
+        error: errorMsg,
       });
     }
   }

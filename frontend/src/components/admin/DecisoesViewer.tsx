@@ -88,8 +88,14 @@ export const DecisoesViewer: React.FC = () => {
       // Calcular total de páginas (simplificado)
       setTotalPaginas(Math.ceil(data.length / decisoesPorPagina) || 1);
     } catch (err: any) {
-      console.error('Erro ao carregar decisões:', err);
-      setError(err.message || 'Erro ao carregar decisões');
+      // Se erro 404, significa que a API ainda não foi implementada - não mostrar erro
+      if (err.response?.status === 404 || err.suppressLog) {
+        setDecisoes([]);
+        // Não mostrar mensagem de erro, apenas deixar vazio
+      } else {
+        console.error('Erro ao carregar decisões:', err);
+        setError(err.message || 'Erro ao carregar decisões');
+      }
     } finally {
       setLoading(false);
     }

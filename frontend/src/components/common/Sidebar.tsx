@@ -136,15 +136,15 @@ export const Sidebar: React.FC<SidebarProps> = ({ userRole, isOpen = false, onCl
         <div className="sidebar-footer">
           <div 
             className="version-info"
-            title="Última atualização: 29/01/2026 - Redesign Premium Relatórios (MAJOR)"
+            title="Última atualização: 02/02/2026 - Modal Cliente Wizard Completo"
           >
             {!isCollapsed ? (
               <>
                 <span className="version-label">Versão</span>
-                <span className="version-number">Alpha 15.0.0</span>
+                <span className="version-number">Alpha 0.15.0</span>
               </>
             ) : (
-              <span className="version-number-collapsed">v15.0.0</span>
+              <span className="version-number-collapsed">v0.15.0</span>
             )}
           </div>
         </div>

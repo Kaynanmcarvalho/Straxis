@@ -12,11 +12,10 @@ import TestPage from './pages/TestPage';
 import TrabalhosPageCore from './pages/TrabalhosPageCore';
 import AgendamentosPageCore from './pages/AgendamentosPageCore';
 import FuncionariosPage from './pages/FuncionariosPage';
-import RelatoriosPremiumPage from './pages/RelatoriosPremiumPage';
+import RelatoriosPageCore from './pages/RelatoriosPageCore';
 import ClientesPage from './pages/ClientesPage';
-import AgendaPage from './pages/AgendaPage';
 import UsuariosPage from './pages/UsuariosPage';
-import EmpresasPage from './pages/EmpresasPage';
+import EmpresasPageCore from './pages/EmpresasPageCore';
 import WhatsAppPageCore from './pages/WhatsAppPageCore';
 import IAConfigPageCore from './pages/IAConfigPageCore';
 import LogsPage from './pages/LogsPage';
@@ -43,16 +42,16 @@ function App() {
             <Route path="test" element={<TestPage />} />
             <Route path="trabalhos" element={<TrabalhosPageCore />} />
             <Route path="agendamentos" element={<AgendamentosPageCore />} />
-            <Route path="agenda" element={<AgendaPage />} />
+            <Route path="agenda" element={<AgendamentosPageCore />} />
             <Route path="funcionarios" element={<FuncionariosPage />} />
-            <Route path="relatorios" element={<RelatoriosPremiumPage />} />
+            <Route path="relatorios" element={<RelatoriosPageCore />} />
             <Route path="clientes" element={<ClientesPage />} />
             <Route path="cargos" element={<CargosPage />} />
             <Route path="fechamento/config" element={<ConfiguracaoFechamentoPage />} />
             <Route path="fechamento/historico" element={<HistoricoFechamentosPage />} />
             <Route path="fechamento/:id" element={<FechamentoPage />} />
             <Route path="usuarios" element={<UsuariosPage />} />
-            <Route path="empresas" element={<EmpresasPage />} />
+            <Route path="empresas" element={<EmpresasPageCore />} />
             <Route path="whatsapp2" element={<WhatsAppPageCore />} />
             <Route path="ia-config" element={<IAConfigPageCore />} />
             <Route path="logs" element={<LogsPage />} />

@@ -1037,70 +1037,160 @@
    MODAIS
    ============================================ */
 
+/* ========================================
+   MODAIS - FULL SCREEN OVERLAY
+   ======================================== */
 .modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--space-4);
-  z-index: 1000;
-  animation: fadeIn 0.2s ease;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  background: rgba(0, 0, 0, 0.65) !important;
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 16px !important;
+  z-index: 99999 !important;
+  animation: fadeIn 0.2s ease !important;
+  overflow: hidden !important;
 }
 
 .modal-seletor-equipe,
-.modal-novo-trabalho {
-  width: 100%;
-  max-width: 500px;
-  max-height: 90vh;
-  background: white;
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-03);
-  display: flex;
-  flex-direction: column;
-  animation: slideUp 0.3s ease;
+.modal-novo-trabalho,
+.modal-presenca,
+.modal-historico {
+  position: relative !important;
+  width: 100% !important;
+  max-width: 560px !important;
+  max-height: 90vh !important;
+  background: white !important;
+  border-radius: 28px !important;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.4) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  animation: slideUpBounce 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+  overflow: hidden !important;
+  z-index: 100000 !important;
 }
 
-@keyframes slideUp {
+@keyframes slideUpBounce {
+  0% {
+    opacity: 0;
+    transform: translateY(60px) scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(20px);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
   }
 }
 
 .modal-header {
-  padding: var(--space-5);
-  border-bottom: 1px solid var(--color-border);
+  position: relative !important;
+  padding: 28px 32px !important;
+  border-bottom: 1px solid #f0f0f0 !important;
+  flex-shrink: 0 !important;
+  background: white !important;
+  z-index: 10 !important;
+}
+
+.modal-close-btn {
+  position: absolute !important;
+  top: 24px !important;
+  right: 24px !important;
+  width: 40px !important;
+  height: 40px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: #f5f5f5 !important;
+  border: none !important;
+  border-radius: 50% !important;
+  font-size: 28px !important;
+  line-height: 1 !important;
+  color: #666 !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  padding: 0 !important;
+}
+
+.modal-close-btn:hover {
+  background: #e5e5e5 !important;
+  color: #333 !important;
+  transform: rotate(90deg) !important;
+}
+
+.modal-close-btn:active {
+  transform: rotate(90deg) scale(0.95) !important;
 }
 
 .modal-titulo {
-  font-family: var(--font-display);
-  font-size: var(--text-heading);
-  font-weight: 600;
-  color: var(--color-text-primary);
-  margin: 0;
+  font-family: var(--font-display) !important;
+  font-size: 28px !important;
+  font-weight: 700 !important;
+  color: #1a1a1a !important;
+  margin: 0 !important;
+  letter-spacing: -0.6px !important;
+  line-height: 1.2 !important;
+}
+
+.modal-subtitulo {
+  font-size: 15px !important;
+  color: #666 !important;
+  margin: 6px 0 0 0 !important;
+  font-weight: 500 !important;
 }
 
 .modal-body {
-  padding: var(--space-5);
-  overflow-y: auto;
-  flex: 1;
+  position: relative !important;
+  padding: 28px 32px !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  flex: 1 !important;
+  min-height: 0 !important;
+  background: white !important;
+}
+
+.modal-body::-webkit-scrollbar {
+  width: 10px !important;
+}
+
+.modal-body::-webkit-scrollbar-track {
+  background: #f8f8f8 !important;
+  border-radius: 5px !important;
+}
+
+.modal-body::-webkit-scrollbar-thumb {
+  background: #d0d0d0 !important;
+  border-radius: 5px !important;
+}
+
+.modal-body::-webkit-scrollbar-thumb:hover {
+  background: #b0b0b0 !important;
 }
 
 .modal-footer {
-  padding: var(--space-5);
-  border-top: 1px solid var(--color-border);
-  display: flex;
-  gap: var(--space-3);
+  position: relative !important;
+  padding: 24px 32px !important;
+  border-top: 1px solid #f0f0f0 !important;
+  display: flex !important;
+  gap: 14px !important;
+  flex-shrink: 0 !important;
+  background: #fafafa !important;
+  z-index: 10 !important;
 }
 
 /* Seletor de Equipe */
@@ -1164,57 +1254,101 @@
   color: var(--straxis-green-600);
 }
 
-.btn-modal-fechar {
-  flex: 1;
-  padding: var(--space-4);
-  background: white;
-  color: var(--color-text-secondary);
-  border: 2px solid var(--color-border);
-  border-radius: var(--radius-md);
-  font-family: var(--font-text);
-  font-size: var(--text-body);
-  font-weight: 600;
-  cursor: pointer;
-  transition: all var(--transition-base);
+.btn-modal-fechar,
+.btn-modal-cancelar,
+.btn-modal-salvar,
+.btn-modal-criar {
+  flex: 1 !important;
+  padding: 16px 28px !important;
+  border-radius: 14px !important;
+  font-family: var(--font-display) !important;
+  font-size: 17px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: all 0.25s ease !important;
+  border: 2px solid transparent !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 10px !important;
+  min-height: 56px !important;
+  letter-spacing: 0.2px !important;
 }
 
-.btn-modal-fechar:hover {
-  border-color: var(--color-border-strong);
-  background: var(--color-surface-elevated);
+.btn-modal-fechar,
+.btn-modal-cancelar {
+  background: white !important;
+  color: #666 !important;
+  border-color: #e0e0e0 !important;
+}
+
+.btn-modal-fechar:hover,
+.btn-modal-cancelar:hover {
+  border-color: #b0b0b0 !important;
+  background: #f8f8f8 !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+}
+
+.btn-modal-criar,
+.btn-modal-salvar {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
+  color: white !important;
+  border-color: transparent !important;
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.35) !important;
+}
+
+.btn-modal-criar:hover,
+.btn-modal-salvar:hover {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+  transform: translateY(-3px) !important;
+  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.45) !important;
+}
+
+.btn-modal-criar:active,
+.btn-modal-salvar:active,
+.btn-modal-fechar:active,
+.btn-modal-cancelar:active {
+  transform: translateY(0) !important;
 }
 
 /* Modal Novo Trabalho */
 .form-group {
-  margin-bottom: var(--space-4);
+  margin-bottom: 24px !important;
 }
 
 .form-label {
-  display: block;
-  font-family: var(--font-text);
-  font-size: var(--text-caption);
-  font-weight: 600;
-  color: var(--color-text-secondary);
-  margin-bottom: var(--space-2);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  display: block !important;
+  font-family: var(--font-display) !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  color: #555 !important;
+  margin-bottom: 10px !important;
+  letter-spacing: 0.2px !important;
 }
 
 .form-input {
-  width: 100%;
-  padding: var(--space-3) var(--space-4);
-  background: var(--color-surface-elevated);
-  border: 2px solid var(--color-border);
-  border-radius: var(--radius-md);
-  font-family: var(--font-text);
-  font-size: var(--text-body);
-  color: var(--color-text-primary);
-  transition: all var(--transition-base);
-  outline: none;
+  width: 100% !important;
+  padding: 16px 18px !important;
+  background: #fafafa !important;
+  border: 2px solid #e5e5e5 !important;
+  border-radius: 14px !important;
+  font-family: var(--font-text) !important;
+  font-size: 16px !important;
+  color: #1a1a1a !important;
+  transition: all 0.2s ease !important;
+  outline: none !important;
+  min-height: 56px !important;
 }
 
 .form-input:focus {
-  border-color: var(--straxis-blue-500);
-  background: white;
+  border-color: #3b82f6 !important;
+  background: white !important;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12) !important;
+}
+
+.form-input::placeholder {
+  color: #aaa !important;
 }
 
 .tipo-selector {
@@ -1261,36 +1395,7 @@
 
 .btn-modal-cancelar,
 .btn-modal-criar {
-  flex: 1;
-  padding: var(--space-4);
-  border: none;
-  border-radius: var(--radius-md);
-  font-family: var(--font-text);
-  font-size: var(--text-body);
-  font-weight: 600;
-  cursor: pointer;
-  transition: all var(--transition-base);
-}
-
-.btn-modal-cancelar {
-  background: white;
-  color: var(--color-text-secondary);
-  border: 2px solid var(--color-border);
-}
-
-.btn-modal-cancelar:hover {
-  border-color: var(--color-border-strong);
-  background: var(--color-surface-elevated);
-}
-
-.btn-modal-criar {
-  background: var(--straxis-blue-500);
-  color: white;
-}
-
-.btn-modal-criar:hover {
-  background: var(--straxis-blue-600);
-  transform: translateY(-1px);
+  /* Estilos já definidos acima com os outros botões */
 }
 
 /* ============================================
@@ -1435,20 +1540,7 @@
 }
 
 .btn-modal-salvar {
-  flex: 1;
-  padding: 12px 24px;
-  background: #3b82f6;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.btn-modal-salvar:hover {
-  background: #2563eb;
-  transform: translateY(-1px);
+  /* Estilos já definidos acima com os outros botões */
 }
 
 /* ============================================
@@ -1633,4 +1725,37 @@
   .historico-timestamp {
     min-width: auto;
   }
+}
+
+/* ========================================
+   LOADING STATE
+   ======================================== */
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 1.5rem;
+  text-align: center;
+  min-height: 60vh;
+}
+
+.loading-spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid rgba(59, 130, 246, 0.1);
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-bottom: 1.5rem;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loading-state p {
+  font-size: 1rem;
+  color: var(--color-textSecondary);
+  font-weight: 500;
 }
