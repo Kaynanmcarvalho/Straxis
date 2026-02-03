@@ -332,3 +332,4 @@ node backend/create-admin-user.js # Criar admin
 - **Perguntar quando houver dúvidas** - melhor prevenir que corrigir
 - **Kiro detecta automaticamente** data/hora e desenvolvedor logado
 - **Atualizar versão no Sidebar** é OBRIGATÓRIO antes de push
+NAO CRIE .MD pra nada apenas README.md !

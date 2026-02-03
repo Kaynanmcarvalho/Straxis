@@ -383,11 +383,13 @@ const WhatsAppPageCore: React.FC = () => {
           background: 'rgba(0,0,0,0.4)',
           backdropFilter: 'blur(20px)',
           display: 'flex',
-          alignItems: 'center',
+          alignItems: 'flex-start',
           justifyContent: 'center',
           zIndex: 9999,
           padding: '24px',
-          animation: 'fadeIn 0.3s ease'
+          animation: 'fadeIn 0.3s ease',
+          overflowY: 'auto',
+          overflowX: 'hidden'
         }}>
           <div style={{
             background: '#ffffff',
@@ -396,7 +398,9 @@ const WhatsAppPageCore: React.FC = () => {
             maxWidth: '400px',
             padding: '40px',
             boxShadow: '0 20px 60px rgba(0,0,0,0.15)',
-            animation: 'slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1)'
+            animation: 'slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+            margin: '2rem auto',
+            maxHeight: 'none'
           }}>
             <div style={{ 
               display: 'flex', 

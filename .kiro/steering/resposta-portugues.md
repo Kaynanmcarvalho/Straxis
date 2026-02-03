@@ -18,3 +18,4 @@ inclusion: always
 - Ser conciso nas respostas
 - Focar em ação, não em explicação
 - Confirmar apenas quando solicitado explicitamente
+NAO CRIE .MD pra nada apenas README.md !

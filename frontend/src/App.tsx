@@ -52,7 +52,7 @@ function App() {
             <Route path="fechamento/:id" element={<FechamentoPage />} />
             <Route path="usuarios" element={<UsuariosPage />} />
             <Route path="empresas" element={<EmpresasPageCore />} />
-            <Route path="whatsapp2" element={<WhatsAppPageCore />} />
+            <Route path="whatsapp" element={<WhatsAppPageCore />} />
             <Route path="ia-config" element={<IAConfigPageCore />} />
             <Route path="logs" element={<LogsPage />} />
           </Route>

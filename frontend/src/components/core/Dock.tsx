@@ -29,7 +29,7 @@ const dockItems: DockItem[] = [
   { id: 'funcionarios', label: 'Equipe', icon: Users, path: '/funcionarios' },
   { id: 'relatorios', label: 'Relatórios', icon: FileText, path: '/relatorios' },
   { id: 'clientes', label: 'Clientes', icon: UserCircle, path: '/clientes' },
-  { id: 'whatsapp', label: 'WhatsApp', icon: MessageSquare, path: '/whatsapp2' },
+  { id: 'whatsapp', label: 'WhatsApp', icon: MessageSquare, path: '/whatsapp' },
   { id: 'ia', label: 'IA', icon: Brain, path: '/ia-config' },
   { id: 'empresas', label: 'Empresas', icon: Building2, path: '/empresas' },
   { id: 'logs', label: 'Logs', icon: ScrollText, path: '/logs' },

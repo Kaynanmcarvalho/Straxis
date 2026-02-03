@@ -136,15 +136,15 @@ export const Sidebar: React.FC<SidebarProps> = ({ userRole, isOpen = false, onCl
         <div className="sidebar-footer">
           <div 
             className="version-info"
-            title="Última atualização: 03/02/2026 - FIX: Backend crash e modal scroll"
+            title="Última atualização: 03/02/2026 - CHANGE: Rota whatsapp2 → whatsapp"
           >
             {!isCollapsed ? (
               <>
                 <span className="version-label">Versão</span>
-                <span className="version-number">Alpha 0.30.8</span>
+                <span className="version-number">Alpha 0.31.2</span>
               </>
             ) : (
-              <span className="version-number-collapsed">v0.30.8</span>
+              <span className="version-number-collapsed">v0.31.2</span>
             )}
           </div>
         </div>
