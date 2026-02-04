@@ -2,7 +2,9 @@ import { apiService } from './api.service';
 
 export interface IAConfig {
   enabled: boolean;
-  provider: 'openai' | 'gemini' | 'openrouter' | 'kimi';
+  provider: 'openai' | 'gemini' | 'openrouter' | 'kimi' | 'local';
+  localProvider?: 'lmstudio' | 'ollama' | 'huggingface';
+  localServerUrl?: string;
   model: string;
   autoResponse: boolean;
   costLimit: number;
@@ -58,3 +60,38 @@ class IAService {
 }
 
 export const iaService = new IAService();
+
+
+// Função para buscar modelos disponíveis de IA local
+export async function fetchLocalModels(
+  localProvider: 'lmstudio' | 'ollama' | 'huggingface',
+  serverUrl?: string
+): Promise<any[]> {
+  try {
+    const response = await apiService.post<{ data: any[] }>('/ia/local/models', {
+      provider: localProvider,
+      serverUrl,
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Erro ao buscar modelos locais:', error);
+    return [];
+  }
+}
+
+// Função para verificar saúde do servidor local
+export async function checkLocalServerHealth(
+  localProvider: 'lmstudio' | 'ollama',
+  serverUrl?: string
+): Promise<boolean> {
+  try {
+    const response = await apiService.post<{ data: { healthy: boolean } }>('/ia/local/health', {
+      provider: localProvider,
+      serverUrl,
+    });
+    return response.data.healthy;
+  } catch (error) {
+    console.error('Erro ao verificar servidor local:', error);
+    return false;
+  }
+}

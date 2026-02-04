@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Brain, Zap, DollarSign, Shield, Settings, Loader, ChevronDown } from 'lucide-react';
+import { Brain, Zap, DollarSign, Shield, Settings, Loader, ChevronDown, Server, RefreshCw, CheckCircle, XCircle } from 'lucide-react';
 import { CoreCard, CoreCardHeader, CoreCardTitle, CoreCardDescription } from '../components/core/CoreCard';
 import { Dock } from '../components/core/Dock';
-import { iaService, IAConfig, IAUsage } from '../services/ia.service';
+import { iaService, IAConfig, IAUsage, fetchLocalModels, checkLocalServerHealth } from '../services/ia.service';
 import { useToast } from '../hooks/useToast';
 import './IAConfigPageCore.css';
 
@@ -32,12 +32,36 @@ const PROVIDER_MODELS = {
     { id: 'moonshot-k2', name: 'Kimi K2', description: 'Versão anterior estável', category: 'medium' },
     { id: 'moonshot-v1-128k', name: 'Kimi 128K', description: 'Contexto longo econômico', category: 'cheap' },
   ],
+  local: [], // Será preenchido dinamicamente
+};
+
+const LOCAL_PROVIDERS = {
+  lmstudio: {
+    name: 'LM Studio',
+    description: 'Servidor local LM Studio',
+    defaultUrl: 'http://localhost:1234',
+    icon: '🖥️',
+  },
+  ollama: {
+    name: 'Ollama',
+    description: 'Servidor local Ollama',
+    defaultUrl: 'http://localhost:11434',
+    icon: '🦙',
+  },
+  huggingface: {
+    name: 'Hugging Face',
+    description: 'Inference API gratuita',
+    defaultUrl: 'https://api-inference.huggingface.co',
+    icon: '🤗',
+  },
 };
 
 const IAConfigPageCore: React.FC = () => {
   const [config, setConfig] = useState<IAConfig>({
     enabled: true,
     provider: 'openai',
+    localProvider: 'lmstudio',
+    localServerUrl: '',
     model: 'gpt-4.1-mini',
     autoResponse: true,
     costLimit: 100,
@@ -54,6 +78,10 @@ const IAConfigPageCore: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showModelSelector, setShowModelSelector] = useState(false);
+  const [showLocalConfig, setShowLocalConfig] = useState(false);
+  const [localModels, setLocalModels] = useState<any[]>([]);
+  const [loadingModels, setLoadingModels] = useState(false);
+  const [serverHealthy, setServerHealthy] = useState<boolean | null>(null);
   const toast = useToast();
 
   // Carregar configurações e uso do Firebase
@@ -106,9 +134,17 @@ const IAConfigPageCore: React.FC = () => {
     }
   };
 
-  const updateProvider = async (provider: 'openai' | 'gemini' | 'openrouter' | 'kimi') => {
+  const updateProvider = async (provider: 'openai' | 'gemini' | 'openrouter' | 'kimi' | 'local') => {
     try {
       setSaving(true);
+      
+      if (provider === 'local') {
+        // Abrir configuração de IA local
+        setShowLocalConfig(true);
+        setSaving(false);
+        return;
+      }
+      
       // Selecionar modelo padrão do provedor
       const defaultModel = PROVIDER_MODELS[provider][1]?.id || PROVIDER_MODELS[provider][0]?.id;
       await iaService.updateConfig({ provider, model: defaultModel });
@@ -122,6 +158,115 @@ const IAConfigPageCore: React.FC = () => {
       toast.error({
         title: 'Erro',
         message: 'Erro ao atualizar provedor',
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const updateLocalProvider = async (localProvider: 'lmstudio' | 'ollama' | 'huggingface') => {
+    try {
+      setSaving(true);
+      setConfig(prev => ({ ...prev, localProvider }));
+      
+      // Buscar modelos disponíveis
+      await loadLocalModels(localProvider, config.localServerUrl);
+      
+      toast.success({
+        title: 'Sucesso',
+        message: `Provedor local alterado para ${LOCAL_PROVIDERS[localProvider].name}`,
+      });
+    } catch (error) {
+      console.error('Erro ao atualizar provedor local:', error);
+      toast.error({
+        title: 'Erro',
+        message: 'Erro ao atualizar provedor local',
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const loadLocalModels = async (localProvider: 'lmstudio' | 'ollama' | 'huggingface', serverUrl?: string) => {
+    try {
+      setLoadingModels(true);
+      const models = await fetchLocalModels(localProvider, serverUrl);
+      setLocalModels(models);
+      PROVIDER_MODELS.local = models.map((m: any) => ({
+        id: m.id || m.name,
+        name: m.name || m.id,
+        description: m.description || 'Modelo local',
+        category: 'medium',
+      }));
+    } catch (error) {
+      console.error('Erro ao carregar modelos locais:', error);
+      setLocalModels([]);
+    } finally {
+      setLoadingModels(false);
+    }
+  };
+
+  const checkServerHealth = async () => {
+    if (!config.localProvider || config.localProvider === 'huggingface') {
+      setServerHealthy(true);
+      return;
+    }
+    
+    try {
+      const healthy = await checkLocalServerHealth(config.localProvider, config.localServerUrl);
+      setServerHealthy(healthy);
+      
+      if (healthy) {
+        toast.success({
+          title: 'Servidor Online',
+          message: `${LOCAL_PROVIDERS[config.localProvider].name} está respondendo`,
+        });
+        // Carregar modelos automaticamente
+        await loadLocalModels(config.localProvider, config.localServerUrl);
+      } else {
+        toast.error({
+          title: 'Servidor Offline',
+          message: `Não foi possível conectar ao ${LOCAL_PROVIDERS[config.localProvider].name}`,
+        });
+      }
+    } catch (error) {
+      setServerHealthy(false);
+      toast.error({
+        title: 'Erro',
+        message: 'Erro ao verificar servidor',
+      });
+    }
+  };
+
+  const saveLocalConfig = async () => {
+    try {
+      setSaving(true);
+      
+      if (!config.model) {
+        toast.warning({
+          title: 'Atenção',
+          message: 'Selecione um modelo antes de salvar',
+        });
+        return;
+      }
+      
+      await iaService.updateConfig({
+        provider: 'local',
+        localProvider: config.localProvider,
+        localServerUrl: config.localServerUrl,
+        model: config.model,
+      });
+      
+      setShowLocalConfig(false);
+      toast.success({
+        title: 'Sucesso',
+        message: 'Configuração de IA local salva',
+      });
+    } catch (error) {
+      console.error('Erro ao salvar config local:', error);
+      toast.error({
+        title: 'Erro',
+        message: 'Erro ao salvar configuração',
       });
     } finally {
       setSaving(false);
@@ -171,11 +316,16 @@ const IAConfigPageCore: React.FC = () => {
       gemini: 'Google Gemini',
       openrouter: 'OpenRouter',
       kimi: 'Kimi (Moonshot AI)',
+      local: 'IA Local (Beta)',
     };
     return names[provider] || provider;
   };
 
   const getCurrentModel = () => {
+    if (config.provider === 'local') {
+      const models = PROVIDER_MODELS.local;
+      return models.find(m => m.id === config.model) || models[0] || { id: '', name: 'Nenhum modelo selecionado', description: 'Configure o servidor local' };
+    }
     const models = PROVIDER_MODELS[config.provider];
     return models.find(m => m.id === config.model) || models[0];
   };
@@ -333,6 +483,30 @@ const IAConfigPageCore: React.FC = () => {
                   {config.provider === 'kimi' && <div className="check-mark" />}
                 </div>
               </button>
+
+              <button
+                className={`provider-option ${config.provider === 'local' ? 'selected' : ''}`}
+                onClick={() => updateProvider('local')}
+                disabled={saving}
+              >
+                <div className="provider-content">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span className="provider-name">IA Local</span>
+                    <span style={{ 
+                      fontSize: '10px', 
+                      padding: '2px 6px', 
+                      background: 'rgba(59, 130, 246, 0.1)', 
+                      color: 'var(--straxis-blue-600)',
+                      borderRadius: '4px',
+                      fontWeight: 600
+                    }}>BETA v1</span>
+                  </div>
+                  <span className="provider-description">LM Studio, Ollama, Hugging Face</span>
+                </div>
+                <div className="provider-check">
+                  {config.provider === 'local' && <div className="check-mark" />}
+                </div>
+              </button>
             </div>
           </CoreCard>
 
@@ -459,6 +633,129 @@ const IAConfigPageCore: React.FC = () => {
           </CoreCard>
         </div>
       </div>
+
+      {/* Modal de Configuração de IA Local */}
+      {showLocalConfig && (
+        <div className="modal-overlay" onClick={() => setShowLocalConfig(false)}>
+          <div className="modal-content local-ai-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2 className="modal-title">
+                <Server style={{ width: '24px', height: '24px' }} />
+                Configurar IA Local
+                <span className="beta-badge">BETA v1</span>
+              </h2>
+              <button className="modal-close" onClick={() => setShowLocalConfig(false)}>
+                ×
+              </button>
+            </div>
+
+            <div className="modal-body">
+              {/* Seleção de Provedor Local */}
+              <div className="form-section">
+                <label className="form-label">Provedor Local</label>
+                <div className="local-provider-options">
+                  {Object.entries(LOCAL_PROVIDERS).map(([key, provider]) => (
+                    <button
+                      key={key}
+                      className={`local-provider-option ${config.localProvider === key ? 'selected' : ''}`}
+                      onClick={() => updateLocalProvider(key as any)}
+                      disabled={saving}
+                    >
+                      <span className="provider-icon">{provider.icon}</span>
+                      <div className="provider-info">
+                        <span className="provider-name">{provider.name}</span>
+                        <span className="provider-description">{provider.description}</span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* URL do Servidor (apenas para LM Studio e Ollama) */}
+              {config.localProvider && config.localProvider !== 'huggingface' && (
+                <div className="form-section">
+                  <label className="form-label">URL do Servidor</label>
+                  <div className="server-url-input">
+                    <input
+                      type="text"
+                      value={config.localServerUrl || LOCAL_PROVIDERS[config.localProvider].defaultUrl}
+                      onChange={(e) => setConfig(prev => ({ ...prev, localServerUrl: e.target.value }))}
+                      placeholder={LOCAL_PROVIDERS[config.localProvider].defaultUrl}
+                      className="form-input"
+                    />
+                    <button
+                      className="check-health-button"
+                      onClick={checkServerHealth}
+                      disabled={loadingModels}
+                    >
+                      {loadingModels ? (
+                        <Loader className="animate-spin" style={{ width: '16px', height: '16px' }} />
+                      ) : (
+                        <RefreshCw style={{ width: '16px', height: '16px' }} />
+                      )}
+                      Testar
+                    </button>
+                  </div>
+                  {serverHealthy !== null && (
+                    <div className={`server-status ${serverHealthy ? 'online' : 'offline'}`}>
+                      {serverHealthy ? (
+                        <>
+                          <CheckCircle style={{ width: '16px', height: '16px' }} />
+                          Servidor online
+                        </>
+                      ) : (
+                        <>
+                          <XCircle style={{ width: '16px', height: '16px' }} />
+                          Servidor offline
+                        </>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Lista de Modelos */}
+              {localModels.length > 0 && (
+                <div className="form-section">
+                  <label className="form-label">Modelo Disponível</label>
+                  <div className="local-models-list">
+                    {localModels.map((model: any) => (
+                      <button
+                        key={model.id || model.name}
+                        className={`local-model-option ${config.model === (model.id || model.name) ? 'selected' : ''}`}
+                        onClick={() => setConfig(prev => ({ ...prev, model: model.id || model.name }))}
+                      >
+                        <span className="model-name">{model.name || model.id}</span>
+                        {model.size && <span className="model-size">{model.size}</span>}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {loadingModels && (
+                <div className="loading-models">
+                  <Loader className="animate-spin" style={{ width: '24px', height: '24px' }} />
+                  <span>Carregando modelos...</span>
+                </div>
+              )}
+            </div>
+
+            <div className="modal-footer">
+              <button className="button-secondary" onClick={() => setShowLocalConfig(false)}>
+                Cancelar
+              </button>
+              <button 
+                className="button-primary" 
+                onClick={saveLocalConfig}
+                disabled={saving || !config.model}
+              >
+                {saving ? 'Salvando...' : 'Salvar Configuração'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <Dock />
     </>
