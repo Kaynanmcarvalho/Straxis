@@ -190,15 +190,30 @@ const FuncionariosPageCore: React.FC = () => {
   const carregarFuncionarios = async () => {
     try {
       setLoadingInicial(true);
-      const funcionariosRef = collection(db, `companies/${companyId}/funcionarios`);
-      const q = query(funcionariosRef, where('deletedAt', '==', null));
-      const snapshot = await getDocs(q);
+      console.log('🔍 [FUNCIONARIOS] Iniciando carregamento via API...');
+      
+      // Usar API service ao invés de Firebase direto
+      const { funcionarioService } = await import('../services/funcionario.service');
+      const data = await funcionarioService.list();
+      
+      console.log('📦 [FUNCIONARIOS] Dados recebidos da API:', data);
+      
+      if (!data || !Array.isArray(data)) {
+        console.error('❌ [FUNCIONARIOS] Dados inválidos recebidos:', data);
+        setFuncionarios([]);
+        return;
+      }
+      
+      if (data.length === 0) {
+        console.warn('⚠️ [FUNCIONARIOS] Nenhum funcionário retornado pela API');
+        setFuncionarios([]);
+        return;
+      }
       
       const funcionariosData: Funcionario[] = [];
       
-      for (const docSnap of snapshot.docs) {
-        const data = docSnap.data();
-        const funcionarioId = docSnap.id;
+      for (const func of data) {
+        const funcionarioId = func.id;
         
         // Carregar pontos de hoje
         const pontosHoje = await carregarPontosHoje(funcionarioId);
@@ -208,28 +223,30 @@ const FuncionariosPageCore: React.FC = () => {
         const status = calcularStatus(pontosHoje);
         
         // Verificar se foi pago hoje
-        const pagoDia = data.pagoDia === new Date().toISOString().split('T')[0];
+        const pagoDia = func.pagoDia === new Date().toISOString().split('T')[0];
         
         funcionariosData.push({
           id: funcionarioId,
-          nome: data.nome,
-          funcao: data.funcao || 'Operador',
+          nome: func.nome,
+          funcao: func.funcao || 'Operador',
           status,
           ultimoPonto,
           pontosHoje,
-          diariaBase: data.diariaBase || 150,
+          diariaBase: func.diariaBase || 150,
           pagoDia,
           companyId,
         });
       }
       
+      console.log('✅ [FUNCIONARIOS] Funcionários carregados:', funcionariosData.length);
       setFuncionarios(funcionariosData);
     } catch (error) {
-      console.error('Erro ao carregar funcionários:', error);
+      console.error('❌ [FUNCIONARIOS] Erro ao carregar:', error);
       toast.error({
         title: 'Erro',
         message: 'Erro ao carregar funcionários. Verifique a conexão.',
       });
+      setFuncionarios([]);
     } finally {
       setLoadingInicial(false);
     }
