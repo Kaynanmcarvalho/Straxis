@@ -136,15 +136,15 @@ export const Sidebar: React.FC<SidebarProps> = ({ userRole, isOpen = false, onCl
         <div className="sidebar-footer">
           <div 
             className="version-info"
-            title="Última atualização: 04/02/2026 - FIX: WhatsApp limite 3 QR codes + Logs multi-tenant"
+            title="Última atualização: 04/02/2026 - WhatsApp Anti-Detecção: Browser realista + Delays humanos + Simulação digitação"
           >
             {!isCollapsed ? (
               <>
                 <span className="version-label">Versão</span>
-                <span className="version-number">Beta 1.33.7</span>
+                <span className="version-number">Beta 1.30.9</span>
               </>
             ) : (
-              <span className="version-number-collapsed">v1.33.7</span>
+              <span className="version-number-collapsed">v1.30.9</span>
             )}
           </div>
         </div>

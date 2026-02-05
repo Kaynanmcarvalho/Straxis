@@ -41,6 +41,12 @@ router.post('/disconnect', WhatsAppController.disconnect);
 router.get('/status', WhatsAppController.getStatus);
 
 /**
+ * GET /api/whatsapp/cooldown
+ * Verifica status do cooldown
+ */
+router.get('/cooldown', WhatsAppController.getCooldownStatus);
+
+/**
  * POST /api/whatsapp/send
  * Envia mensagem
  * Rate limits: diário, por minuto e cooldown

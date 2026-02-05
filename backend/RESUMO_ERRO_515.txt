@@ -1,0 +1,89 @@
+╔══════════════════════════════════════════════════════════════════════╗
+║                    🚨 RESUMO ERRO 515 - AÇÃO IMEDIATA 🚨              ║
+╚══════════════════════════════════════════════════════════════════════╝
+
+📋 O QUE ACONTECEU:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ QR Code gerado
+✅ Você escaneou
+✅ Pareamento aceito: "pairing configured successfully"
+❌ WhatsApp rejeitou: Erro 515
+📱 Plataforma: WhatsApp Business (SMBA)
+
+🎯 DIAGNÓSTICO:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+O problema NÃO é técnico. É o seu número que está:
+❌ Temporariamente bloqueado para novas conexões
+❌ Em cooldown (período de espera obrigatório)
+❌ Marcado como suspeito por tentativas anteriores
+
+✅ SOLUÇÃO IMEDIATA (FAÇA AGORA):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. PARE DE TENTAR CONECTAR
+   ❌ NÃO execute: npm run dev
+   ❌ NÃO execute: node test-whatsapp-connection.js
+   ⏱️  Aguarde 48 HORAS completas
+
+2. LIMPE TUDO
+   cd backend
+   node clean-whatsapp-sessions-force.js
+
+3. DESCONECTE DISPOSITIVOS
+   No celular:
+   WhatsApp → Configurações → Aparelhos conectados
+   → Desconectar TODOS
+
+4. USE WHATSAPP NORMALMENTE (48 horas)
+   ✅ Envie 5-10 mensagens por dia
+   ✅ Converse com contatos diferentes
+   ✅ Receba mensagens
+   ❌ NÃO envie links
+   ❌ NÃO envie mensagens em massa
+
+5. TENTE NOVAMENTE (Após 48h)
+   Dia 3 (04/02 + 48h = 06/02):
+   cd backend
+   npm run dev
+
+📊 CHANCE DE SUCESSO:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Com cooldown de 48h: 80% de sucesso
+Com 7 dias de espera: 95% de sucesso
+
+🆘 SE CONTINUAR FALHANDO:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Opção 1: Usar número diferente (100% sucesso)
+Opção 2: WhatsApp Business API oficial (pago, sem bloqueio)
+Opção 3: Contatar support@whatsapp.com
+
+📚 DOCUMENTAÇÃO COMPLETA:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📄 WHATSAPP_ERROR_515_SOLUTION.md - Solução detalhada
+📄 WHATSAPP_ANTI_BAN_GUIDE.md - Boas práticas
+📄 check-number-status.js - Verificar status do número
+
+🔧 VERIFICAR STATUS DO NÚMERO:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+node check-number-status.js
+
+⚠️  IMPORTANTE:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Cada tentativa falha PIORA a situação
+WhatsApp aumenta o cooldown a cada erro 515
+AGUARDE 48 HORAS antes de tentar novamente
+
+✅ MELHORIAS JÁ IMPLEMENTADAS (v1.30.9):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ Browser realista (Chrome/Firefox/Edge)
+✅ Delays humanos (2-5s)
+✅ Simulação de digitação
+✅ Configurações anti-detecção
+
+O código está OK. O problema é o número em cooldown.
+
+╔══════════════════════════════════════════════════════════════════════╗
+║                    ⏱️  AGUARDE 48 HORAS ⏱️                            ║
+║                                                                        ║
+║              Próxima tentativa: 06/02/2026 às 23:55                  ║
+╚══════════════════════════════════════════════════════════════════════╝

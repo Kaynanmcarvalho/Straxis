@@ -22,6 +22,9 @@ router.post(
   iaController.query.bind(iaController)
 );
 
+// GET /api/ia/config - Obter configuração de IA
+router.get('/config', iaController.getConfig.bind(iaController));
+
 // GET /api/ia/usage - Obter uso de IA da empresa
 router.get('/usage', iaController.getUsage.bind(iaController));
 
@@ -36,5 +39,11 @@ router.put('/config', iaController.updateConfig.bind(iaController));
 
 // PUT /api/ia/prompt - Atualizar prompt personalizado
 router.put('/prompt', iaController.updatePrompt.bind(iaController));
+
+// POST /api/ia/local/models - Buscar modelos disponíveis de IA local
+router.post('/local/models', iaController.getLocalModels.bind(iaController));
+
+// POST /api/ia/local/health - Verificar saúde do servidor local
+router.post('/local/health', iaController.checkLocalHealth.bind(iaController));
 
 export default router;

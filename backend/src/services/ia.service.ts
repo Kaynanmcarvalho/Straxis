@@ -1,5 +1,6 @@
 import { openaiService } from './openai.service';
 import { geminiService } from './gemini.service';
+import { localAIService } from './localAI.service';
 import admin from 'firebase-admin';
 import { retryWithBackoff, isRetryableError } from '../utils/retry.util';
 import { notificationService } from './notification.service';
@@ -9,7 +10,7 @@ interface IAQueryResult {
   response: string;
   tokensUsed: number;
   estimatedCostCentavos: number;
-  provider: 'openai' | 'gemini';
+  provider: 'openai' | 'gemini' | 'local';
   model: string;
   modelCategory: 'cheap' | 'medium' | 'expensive';
 }
@@ -39,8 +40,16 @@ class IAService {
         throw new Error('IA is not enabled for this company');
       }
 
-      const provider = config.iaProvider as 'openai' | 'gemini';
+      const provider = config.iaProvider as 'openai' | 'gemini' | 'local';
       const model = config.iaModel || (provider === 'openai' ? 'gpt-3.5-turbo' : 'gemini-pro');
+
+      // Log de início
+      console.log(`[IA] 🤖 Processando query com ${provider.toUpperCase()}`);
+      console.log(`[IA] 📦 Modelo: ${model}`);
+      if (provider === 'local') {
+        console.log(`[IA] 🖥️  Provedor Local: ${config.iaLocalProvider || 'lmstudio'}`);
+        console.log(`[IA] 🌐 URL: ${config.iaLocalServerUrl || 'padrão'}`);
+      }
 
       // Buscar dados do Firestore para contexto
       const context = await this.buildContext(companyId, config.iaPrompt);
@@ -49,7 +58,28 @@ class IAService {
       let result;
       try {
         result = await retryWithBackoff(async () => {
-          if (provider === 'openai') {
+          if (provider === 'local') {
+            console.log(`[IA] 🚀 Enviando query para IA local...`);
+            const localProvider = config.iaLocalProvider || 'lmstudio';
+            const serverUrl = config.iaLocalServerUrl;
+            
+            const localResult = await localAIService.processQuery(
+              message,
+              context,
+              localProvider,
+              model,
+              serverUrl
+            );
+            
+            console.log(`[IA] ✅ Resposta recebida da IA local`);
+            console.log(`[IA] 📊 Tokens: ${localResult.tokensUsed}`);
+            
+            return {
+              response: localResult.response,
+              tokensUsed: localResult.tokensUsed,
+              estimatedCostCentavos: 0, // Local é grátis
+            };
+          } else if (provider === 'openai') {
             const apiKey = process.env.OPENAI_API_KEY;
             if (!apiKey) throw new Error('OpenAI API key not configured');
             
@@ -78,9 +108,14 @@ class IAService {
     const validatedResponse = await this.validateResponse(result.response, companyId);
 
     // Obter categoria do modelo
-    const modelCategory = provider === 'openai' 
-      ? openaiService.getModelCategory(model)
-      : geminiService.getModelCategory(model);
+    let modelCategory: 'cheap' | 'medium' | 'expensive' = 'medium';
+    if (provider === 'openai') {
+      modelCategory = openaiService.getModelCategory(model);
+    } else if (provider === 'gemini') {
+      modelCategory = geminiService.getModelCategory(model);
+    } else if (provider === 'local') {
+      modelCategory = 'cheap'; // Local é sempre "cheap" (grátis)
+    }
 
     // Registrar uso de IA
     await this.recordUsage({
@@ -103,6 +138,9 @@ class IAService {
       estimatedCostCentavos: result.estimatedCostCentavos,
       query: message
     });
+
+    console.log(`[IA] ✅ Query processada com sucesso`);
+    console.log(`[IA] 💰 Custo: R$ ${(result.estimatedCostCentavos / 100).toFixed(4)}`);
 
     // Verificar limite de custo
     await this.checkCostLimit(companyId);

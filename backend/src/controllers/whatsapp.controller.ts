@@ -37,6 +37,29 @@ export class WhatsAppController {
         message: 'Conexão iniciada. Escaneie o QR Code no WhatsApp.',
       });
     } catch (error: any) {
+      // Verificar se é erro de cooldown
+      if (error.message.includes('Cooldown ativo')) {
+        const hoursMatch = error.message.match(/(\d+) horas/);
+        const remainingHours = hoursMatch ? parseInt(hoursMatch[1]) : 48;
+        
+        res.status(429).json({
+          success: false,
+          error: 'COOLDOWN_ACTIVE',
+          code: 'WHATSAPP_COOLDOWN',
+          message: 'Número em cooldown por erro 515',
+          data: {
+            remainingHours,
+            reason: 'Erro 515 - Número temporariamente bloqueado pelo WhatsApp',
+            actions: [
+              'Desconecte TODOS os dispositivos no celular',
+              'Use WhatsApp normalmente (envie/receba mensagens)',
+              `Aguarde ${remainingHours} horas antes de tentar novamente`,
+            ],
+          },
+        });
+        return;
+      }
+
       res.status(500).json({
         success: false,
         error: 'Erro ao conectar WhatsApp',
@@ -81,6 +104,37 @@ export class WhatsAppController {
       res.status(500).json({
         success: false,
         error: 'Erro ao desconectar WhatsApp',
+        message: error.message,
+      });
+    }
+  }
+
+  /**
+   * GET /whatsapp/cooldown - Verifica status do cooldown
+   */
+  static async getCooldownStatus(req: Request, res: Response): Promise<void> {
+    try {
+      const companyId = req.auth?.companyId;
+
+      if (!companyId) {
+        res.status(400).json({
+          success: false,
+          error: 'CompanyId é obrigatório',
+          code: 2001,
+        });
+        return;
+      }
+
+      const cooldownStatus = await WhatsAppService.getCooldownStatus();
+
+      res.json({
+        success: true,
+        data: cooldownStatus,
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        success: false,
+        error: 'Erro ao verificar cooldown',
         message: error.message,
       });
     }

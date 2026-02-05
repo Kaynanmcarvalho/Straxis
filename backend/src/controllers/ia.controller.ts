@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { iaService } from '../services/ia.service';
+import { localAIService } from '../services/localAI.service';
 import admin from 'firebase-admin';
 
 export class IAController {
@@ -38,6 +39,40 @@ export class IAController {
           message: error.message 
         });
       }
+    }
+  }
+
+  async getConfig(req: Request, res: Response) {
+    try {
+      const { companyId } = (req as any).auth;
+
+      const companyDoc = await admin.firestore()
+        .collection('companies')
+        .doc(companyId)
+        .get();
+
+      if (!companyDoc.exists) {
+        return res.status(404).json({ error: 'Company not found' });
+      }
+
+      const companyData = companyDoc.data();
+      const config = companyData?.config || {};
+
+      res.json({
+        data: {
+          enabled: config.iaEnabled ?? true,
+          provider: config.iaProvider || 'openai',
+          localProvider: config.iaLocalProvider || 'lmstudio',
+          localServerUrl: config.iaLocalServerUrl || '',
+          model: config.iaModel || 'gpt-4.1-mini',
+          autoResponse: config.iaAutoResponse ?? true,
+          costLimit: config.iaCostLimit || 100,
+          antiHallucination: config.iaAntiHallucination ?? true,
+        }
+      });
+    } catch (error: any) {
+      console.error('Error getting IA config:', error);
+      res.status(500).json({ error: 'Failed to get IA config', message: error.message });
     }
   }
 
@@ -107,7 +142,16 @@ export class IAController {
   async updateConfig(req: Request, res: Response) {
     try {
       const { companyId, role } = (req as any).auth;
-      const { iaEnabled, iaProvider, iaModel } = req.body;
+      const { 
+        enabled, 
+        provider, 
+        localProvider,
+        localServerUrl,
+        model,
+        autoResponse,
+        costLimit,
+        antiHallucination 
+      } = req.body;
 
       // Apenas Dono_Empresa pode atualizar config
       if (role !== 'owner' && role !== 'admin_platform') {
@@ -115,9 +159,19 @@ export class IAController {
       }
 
       const updates: any = {};
-      if (iaEnabled !== undefined) updates['config.iaEnabled'] = iaEnabled;
-      if (iaProvider) updates['config.iaProvider'] = iaProvider;
-      if (iaModel) updates['config.iaModel'] = iaModel;
+      if (enabled !== undefined) updates['config.iaEnabled'] = enabled;
+      if (provider !== undefined) updates['config.iaProvider'] = provider;
+      if (localProvider !== undefined) updates['config.iaLocalProvider'] = localProvider;
+      if (localServerUrl !== undefined) updates['config.iaLocalServerUrl'] = localServerUrl;
+      if (model !== undefined) updates['config.iaModel'] = model;
+      if (autoResponse !== undefined) updates['config.iaAutoResponse'] = autoResponse;
+      if (costLimit !== undefined) updates['config.iaCostLimit'] = costLimit;
+      if (antiHallucination !== undefined) updates['config.iaAntiHallucination'] = antiHallucination;
+
+      // Verificar se há algo para atualizar
+      if (Object.keys(updates).length === 0) {
+        return res.status(400).json({ error: 'No fields to update' });
+      }
 
       await admin.firestore()
         .collection('companies')
@@ -152,6 +206,38 @@ export class IAController {
     } catch (error: any) {
       console.error('Error updating IA prompt:', error);
       res.status(500).json({ error: 'Failed to update IA prompt', message: error.message });
+    }
+  }
+
+  async getLocalModels(req: Request, res: Response) {
+    try {
+      const { provider, serverUrl } = req.body;
+
+      if (!provider || !['lmstudio', 'ollama', 'huggingface'].includes(provider)) {
+        return res.status(400).json({ error: 'Invalid provider' });
+      }
+
+      const models = await localAIService.getAvailableModels(provider, serverUrl);
+      res.json({ data: models });
+    } catch (error: any) {
+      console.error('Error fetching local models:', error);
+      res.status(500).json({ error: 'Failed to fetch local models', message: error.message });
+    }
+  }
+
+  async checkLocalHealth(req: Request, res: Response) {
+    try {
+      const { provider, serverUrl } = req.body;
+
+      if (!provider || !['lmstudio', 'ollama'].includes(provider)) {
+        return res.status(400).json({ error: 'Invalid provider' });
+      }
+
+      const healthy = await localAIService.checkHealth(provider, serverUrl);
+      res.json({ data: { healthy } });
+    } catch (error: any) {
+      console.error('Error checking local server health:', error);
+      res.status(500).json({ error: 'Failed to check server health', message: error.message });
     }
   }
 }

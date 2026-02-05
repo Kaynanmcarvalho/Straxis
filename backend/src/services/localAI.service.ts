@@ -28,8 +28,11 @@ class LocalAIService {
   ): Promise<LocalAIQueryResult> {
     const client = lmStudioClient(serverUrl);
     
+    console.log(`[LM Studio] 🖥️  Conectando ao servidor: ${serverUrl || 'http://localhost:1234'}`);
+    console.log(`[LM Studio] 📦 Modelo: ${model}`);
+    
     try {
-      const response = await client.post('/v1/chat/completions', {
+      const payload = {
         model: model,
         messages: [
           { role: 'system', content: context },
@@ -37,10 +40,26 @@ class LocalAIService {
         ],
         temperature: 0.7,
         max_tokens: 1000,
-      });
+      };
+
+      // Tentar primeiro com /v1/chat/completions (padrão OpenAI)
+      let response;
+      try {
+        console.log(`[LM Studio] 🚀 Tentando /v1/chat/completions...`);
+        response = await client.post('/v1/chat/completions', payload);
+        console.log(`[LM Studio] ✅ Sucesso com /v1/chat/completions`);
+      } catch (error) {
+        // Se falhar, tentar com /api/v1/chat (alternativa LM Studio)
+        console.log(`[LM Studio] ⚠️  Falhou /v1/chat/completions, tentando /api/v1/chat...`);
+        response = await client.post('/api/v1/chat', payload);
+        console.log(`[LM Studio] ✅ Sucesso com /api/v1/chat`);
+      }
 
       const completion = response.data.choices[0].message.content;
       const tokensUsed = response.data.usage?.total_tokens || 0;
+
+      console.log(`[LM Studio] 📊 Tokens usados: ${tokensUsed}`);
+      console.log(`[LM Studio] 💬 Resposta: ${completion.substring(0, 100)}...`);
 
       return {
         response: completion,
@@ -50,6 +69,7 @@ class LocalAIService {
         model,
       };
     } catch (error: any) {
+      console.error(`[LM Studio] ❌ Erro:`, error.message);
       throw new Error(`LM Studio error: ${error.message}`);
     }
   }
@@ -65,6 +85,9 @@ class LocalAIService {
   ): Promise<LocalAIQueryResult> {
     const client = ollamaClient(serverUrl);
     
+    console.log(`[Ollama] 🦙 Conectando ao servidor: ${serverUrl || 'http://localhost:11434'}`);
+    console.log(`[Ollama] 📦 Modelo: ${model}`);
+    
     try {
       const response = await client.post('/api/chat', {
         model: model,
@@ -78,6 +101,9 @@ class LocalAIService {
       const completion = response.data.message.content;
       const tokensUsed = response.data.eval_count || 0;
 
+      console.log(`[Ollama] 📊 Tokens usados: ${tokensUsed}`);
+      console.log(`[Ollama] 💬 Resposta: ${completion.substring(0, 100)}...`);
+
       return {
         response: completion,
         tokensUsed,
@@ -86,6 +112,7 @@ class LocalAIService {
         model,
       };
     } catch (error: any) {
+      console.error(`[Ollama] ❌ Erro:`, error.message);
       throw new Error(`Ollama error: ${error.message}`);
     }
   }

@@ -5,6 +5,7 @@ import { whatsappService } from '../../services/whatsapp.service';
 import { Card, CardHeader, CardTitle, CardContent } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
+import { CooldownAlert } from './CooldownAlert';
 
 export const WhatsAppConfig: React.FC = () => {
   const [status, setStatus] = useState<{ connected: boolean; lastActivity: Date | null } | null>(null);
@@ -12,6 +13,7 @@ export const WhatsAppConfig: React.FC = () => {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [inCooldown, setInCooldown] = useState(false);
 
   useEffect(() => {
     loadStatus();
@@ -36,7 +38,13 @@ export const WhatsAppConfig: React.FC = () => {
       setQrCode(data.qrCode);
       setSessionId(data.sessionId);
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Erro ao conectar');
+      // Verificar se é erro de cooldown
+      if (err.response?.status === 429 && err.response?.data?.code === 'WHATSAPP_COOLDOWN') {
+        const cooldownData = err.response.data.data;
+        setError(`Cooldown ativo: Aguarde ${cooldownData.remainingHours} horas antes de tentar novamente.`);
+      } else {
+        setError(err.response?.data?.message || err.message || 'Erro ao conectar');
+      }
     } finally {
       setLoading(false);
     }
@@ -83,6 +91,9 @@ export const WhatsAppConfig: React.FC = () => {
       </CardHeader>
 
       <CardContent className="p-6 space-y-6">
+        {/* Cooldown Alert */}
+        <CooldownAlert onCooldownChange={setInCooldown} />
+
         {/* Error Message */}
         {error && (
           <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl flex items-start gap-3">
@@ -135,13 +146,19 @@ export const WhatsAppConfig: React.FC = () => {
             <Button
               variant="primary"
               onClick={handleConnect}
-              disabled={loading}
+              disabled={loading || inCooldown}
               className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
+              title={inCooldown ? 'Aguarde o cooldown terminar' : ''}
             >
               {loading ? (
                 <>
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
                   Conectando...
+                </>
+              ) : inCooldown ? (
+                <>
+                  <XCircle className="w-4 h-4 mr-2" />
+                  Cooldown Ativo
                 </>
               ) : (
                 <>

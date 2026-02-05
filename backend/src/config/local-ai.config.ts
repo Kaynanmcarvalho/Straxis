@@ -87,8 +87,16 @@ export const LOCAL_AI_MODELS = {
 export async function fetchLMStudioModels(serverUrl?: string): Promise<any[]> {
   try {
     const client = lmStudioClient(serverUrl);
-    const response = await client.get('/v1/models');
-    return response.data.data || [];
+    
+    // Tentar primeiro com /v1/models (padrão OpenAI)
+    try {
+      const response = await client.get('/v1/models');
+      return response.data.data || [];
+    } catch (error) {
+      // Se falhar, tentar com /api/v1/models (alternativa LM Studio)
+      const response = await client.get('/api/v1/models');
+      return response.data.data || [];
+    }
   } catch (error) {
     console.error('Erro ao buscar modelos LM Studio:', error);
     return [];
@@ -112,8 +120,16 @@ export async function checkLocalServerHealth(provider: LocalAIProvider, serverUr
   try {
     if (provider === 'lmstudio') {
       const client = lmStudioClient(serverUrl);
-      await client.get('/v1/models');
-      return true;
+      
+      // Tentar primeiro com /v1/models (padrão OpenAI)
+      try {
+        await client.get('/v1/models');
+        return true;
+      } catch (error) {
+        // Se falhar, tentar com /api/v1/models (alternativa LM Studio)
+        await client.get('/api/v1/models');
+        return true;
+      }
     } else if (provider === 'ollama') {
       const client = ollamaClient(serverUrl);
       await client.get('/api/tags');
