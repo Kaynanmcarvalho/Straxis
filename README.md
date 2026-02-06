@@ -1,9 +1,9 @@
 # Straxis SaaS - Sistema de Gestão de Carga e Descarga
 
 **Data de Criação:** 26/01/2026  
-**Última Atualização:** 03/02/2026  
+**Última Atualização:** 04/02/2026  
 **Desenvolvedores Principais:** Kaynan e Renier
-**Versão:** Beta 1.33.3  
+**Versão:** Beta 1.33.7  
 **Status:** Em Desenvolvimento Ativo ✅
 
 
@@ -1200,8 +1200,8 @@ flowchart LR
 - 📱 (62) 99278-2003
 
 **Data de Criação:** 26/01/2026  
-**Versão:** Beta 1.33.3  
-**Última Atualização:** 03/02/2026
+**Versão:** Beta 1.33.7  
+**Última Atualização:** 04/02/2026
 
 ---
 
@@ -1214,6 +1214,26 @@ Propriedade privada - Todos os direitos reservados.
 ---
 
 ## 📊 Histórico de Desenvolvimento
+
+### 04/02/2026 - Correções Críticas WhatsApp e Limpeza (Beta 1.33.3 → Beta 1.33.7)
+**Desenvolvedor:** Kaynan Moreira  
+**Versão:** Beta 1.33.7  
+**Mudanças:**
+- ✅ **Correção Crítica WhatsApp (Beta 1.33.7)**
+  - Corrigido modelo local, agora funcional
+  - WhatsApp com reconexão limitada a 3 QR codes para não travar o backend
+  - Implementado sistema de timeout e limpeza de sessões antigas
+  - Prevenção de travamento quando QR code não é escaneado
+- ✅ **Limpeza de Arquivos (Beta 1.33.4)**
+  - Removido 86 arquivos `.md` desnecessários
+  - Verificado que nenhum arquivo importante foi excluído
+  - Mantido apenas documentação essencial (README.md)
+  - Projeto mais organizado e limpo
+- ✅ **Correção Menu Navegação (Beta 1.33.1)**
+  - Corrigido bug: menu não navegava a partir da quarta página
+  - Backend atualizado com biblioteca `concurrently`
+  - FIX: Dock - clique após arrastar funcionando corretamente
+  - Corrigido rotas de autenticação IA
 
 ### 03/02/2026 - Provedores de IA e Melhorias Gerais (Beta 1.32.0 → Beta 1.33.3)
 **Desenvolvedor:** Kaynan Moreira  
@@ -1312,9 +1332,9 @@ Propriedade privada - Todos os direitos reservados.
 
 ---
 
-**Status do Projeto:** ✅ Beta 1.33.3 - Provedores de IA Expandidos + Correções  
+**Status do Projeto:** ✅ Beta 1.33.7 - WhatsApp Estável + Limpeza de Código  
 **Próximo Passo:** Implementar fallbacks de chaves para Alpha v1.1  
-**Desenvolvedor Atual:** Kaynan Moreira  e Renier
-**Última Atualização:** 03/02/2026 23:20
+**Desenvolvedor Atual:** Kaynan Moreira e Renier  
+**Última Atualização:** 04/02/2026 17:01
 
 **Nota:** Este README é atualizado automaticamente registrando mudanças e releases.

@@ -185,6 +185,36 @@
   background: rgba(10, 132, 255, 0.12);
 }
 
+/* Logout item - estilo especial */
+.dock-item.logout-item {
+  color: #EF4444;
+}
+
+.dock-item.logout-item:hover {
+  background: rgba(239, 68, 68, 0.08);
+  color: #DC2626;
+}
+
+@media (prefers-color-scheme: dark) {
+  .dock-item.logout-item {
+    color: #F87171;
+  }
+  
+  .dock-item.logout-item:hover {
+    background: rgba(248, 113, 113, 0.12);
+    color: #FCA5A5;
+  }
+}
+
+:root[data-theme="dark"] .dock-item.logout-item {
+  color: #F87171;
+}
+
+:root[data-theme="dark"] .dock-item.logout-item:hover {
+  background: rgba(248, 113, 113, 0.12);
+  color: #FCA5A5;
+}
+
 .dock-item-icon {
   display: flex;
   align-items: center;

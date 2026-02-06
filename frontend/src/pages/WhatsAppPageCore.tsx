@@ -324,7 +324,7 @@ const WhatsAppPageCore: React.FC = () => {
               letterSpacing: '-0.01em',
               margin: '0 0 24px 0'
             }}>
-              O servidor não está respondendo. Verifique se o backend está rodando na porta 5000.
+              O servidor não está respondendo. Verifique se o backend está rodando na porta 3000.
             </p>
 
             <code style={{

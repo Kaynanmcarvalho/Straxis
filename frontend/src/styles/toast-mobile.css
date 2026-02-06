@@ -1,0 +1,86 @@
+/* Toast Mobile Fixes */
+
+/* Garantir que o container de toasts esteja visível em mobile */
+[data-sonner-toaster],
+[data-hot-toast-container] {
+  position: fixed !important;
+  z-index: 9999999 !important;
+  pointer-events: none !important;
+}
+
+[data-sonner-toast],
+[data-hot-toast] {
+  pointer-events: auto !important;
+  z-index: 9999999 !important;
+}
+
+/* Mobile: Toasts no topo centralizado */
+@media (max-width: 768px) {
+  [data-hot-toast-container] {
+    top: 20px !important;
+    left: 10px !important;
+    right: 10px !important;
+    bottom: auto !important;
+  }
+  
+  [data-hot-toast] {
+    max-width: calc(100vw - 20px) !important;
+    width: 100% !important;
+    margin: 0 auto !important;
+  }
+}
+
+/* Desktop: Toasts no topo direito */
+@media (min-width: 769px) {
+  [data-hot-toast-container] {
+    top: 20px !important;
+    right: 20px !important;
+    left: auto !important;
+    bottom: auto !important;
+  }
+  
+  [data-hot-toast] {
+    max-width: 420px !important;
+  }
+}
+
+/* Garantir que toasts fiquem acima de TUDO */
+.modal-overlay {
+  z-index: 100000 !important;
+}
+
+.modal-empresa,
+.modal-overlay-funcao {
+  z-index: 100000 !important;
+}
+
+/* Animações suaves */
+@keyframes toast-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes toast-leave {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+}
+
+[data-hot-toast] {
+  animation: toast-enter 0.3s ease-out;
+}
+
+[data-hot-toast][data-visible="false"] {
+  animation: toast-leave 0.2s ease-in;
+}

@@ -1,18 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Building2, Users, Calendar, AlertTriangle, Loader } from 'lucide-react';
+import { Plus, Building2, Users, Calendar, AlertTriangle, Loader, X, Mail, Lock, User, Phone, Building, CreditCard, Eye, EyeOff } from 'lucide-react';
 import { Dock } from '../components/core/Dock';
 import { useAuth } from '../contexts/AuthContext';
 import { empresaService } from '../services/empresa.service';
 import { useToast } from '../hooks/useToast';
 import './EmpresasPageCore.css';
 
-interface Company {
+interface CompanyDisplay {
   id: string;
   nome: string;
   cnpj?: string;
   status: 'active' | 'suspended';
   createdAt: Date;
   userCount: number;
+  isPlatform?: boolean;
 }
 
 interface OrphanUser {
@@ -23,20 +24,70 @@ interface OrphanUser {
   companyId?: string;
 }
 
+interface PlatformCompanyForm {
+  nome: string;
+  adminNome: string;
+  adminEmail: string;
+  adminSenha: string;
+  adminTelefone: string;
+}
+
+interface ClientCompanyForm {
+  nome: string;
+  cnpj: string;
+  telefone: string;
+  planMonths: number;
+  ownerNome: string;
+  ownerEmail: string;
+  ownerSenha: string;
+  ownerTelefone: string;
+}
+
 const EmpresasPageCore: React.FC = () => {
   const { user } = useAuth();
   const toast = useToast();
   
-  const [companies, setCompanies] = useState<Company[]>([]);
+  const [companies, setCompanies] = useState<CompanyDisplay[]>([]);
+  const [platformCompany, setPlatformCompany] = useState<CompanyDisplay | null>(null);
   const [orphanUsers, setOrphanUsers] = useState<OrphanUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [showOrphanAlert, setShowOrphanAlert] = useState(false);
+  const [showPlatformModal, setShowPlatformModal] = useState(false);
+  const [showClientModal, setShowClientModal] = useState(false);
+  const [showAssignModal, setShowAssignModal] = useState(false);
+  const [showManageModal, setShowManageModal] = useState(false);
+  const [showPasswordPlatform, setShowPasswordPlatform] = useState(false);
+  const [showPasswordClient, setShowPasswordClient] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<OrphanUser | null>(null);
+  const [selectedCompany, setSelectedCompany] = useState<CompanyDisplay | null>(null);
+  const [selectedCompanyId, setSelectedCompanyId] = useState<string>('');
+
+  const [platformForm, setPlatformForm] = useState<PlatformCompanyForm>({
+    nome: '',
+    adminNome: '',
+    adminEmail: '',
+    adminSenha: '',
+    adminTelefone: '',
+  });
+
+  const [clientForm, setClientForm] = useState<ClientCompanyForm>({
+    nome: '',
+    cnpj: '',
+    telefone: '',
+    planMonths: 12,
+    ownerNome: '',
+    ownerEmail: '',
+    ownerSenha: '',
+    ownerTelefone: '',
+  });
 
   // Verificar se usuário é admin da plataforma
   const isAdmin = user?.role === 'admin_platform';
 
   useEffect(() => {
-    if (!isAdmin) {
+    // Só mostrar erro se user já foi carregado e não é admin
+    if (user && !isAdmin) {
       toast.error({
         title: 'Acesso Negado',
         message: 'Apenas administradores da plataforma podem acessar esta área.',
@@ -44,8 +95,11 @@ const EmpresasPageCore: React.FC = () => {
       return;
     }
 
-    carregarDados();
-  }, [isAdmin]);
+    // Só carregar dados se for admin
+    if (isAdmin) {
+      carregarDados();
+    }
+  }, [isAdmin, user]);
 
   const carregarDados = async () => {
     try {
@@ -53,14 +107,31 @@ const EmpresasPageCore: React.FC = () => {
 
       // Carregar empresas
       const empresasData = await empresaService.listar();
-      setCompanies(empresasData.map((emp: any) => ({
+      
+      // Separar empresa plataforma das empresas clientes
+      const platform = empresasData.find((emp: any) => emp.isPlatform || emp.id === 'platform');
+      const clients = empresasData.filter((emp: any) => !emp.isPlatform && emp.id !== 'platform');
+      
+      if (platform) {
+        setPlatformCompany({
+          id: platform.id,
+          nome: platform.name || platform.nome,
+          status: platform.active ? 'active' : 'suspended',
+          createdAt: new Date(platform.createdAt),
+          userCount: platform.userCount || 0,
+          isPlatform: true,
+        } as CompanyDisplay);
+      }
+
+      setCompanies(clients.map((emp: any) => ({
         id: emp.id,
-        nome: emp.nome,
+        nome: emp.name || emp.nome,
         cnpj: emp.cnpj,
         status: emp.active ? 'active' : 'suspended',
-        createdAt: emp.createdAt?.toDate ? emp.createdAt.toDate() : new Date(emp.createdAt),
+        createdAt: new Date(emp.createdAt),
         userCount: emp.userCount || 0,
-      })));
+        isPlatform: false,
+      } as CompanyDisplay)));
 
       // Carregar usuários órfãos
       const orphansData = await empresaService.listarUsuariosSemEmpresa();
@@ -78,25 +149,216 @@ const EmpresasPageCore: React.FC = () => {
     }
   };
 
-  const handleCreateCompany = () => {
-    toast.info({
-      title: 'Em desenvolvimento',
-      message: 'Modal de criação de empresa será implementado.',
-    });
+  const handleCreatePlatformCompany = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (isSubmitting) return;
+
+    // Validações
+    if (!platformForm.nome.trim() || !platformForm.adminNome.trim() || 
+        !platformForm.adminEmail.trim() || !platformForm.adminSenha.trim()) {
+      toast.error({
+        title: 'Campos obrigatórios',
+        message: 'Preencha todos os campos obrigatórios.',
+      });
+      return;
+    }
+
+    if (platformForm.adminSenha.length < 6) {
+      toast.error({
+        title: 'Senha inválida',
+        message: 'A senha deve ter pelo menos 6 caracteres.',
+      });
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+
+      const response = await fetch('/api/empresas/create-platform', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(platformForm),
+      });
+
+      if (response.ok) {
+        toast.success({
+          title: 'Empresa Plataforma criada',
+          message: 'Empresa e usuário administrador criados com sucesso!',
+        });
+        setShowPlatformModal(false);
+        setPlatformForm({
+          nome: '',
+          adminNome: '',
+          adminEmail: '',
+          adminSenha: '',
+          adminTelefone: '',
+        });
+        carregarDados();
+      } else {
+        const error = await response.json();
+        toast.error({
+          title: 'Erro ao criar',
+          message: error.error || 'Não foi possível criar a empresa plataforma.',
+        });
+      }
+    } catch (error: any) {
+      console.error('Erro ao criar empresa plataforma:', error);
+      toast.error({
+        title: 'Erro',
+        message: 'Erro ao criar empresa plataforma. Verifique sua conexão.',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleCreateClientCompany = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (isSubmitting) return;
+
+    // Validações
+    if (!clientForm.nome.trim() || !clientForm.ownerNome.trim() || 
+        !clientForm.ownerEmail.trim() || !clientForm.ownerSenha.trim()) {
+      toast.error({
+        title: 'Campos obrigatórios',
+        message: 'Preencha todos os campos obrigatórios.',
+      });
+      return;
+    }
+
+    if (clientForm.ownerSenha.length < 6) {
+      toast.error({
+        title: 'Senha inválida',
+        message: 'A senha deve ter pelo menos 6 caracteres.',
+      });
+      return;
+    }
+
+    if (clientForm.planMonths < 1) {
+      toast.error({
+        title: 'Plano inválido',
+        message: 'O plano deve ter pelo menos 1 mês.',
+      });
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+
+      const response = await fetch('/api/empresas/create-client', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(clientForm),
+      });
+
+      if (response.ok) {
+        toast.success({
+          title: 'Empresa Cliente criada',
+          message: 'Empresa e usuário proprietário criados com sucesso!',
+        });
+        setShowClientModal(false);
+        setClientForm({
+          nome: '',
+          cnpj: '',
+          telefone: '',
+          planMonths: 12,
+          ownerNome: '',
+          ownerEmail: '',
+          ownerSenha: '',
+          ownerTelefone: '',
+        });
+        carregarDados();
+      } else {
+        const error = await response.json();
+        toast.error({
+          title: 'Erro ao criar',
+          message: error.error || 'Não foi possível criar a empresa cliente.',
+        });
+      }
+    } catch (error: any) {
+      console.error('Erro ao criar empresa cliente:', error);
+      toast.error({
+        title: 'Erro',
+        message: 'Erro ao criar empresa cliente. Verifique sua conexão.',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleAssignCompany = (userId: string) => {
-    toast.info({
-      title: 'Em desenvolvimento',
-      message: 'Modal de atribuição de empresa será implementado.',
-    });
+    const user = orphanUsers.find(u => u.id === userId);
+    if (user) {
+      setSelectedUser(user);
+      setSelectedCompanyId('');
+      setShowAssignModal(true);
+    }
+  };
+
+  const handleSubmitAssignCompany = async () => {
+    if (!selectedUser || !selectedCompanyId) {
+      toast.error({
+        title: 'Erro',
+        message: 'Selecione uma empresa para atribuir ao usuário.',
+      });
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+
+      const response = await fetch(`/api/usuarios/${selectedUser.id}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          companyId: selectedCompanyId,
+        }),
+      });
+
+      if (response.ok) {
+        toast.success({
+          title: 'Empresa atribuída',
+          message: 'Usuário vinculado à empresa com sucesso!',
+        });
+        setShowAssignModal(false);
+        setSelectedUser(null);
+        setSelectedCompanyId('');
+        carregarDados();
+      } else {
+        const error = await response.json();
+        toast.error({
+          title: 'Erro ao atribuir',
+          message: error.error || 'Não foi possível atribuir a empresa.',
+        });
+      }
+    } catch (error: any) {
+      console.error('Erro ao atribuir empresa:', error);
+      toast.error({
+        title: 'Erro',
+        message: 'Erro ao atribuir empresa. Verifique sua conexão.',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleManageCompany = (companyId: string) => {
-    toast.info({
-      title: 'Em desenvolvimento',
-      message: 'Modal de gerenciamento de empresa será implementado.',
-    });
+    const company = companies.find(c => c.id === companyId);
+    if (company) {
+      setSelectedCompany(company);
+      setShowManageModal(true);
+    }
   };
 
   const handleReactivateCompany = async (companyId: string) => {
@@ -127,7 +389,7 @@ const EmpresasPageCore: React.FC = () => {
             </p>
           </div>
         </div>
-        <Dock userRole="user" />
+        <Dock />
       </>
     );
   }
@@ -140,7 +402,7 @@ const EmpresasPageCore: React.FC = () => {
             <Loader size={48} className="empresas-spinner" />
           </div>
         </div>
-        <Dock userRole="admin_platform" />
+        <Dock />
       </>
     );
   }
@@ -156,15 +418,49 @@ const EmpresasPageCore: React.FC = () => {
               <p className="empresas-subtitle">Gestão administrativa da plataforma</p>
             </div>
             <span className="empresas-admin-badge">Admin</span>
-            <button className="empresas-btn-create" onClick={handleCreateCompany}>
-              <Plus size={20} strokeWidth={2} />
-              Criar Empresa
-            </button>
+            <div className="empresas-header-actions">
+              {!platformCompany && (
+                <button className="empresas-btn-create empresas-btn-platform" onClick={() => setShowPlatformModal(true)}>
+                  <Plus size={20} strokeWidth={2} />
+                  Criar Empresa Plataforma
+                </button>
+              )}
+              <button className="empresas-btn-create" onClick={() => setShowClientModal(true)}>
+                <Plus size={20} strokeWidth={2} />
+                Criar Empresa Cliente
+              </button>
+            </div>
           </div>
         </header>
 
         {/* Conteúdo Principal */}
         <div className="empresas-content">
+          {/* Seção Empresa Plataforma */}
+          {platformCompany && (
+            <section className="platform-company-section">
+              <h2 className="section-title">Empresa Plataforma</h2>
+              <div className="platform-company-card">
+                <div className="platform-company-header">
+                  <Building2 size={32} className="platform-company-icon" />
+                  <div>
+                    <h3 className="platform-company-name">{platformCompany.nome}</h3>
+                    <p className="platform-company-description">Dona do sistema - Acesso total</p>
+                  </div>
+                </div>
+                <div className="platform-company-stats">
+                  <div className="platform-stat">
+                    <Users size={16} />
+                    <span>{platformCompany.userCount} administrador{platformCompany.userCount !== 1 ? 'es' : ''}</span>
+                  </div>
+                  <div className="platform-stat">
+                    <Calendar size={16} />
+                    <span>Desde {platformCompany.createdAt.toLocaleDateString('pt-BR')}</span>
+                  </div>
+                </div>
+              </div>
+            </section>
+          )}
+
           {/* Alerta de Governança */}
           {showOrphanAlert && (
             <div className="governance-alert">
@@ -215,21 +511,21 @@ const EmpresasPageCore: React.FC = () => {
             </section>
           )}
 
-          {/* Seção de Empresas */}
+          {/* Seção de Empresas Clientes */}
           <section className="companies-section">
             <h2 className="section-title">
-              {companies.length === 0 ? 'Nenhuma Empresa Cadastrada' : 'Empresas Ativas'}
+              {companies.length === 0 ? 'Nenhuma Empresa Cliente' : 'Empresas Clientes'}
             </h2>
 
             {companies.length === 0 ? (
               <div className="empresas-empty-state">
                 <Building2 size={64} className="empresas-empty-icon" />
-                <h2 className="empresas-empty-title">Nenhuma empresa cadastrada</h2>
+                <h2 className="empresas-empty-title">Nenhuma empresa cliente cadastrada</h2>
                 <p className="empresas-empty-description">
-                  Crie a primeira empresa para começar a organizar usuários e gerenciar a plataforma.
+                  Crie a primeira empresa cliente para começar a gerenciar usuários isolados por empresa.
                 </p>
-                <button className="empresas-empty-btn" onClick={handleCreateCompany}>
-                  Criar Primeira Empresa
+                <button className="empresas-empty-btn" onClick={() => setShowClientModal(true)}>
+                  Criar Primeira Empresa Cliente
                 </button>
               </div>
             ) : (
@@ -241,6 +537,10 @@ const EmpresasPageCore: React.FC = () => {
                     onClick={() => handleManageCompany(company.id)}
                   >
                     <h3 className="company-card-name">{company.nome}</h3>
+                    
+                    {company.cnpj && (
+                      <p className="company-card-cnpj">CNPJ: {company.cnpj}</p>
+                    )}
                     
                     <div className="company-card-users">
                       <Users size={16} />
@@ -287,9 +587,463 @@ const EmpresasPageCore: React.FC = () => {
             )}
           </section>
         </div>
+
+        {/* Modal Empresa Plataforma */}
+        {showPlatformModal && (
+          <div className="modal-overlay" onClick={() => setShowPlatformModal(false)}>
+            <div className="modal-empresa" onClick={(e) => e.stopPropagation()}>
+              <div className="modal-header">
+                <h2 className="modal-title">Criar Empresa Plataforma</h2>
+                <button className="modal-close" onClick={() => setShowPlatformModal(false)}>
+                  <X size={24} />
+                </button>
+              </div>
+
+              <form onSubmit={handleCreatePlatformCompany} className="modal-form">
+                <div className="form-section">
+                  <h3 className="form-section-title">Dados da Empresa</h3>
+                  
+                  <div className="form-group">
+                    <label className="form-label">
+                      <Building size={18} />
+                      Nome da Empresa *
+                    </label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={platformForm.nome}
+                      onChange={(e) => setPlatformForm({ ...platformForm, nome: e.target.value })}
+                      placeholder="Ex: Straxis SaaS"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="form-section">
+                  <h3 className="form-section-title">Primeiro Administrador</h3>
+                  
+                  <div className="form-group">
+                    <label className="form-label">
+                      <User size={18} />
+                      Nome Completo *
+                    </label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={platformForm.adminNome}
+                      onChange={(e) => setPlatformForm({ ...platformForm, adminNome: e.target.value })}
+                      placeholder="Nome do administrador"
+                      required
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">
+                      <Mail size={18} />
+                      Email *
+                    </label>
+                    <input
+                      type="email"
+                      className="form-input"
+                      value={platformForm.adminEmail}
+                      onChange={(e) => setPlatformForm({ ...platformForm, adminEmail: e.target.value })}
+                      placeholder="email@exemplo.com"
+                      required
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">
+                      <Lock size={18} />
+                      Senha *
+                    </label>
+                    <div className="password-input-wrapper">
+                      <input
+                        type={showPasswordPlatform ? 'text' : 'password'}
+                        className="form-input"
+                        value={platformForm.adminSenha}
+                        onChange={(e) => setPlatformForm({ ...platformForm, adminSenha: e.target.value })}
+                        placeholder="Mínimo 6 caracteres"
+                        required
+                        minLength={6}
+                      />
+                      <button
+                        type="button"
+                        className="password-toggle"
+                        onClick={() => setShowPasswordPlatform(!showPasswordPlatform)}
+                      >
+                        {showPasswordPlatform ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">
+                      <Phone size={18} />
+                      Telefone
+                    </label>
+                    <input
+                      type="tel"
+                      className="form-input"
+                      value={platformForm.adminTelefone}
+                      onChange={(e) => setPlatformForm({ ...platformForm, adminTelefone: e.target.value })}
+                      placeholder="(00) 00000-0000"
+                    />
+                  </div>
+                </div>
+
+                <div className="modal-actions">
+                  <button
+                    type="button"
+                    className="btn-cancel"
+                    onClick={() => setShowPlatformModal(false)}
+                    disabled={isSubmitting}
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    className="btn-submit"
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? 'Criando...' : 'Criar Empresa Plataforma'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Modal Empresa Cliente */}
+        {showClientModal && (
+          <div className="modal-overlay" onClick={() => setShowClientModal(false)}>
+            <div className="modal-empresa" onClick={(e) => e.stopPropagation()}>
+              <div className="modal-header">
+                <h2 className="modal-title">Criar Empresa Cliente</h2>
+                <button className="modal-close" onClick={() => setShowClientModal(false)}>
+                  <X size={24} />
+                </button>
+              </div>
+
+              <form onSubmit={handleCreateClientCompany} className="modal-form">
+                <div className="form-section">
+                  <h3 className="form-section-title">Dados da Empresa</h3>
+                  
+                  <div className="form-group">
+                    <label className="form-label">
+                      <Building size={18} />
+                      Nome da Empresa *
+                    </label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={clientForm.nome}
+                      onChange={(e) => setClientForm({ ...clientForm, nome: e.target.value })}
+                      placeholder="Ex: Empresa XYZ Ltda"
+                      required
+                    />
+                  </div>
+
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label className="form-label">
+                        <CreditCard size={18} />
+                        CNPJ
+                      </label>
+                      <input
+                        type="text"
+                        className="form-input"
+                        value={clientForm.cnpj}
+                        onChange={(e) => setClientForm({ ...clientForm, cnpj: e.target.value })}
+                        placeholder="00.000.000/0000-00"
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label className="form-label">
+                        <Phone size={18} />
+                        Telefone
+                      </label>
+                      <input
+                        type="tel"
+                        className="form-input"
+                        value={clientForm.telefone}
+                        onChange={(e) => setClientForm({ ...clientForm, telefone: e.target.value })}
+                        placeholder="(00) 0000-0000"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">
+                      <Calendar size={18} />
+                      Plano (meses) *
+                    </label>
+                    <input
+                      type="number"
+                      className="form-input"
+                      value={clientForm.planMonths}
+                      onChange={(e) => setClientForm({ ...clientForm, planMonths: parseInt(e.target.value) || 0 })}
+                      placeholder="12"
+                      min="1"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="form-section">
+                  <h3 className="form-section-title">Proprietário da Empresa</h3>
+                  
+                  <div className="form-group">
+                    <label className="form-label">
+                      <User size={18} />
+                      Nome Completo *
+                    </label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={clientForm.ownerNome}
+                      onChange={(e) => setClientForm({ ...clientForm, ownerNome: e.target.value })}
+                      placeholder="Nome do proprietário"
+                      required
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">
+                      <Mail size={18} />
+                      Email *
+                    </label>
+                    <input
+                      type="email"
+                      className="form-input"
+                      value={clientForm.ownerEmail}
+                      onChange={(e) => setClientForm({ ...clientForm, ownerEmail: e.target.value })}
+                      placeholder="email@exemplo.com"
+                      required
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">
+                      <Lock size={18} />
+                      Senha *
+                    </label>
+                    <div className="password-input-wrapper">
+                      <input
+                        type={showPasswordClient ? 'text' : 'password'}
+                        className="form-input"
+                        value={clientForm.ownerSenha}
+                        onChange={(e) => setClientForm({ ...clientForm, ownerSenha: e.target.value })}
+                        placeholder="Mínimo 6 caracteres"
+                        required
+                        minLength={6}
+                      />
+                      <button
+                        type="button"
+                        className="password-toggle"
+                        onClick={() => setShowPasswordClient(!showPasswordClient)}
+                      >
+                        {showPasswordClient ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">
+                      <Phone size={18} />
+                      Telefone
+                    </label>
+                    <input
+                      type="tel"
+                      className="form-input"
+                      value={clientForm.ownerTelefone}
+                      onChange={(e) => setClientForm({ ...clientForm, ownerTelefone: e.target.value })}
+                      placeholder="(00) 00000-0000"
+                    />
+                  </div>
+                </div>
+
+                <div className="modal-actions">
+                  <button
+                    type="button"
+                    className="btn-cancel"
+                    onClick={() => setShowClientModal(false)}
+                    disabled={isSubmitting}
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    className="btn-submit"
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? 'Criando...' : 'Criar Empresa Cliente'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Modal Atribuir Empresa */}
+        {showAssignModal && selectedUser && (
+          <div className="modal-overlay" onClick={() => setShowAssignModal(false)}>
+            <div className="modal-empresa modal-assign" onClick={(e) => e.stopPropagation()}>
+              <div className="modal-header">
+                <h2 className="modal-title">Atribuir Empresa</h2>
+                <button className="modal-close" onClick={() => setShowAssignModal(false)}>
+                  <X size={24} />
+                </button>
+              </div>
+
+              <div className="modal-form">
+                <div className="user-info-card">
+                  <User size={24} className="user-info-icon" />
+                  <div>
+                    <h3 className="user-info-name">{selectedUser.name}</h3>
+                    <p className="user-info-email">{selectedUser.email}</p>
+                    <span className="user-info-role">{selectedUser.role}</span>
+                  </div>
+                </div>
+
+                <div className="form-section">
+                  <h3 className="form-section-title">Selecione a Empresa</h3>
+                  
+                  <div className="form-group">
+                    <label className="form-label">
+                      <Building2 size={18} />
+                      Empresa *
+                    </label>
+                    <select
+                      className="form-input"
+                      value={selectedCompanyId}
+                      onChange={(e) => setSelectedCompanyId(e.target.value)}
+                      required
+                    >
+                      <option value="">Selecione uma empresa...</option>
+                      {platformCompany && (
+                        <option value={platformCompany.id}>
+                          {platformCompany.nome} (Plataforma)
+                        </option>
+                      )}
+                      {companies.map((company) => (
+                        <option key={company.id} value={company.id}>
+                          {company.nome}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="modal-actions">
+                  <button
+                    type="button"
+                    className="btn-cancel"
+                    onClick={() => setShowAssignModal(false)}
+                    disabled={isSubmitting}
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-submit"
+                    onClick={handleSubmitAssignCompany}
+                    disabled={isSubmitting || !selectedCompanyId}
+                  >
+                    {isSubmitting ? 'Atribuindo...' : 'Atribuir Empresa'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modal Gerenciar Empresa */}
+        {showManageModal && selectedCompany && (
+          <div className="modal-overlay" onClick={() => setShowManageModal(false)}>
+            <div className="modal-empresa modal-manage" onClick={(e) => e.stopPropagation()}>
+              <div className="modal-header">
+                <h2 className="modal-title">Gerenciar Empresa</h2>
+                <button className="modal-close" onClick={() => setShowManageModal(false)}>
+                  <X size={24} />
+                </button>
+              </div>
+
+              <div className="modal-form">
+                <div className="company-info-card">
+                  <Building2 size={32} className="company-info-icon" />
+                  <div>
+                    <h3 className="company-info-name">{selectedCompany.nome}</h3>
+                    {selectedCompany.cnpj && (
+                      <p className="company-info-cnpj">CNPJ: {selectedCompany.cnpj}</p>
+                    )}
+                    <span className={`company-info-status ${selectedCompany.status}`}>
+                      {selectedCompany.status === 'active' ? 'Ativa' : 'Suspensa'}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="company-stats-grid">
+                  <div className="company-stat-item">
+                    <Users size={20} />
+                    <div>
+                      <span className="stat-value">{selectedCompany.userCount}</span>
+                      <span className="stat-label">Usuários</span>
+                    </div>
+                  </div>
+                  <div className="company-stat-item">
+                    <Calendar size={20} />
+                    <div>
+                      <span className="stat-value">
+                        {selectedCompany.createdAt.toLocaleDateString('pt-BR')}
+                      </span>
+                      <span className="stat-label">Criada em</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="modal-actions">
+                  <button
+                    type="button"
+                    className="btn-cancel"
+                    onClick={() => setShowManageModal(false)}
+                  >
+                    Fechar
+                  </button>
+                  {selectedCompany.status === 'active' ? (
+                    <button
+                      type="button"
+                      className="btn-danger"
+                      onClick={() => {
+                        if (window.confirm('Tem certeza que deseja suspender esta empresa?')) {
+                          // Implementar suspensão
+                          toast.info({
+                            title: 'Em breve',
+                            message: 'Funcionalidade de suspensão será implementada.',
+                          });
+                        }
+                      }}
+                    >
+                      Suspender Empresa
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      className="btn-submit"
+                      onClick={() => handleReactivateCompany(selectedCompany.id)}
+                    >
+                      Reativar Empresa
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
-      <Dock userRole="admin_platform" />
+      <Dock />
     </>
   );
 };

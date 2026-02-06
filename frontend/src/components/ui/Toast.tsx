@@ -6,7 +6,7 @@ import { CheckCircle, XCircle, AlertCircle, Info, X } from 'lucide-react';
 export const ToastProvider: React.FC = () => {
   return (
     <Toaster
-      position="top-right"
+      position="top-center"
       toastOptions={{
         duration: 4000,
         style: {
@@ -16,6 +16,9 @@ export const ToastProvider: React.FC = () => {
           borderRadius: 'var(--radius-lg)',
           padding: '16px',
           boxShadow: 'var(--shadow-lg)',
+          maxWidth: '90vw',
+          width: '100%',
+          zIndex: 2147483647, // MÁXIMO VALOR POSSÍVEL
         },
         success: {
           iconTheme: {
@@ -29,6 +32,13 @@ export const ToastProvider: React.FC = () => {
             secondary: 'white',
           },
         },
+      }}
+      containerStyle={{
+        top: 20,
+        left: 20,
+        right: 20,
+        bottom: 20,
+        zIndex: 2147483647, // MÁXIMO VALOR POSSÍVEL
       }}
     />
   );

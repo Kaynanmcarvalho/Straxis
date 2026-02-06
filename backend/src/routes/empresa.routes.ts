@@ -4,8 +4,34 @@ import { authMiddleware, requireAdminPlatform } from '../middleware/auth.middlew
 
 const router = Router();
 
-// Todas as rotas de empresa requerem autenticação e permissão de Admin
+// Todas as rotas de empresa requerem autenticação
 router.use(authMiddleware);
+
+/**
+ * POST /api/empresas/create-platform
+ * Cria empresa plataforma com primeiro admin (apenas admin_platform)
+ */
+router.post('/create-platform', requireAdminPlatform, EmpresaController.createPlatformCompany);
+
+/**
+ * POST /api/empresas/create-client
+ * Cria empresa cliente com primeiro owner (apenas admin_platform)
+ */
+router.post('/create-client', requireAdminPlatform, EmpresaController.createClientCompany);
+
+/**
+ * GET /api/empresas/:id/funcoes
+ * Busca funções da empresa (owner pode acessar sua própria empresa)
+ */
+router.get('/:id/funcoes', EmpresaController.getFuncoes);
+
+/**
+ * PUT /api/empresas/:id/funcoes
+ * Atualiza funções da empresa (owner pode atualizar sua própria empresa)
+ */
+router.put('/:id/funcoes', EmpresaController.updateFuncoes);
+
+// Rotas administrativas requerem permissão de Admin
 router.use(requireAdminPlatform);
 
 /**

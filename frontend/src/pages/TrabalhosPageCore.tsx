@@ -123,8 +123,63 @@ const TrabalhosPageCore: React.FC = () => {
   
   // Carregar trabalhos do Firebase
   useEffect(() => {
-    loadTrabalhos();
-    loadFuncionarios();
+    let mounted = true;
+    
+    const init = async () => {
+      if (!mounted) return;
+      
+      try {
+        console.log('🔍 [INIT] Carregando dados iniciais...');
+        setLoading(true);
+        
+        // Carregar trabalhos
+        const trabalhos = await trabalhoService.list();
+        if (mounted && Array.isArray(trabalhos)) {
+          setTrabalhos(trabalhos.map(t => ({
+            id: t.id,
+            tipo: t.tipo,
+            cliente: t.clienteNome || 'Cliente não informado',
+            local: t.localDescricao || 'Local não informado',
+            toneladas: t.tonelagem || 0,
+            toneladasParciais: 0,
+            status: 'planejado',
+            funcionarios: [],
+            registrosPresenca: [],
+            historico: [],
+            pausas: [],
+          })));
+        }
+        
+        // Carregar funcionários
+        const { funcionarioService } = await import('../services/funcionario.service');
+        const funcionarios = await funcionarioService.list();
+        if (mounted && Array.isArray(funcionarios)) {
+          setFuncionariosDisponiveis(funcionarios.map(f => ({
+            id: f.id,
+            nome: f.nome,
+            presente: false
+          })));
+        }
+        
+        console.log('✅ [INIT] Dados carregados com sucesso');
+      } catch (error) {
+        console.error('❌ [INIT] Erro:', error);
+        if (mounted) {
+          setTrabalhos([]);
+          setFuncionariosDisponiveis([]);
+        }
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    };
+    
+    init();
+    
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   const loadFuncionarios = async () => {
@@ -173,8 +228,22 @@ const TrabalhosPageCore: React.FC = () => {
 
   const loadTrabalhos = async () => {
     try {
+      console.log('🔍 [TRABALHOS] Iniciando carregamento...');
       setLoading(true);
+      
+      console.log('🔍 [TRABALHOS] Chamando trabalhoService.list()...');
       const data = await trabalhoService.list();
+      console.log('📦 [TRABALHOS] Dados recebidos:', data);
+      console.log('📦 [TRABALHOS] Tipo:', typeof data);
+      console.log('📦 [TRABALHOS] É array?', Array.isArray(data));
+      
+      if (!data || !Array.isArray(data)) {
+        console.error('❌ [TRABALHOS] Dados inválidos:', data);
+        setTrabalhos([]);
+        return;
+      }
+      
+      console.log('🔍 [TRABALHOS] Processando', data.length, 'trabalhos...');
       
       // Converter trabalhos do Firebase para formato local
       const trabalhosLocais: TrabalhoLocal[] = data.map(t => ({
@@ -191,11 +260,15 @@ const TrabalhosPageCore: React.FC = () => {
         pausas: [],
       }));
       
+      console.log('✅ [TRABALHOS] Trabalhos processados:', trabalhosLocais.length);
       setTrabalhos(trabalhosLocais);
     } catch (error) {
-      console.error('Erro ao carregar trabalhos:', error);
+      console.error('❌ [TRABALHOS] Erro ao carregar:', error);
+      console.error('❌ [TRABALHOS] Stack:', error.stack);
+      setTrabalhos([]);
       alert('Erro ao carregar trabalhos');
     } finally {
+      console.log('🔄 [TRABALHOS] Finalizando carregamento...');
       setLoading(false);
     }
   };

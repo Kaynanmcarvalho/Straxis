@@ -71,12 +71,16 @@ export class AuthService {
     userData: Partial<User>
   ): Promise<User> {
     try {
+      console.log('🔵 [AuthService.createUser] Iniciando criação:', { email, userData });
+      
       // Criar usuário no Firebase Auth
       const userRecord = await auth.createUser({
         email,
         password,
         displayName: userData.name,
       });
+
+      console.log('🔵 [AuthService.createUser] Firebase Auth criado:', { uid: userRecord.uid });
 
       // Criar documento no Firestore
       const user = UserModel.create({
@@ -85,7 +89,11 @@ export class AuthService {
         email,
       });
 
+      console.log('🔵 [AuthService.createUser] User model criado:', { id: user.id, email: user.email });
+
       await db.collection('users').doc(userRecord.uid).set(UserModel.toFirestore(user));
+
+      console.log('✅ [AuthService.createUser] Usuário salvo no Firestore');
 
       return user;
     } catch (error: any) {

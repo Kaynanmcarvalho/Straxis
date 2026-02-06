@@ -34,16 +34,16 @@ export default defineConfig({
     include: ['jspdf', 'jspdf-autotable', 'canvg', 'html2canvas', 'dompurify']
   },
   server: {
-    port: 3000,
+    port: 5173,
     host: true,
     hmr: {
       protocol: 'ws',
       host: 'localhost',
-      port: 3000,
+      port: 5173,
     },
     proxy: {
       '/api': {
-        target: 'http://localhost:5000',
+        target: 'http://localhost:3000',
         changeOrigin: true,
       },
     },

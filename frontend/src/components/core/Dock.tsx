@@ -11,6 +11,7 @@ import {
   Building2,
   ScrollText,
   UserCircle,
+  LogOut,
   LucideIcon
 } from 'lucide-react';
 import './Dock.css';
@@ -19,21 +20,9 @@ interface DockItem {
   id: string;
   label: string;
   icon: LucideIcon;
-  path: string;
+  path?: string;
+  action?: () => void;
 }
-
-const dockItems: DockItem[] = [
-  { id: 'dashboard', label: 'Início', icon: LayoutDashboard, path: '/dashboard' },
-  { id: 'trabalhos', label: 'Trabalhos', icon: Package, path: '/trabalhos' },
-  { id: 'agendamentos', label: 'Agenda', icon: Calendar, path: '/agenda' },
-  { id: 'funcionarios', label: 'Equipe', icon: Users, path: '/funcionarios' },
-  { id: 'relatorios', label: 'Relatórios', icon: FileText, path: '/relatorios' },
-  { id: 'clientes', label: 'Clientes', icon: UserCircle, path: '/clientes' },
-  { id: 'whatsapp', label: 'WhatsApp', icon: MessageSquare, path: '/whatsapp' },
-  { id: 'ia', label: 'IA', icon: Brain, path: '/ia-config' },
-  { id: 'empresas', label: 'Empresas', icon: Building2, path: '/empresas' },
-  { id: 'logs', label: 'Logs', icon: ScrollText, path: '/logs' },
-];
 
 const VISIBLE_ITEMS = 5;
 const GAP = 4;
@@ -59,6 +48,31 @@ export const Dock: React.FC = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [itemWidth, setItemWidth] = useState(70);
   const [containerWidth, setContainerWidth] = useState(0);
+
+  // Função de logout
+  const handleLogout = useCallback(() => {
+    if (window.confirm('Tem certeza que deseja sair?')) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      navigate('/login');
+      window.location.reload();
+    }
+  }, [navigate]);
+
+  // Itens do dock com logout
+  const dockItems: DockItem[] = [
+    { id: 'dashboard', label: 'Início', icon: LayoutDashboard, path: '/dashboard' },
+    { id: 'trabalhos', label: 'Trabalhos', icon: Package, path: '/trabalhos' },
+    { id: 'agendamentos', label: 'Agenda', icon: Calendar, path: '/agenda' },
+    { id: 'funcionarios', label: 'Equipe', icon: Users, path: '/funcionarios' },
+    { id: 'relatorios', label: 'Relatórios', icon: FileText, path: '/relatorios' },
+    { id: 'clientes', label: 'Clientes', icon: UserCircle, path: '/clientes' },
+    { id: 'whatsapp', label: 'WhatsApp', icon: MessageSquare, path: '/whatsapp' },
+    { id: 'ia', label: 'IA', icon: Brain, path: '/ia-config' },
+    { id: 'empresas', label: 'Empresas', icon: Building2, path: '/empresas' },
+    { id: 'logs', label: 'Logs', icon: ScrollText, path: '/logs' },
+    { id: 'logout', label: 'Sair', icon: LogOut, action: handleLogout },
+  ];
 
   // Calculate dimensions based on window width
   const updateDimensions = useCallback(() => {
@@ -99,7 +113,7 @@ export const Dock: React.FC = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, [updateDimensions, getMaxOffset, offset]);
 
-  const isActive = (path: string) => location.pathname === path;
+  const isActive = (path?: string) => path && location.pathname === path;
 
   // Animate to target with spring physics
   const animateToOffset = useCallback((targetOffset: number) => {
@@ -263,9 +277,13 @@ export const Dock: React.FC = () => {
   }, [handleMouseMove, handleMouseUp, handleTouchMove, handleTouchEnd]);
 
   // Handle item click (only if not dragged)
-  const handleItemClick = useCallback((path: string) => {
+  const handleItemClick = useCallback((item: DockItem) => {
     if (!hasDraggedRef.current) {
-      navigate(path);
+      if (item.action) {
+        item.action();
+      } else if (item.path) {
+        navigate(item.path);
+      }
     }
   }, [navigate]);
 
@@ -294,12 +312,13 @@ export const Dock: React.FC = () => {
           {dockItems.map((item) => {
             const Icon = item.icon;
             const active = isActive(item.path);
+            const isLogoutItem = item.id === 'logout';
 
             return (
               <button
                 key={item.id}
-                className={`dock-item ${active ? 'active' : ''}`}
-                onClick={() => handleItemClick(item.path)}
+                className={`dock-item ${active ? 'active' : ''} ${isLogoutItem ? 'logout-item' : ''}`}
+                onClick={() => handleItemClick(item)}
                 onMouseDown={(e) => e.stopPropagation()}
                 aria-label={item.label}
                 style={{

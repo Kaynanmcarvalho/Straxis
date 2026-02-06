@@ -70,6 +70,11 @@ export class EmpresaModel {
       config: company.config,
       createdAt: company.createdAt,
       updatedAt: company.updatedAt,
+      deletedAt: null, // Importante para o soft delete
+      isPlatform: (company as any).isPlatform || false,
+      cnpj: (company as any).cnpj || null,
+      telefone: (company as any).telefone || null,
+      funcoes: (company as any).funcoes || [],
     };
   }
 

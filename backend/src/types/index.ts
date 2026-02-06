@@ -21,11 +21,15 @@ export interface Permission {
 export interface Company {
   id: string;
   name: string;
+  cnpj?: string;
+  telefone?: string;
   planMonths: number;
   planStartDate: Date;
   planEndDate: Date;
   active: boolean;
+  isPlatform?: boolean; // true para empresa plataforma
   config: CompanyConfig;
+  funcoes?: string[]; // Funções personalizadas da empresa
   createdAt: Date;
   updatedAt: Date;
 }

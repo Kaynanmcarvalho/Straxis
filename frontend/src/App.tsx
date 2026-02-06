@@ -5,6 +5,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import { ToastProvider } from './components/ui/Toast';
 import { OfflineIndicator } from './components/offline/OfflineIndicator';
 import './styles/straxis-tokens.css';
+import './styles/toast-mobile.css';
 import CoreLayout from './layouts/CoreLayout';
 import LoginPage from './pages/LoginPage';
 import DashboardPageCore from './pages/DashboardPageCore';

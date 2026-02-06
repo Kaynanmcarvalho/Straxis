@@ -13,7 +13,8 @@ import {
   ScrollText,
   Shield,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  LogOut
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -81,6 +82,20 @@ export const Sidebar: React.FC<SidebarProps> = ({ userRole, isOpen = false, onCl
     }
   };
 
+  const handleLogout = () => {
+    if (window.confirm('Tem certeza que deseja sair?')) {
+      // Limpar dados do localStorage
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      
+      // Redirecionar para login
+      navigate('/login');
+      
+      // Recarregar página para limpar estado
+      window.location.reload();
+    }
+  };
+
   return (
     <>
       {/* Overlay para mobile */}
@@ -132,19 +147,33 @@ export const Sidebar: React.FC<SidebarProps> = ({ userRole, isOpen = false, onCl
           })}
         </nav>
 
+        {/* Logout Button */}
+        <div className="sidebar-logout">
+          <button
+            onClick={handleLogout}
+            className="logout-button"
+            title="Sair do sistema"
+          >
+            <span className="logout-icon">
+              <LogOut className="w-5 h-5" />
+            </span>
+            {!isCollapsed && <span className="logout-label">Sair</span>}
+          </button>
+        </div>
+
         {/* Version Info */}
         <div className="sidebar-footer">
           <div 
             className="version-info"
-            title="Última atualização: 04/02/2026 - WhatsApp Anti-Detecção: Browser realista + Delays humanos + Simulação digitação"
+            title="Última atualização: 06/02/2026 - Fix: Telefone e funções agora são salvos corretamente no cadastro"
           >
             {!isCollapsed ? (
               <>
                 <span className="version-label">Versão</span>
-                <span className="version-number">Beta 1.30.9</span>
+                <span className="version-number">Beta 1.48.1</span>
               </>
             ) : (
-              <span className="version-number-collapsed">v1.30.9</span>
+              <span className="version-number-collapsed">v1.48.1</span>
             )}
           </div>
         </div>
@@ -397,6 +426,64 @@ export const Sidebar: React.FC<SidebarProps> = ({ userRole, isOpen = false, onCl
         .sidebar.collapsed .sidebar-footer {
           padding: 0.5rem 0.25rem;
           text-align: center;
+        }
+
+        .sidebar-logout {
+          padding: 0.75rem 1rem;
+          border-top: 1px solid var(--color-border, #e0e0e0);
+        }
+
+        .logout-button {
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+          width: 100%;
+          padding: 0.875rem 1.5rem;
+          background: transparent;
+          border: none;
+          border-radius: 12px;
+          color: #EF4444;
+          font-size: 1rem;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+
+        .sidebar.collapsed .logout-button {
+          justify-content: center;
+          padding: 0.875rem 0;
+        }
+
+        .logout-button:hover {
+          background: rgba(239, 68, 68, 0.1);
+          transform: translateX(4px);
+        }
+
+        .sidebar.collapsed .logout-button:hover {
+          transform: scale(1.05);
+        }
+
+        .logout-button:active {
+          transform: scale(0.98);
+        }
+
+        .logout-icon {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          min-width: 20px;
+        }
+
+        .logout-label {
+          font-size: 1rem;
+          white-space: nowrap;
+          transition: opacity 0.3s ease;
+        }
+
+        .sidebar.collapsed .logout-label {
+          opacity: 0;
+          width: 0;
+          overflow: hidden;
         }
 
         @media (max-width: 767px) {

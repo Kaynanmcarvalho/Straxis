@@ -208,18 +208,20 @@ export class UserController {
         return;
       }
 
-      // Verificar se usuário pertence à empresa (exceto admin)
-      if (req.auth?.role !== 'admin_platform' && usuarioExistente.companyId !== req.auth?.companyId) {
-        res.status(403).json({
-          success: false,
-          error: 'Acesso negado',
-          code: 1003,
-        });
-        return;
+      // Admin pode alterar companyId, owner não pode
+      if (req.auth?.role !== 'admin_platform') {
+        // Verificar se usuário pertence à empresa (exceto admin)
+        if (usuarioExistente.companyId !== req.auth?.companyId) {
+          res.status(403).json({
+            success: false,
+            error: 'Acesso negado',
+            code: 1003,
+          });
+          return;
+        }
+        // Não permitir alterar companyId se não for admin
+        delete updates.companyId;
       }
-
-      // Não permitir alterar companyId
-      delete updates.companyId;
 
       // Atualizar updatedAt
       updates.updatedAt = new Date();
@@ -470,6 +472,11 @@ export class UserController {
       // Importar AuthService
       const { AuthService } = require('../services/auth.service');
 
+      console.log('🔵 [createFuncionario] Criando usuário:', { email, name, companyId, role });
+
+      // Extrair campos extras do body
+      const { telefone, funcao, dataAdmissao, diariaCentavos } = req.body;
+
       // Criar usuário no Firebase Auth e Firestore
       const user = await AuthService.createUser(email, password, {
         name,
@@ -477,7 +484,13 @@ export class UserController {
         role: role || 'user',
         permissions: [],
         active: true,
+        telefone: telefone || null,
+        funcao: funcao || null,
+        dataAdmissao: dataAdmissao || null,
+        diariaCentavos: diariaCentavos || 0,
       });
+
+      console.log('🔵 [createFuncionario] Usuário criado:', { userId: user.id, email: user.email });
 
       // Registrar log
       await LogService.logCriticalChange(
@@ -491,7 +504,7 @@ export class UserController {
         }
       );
 
-      res.status(201).json({
+      const responseData = {
         success: true,
         data: {
           userId: user.id,
@@ -499,7 +512,11 @@ export class UserController {
           name: user.name,
         },
         message: 'Funcionário criado com sucesso. Login habilitado.',
-      });
+      };
+
+      console.log('✅ [createFuncionario] Resposta:', responseData);
+
+      res.status(201).json(responseData);
     } catch (error: any) {
       console.error('Erro ao criar funcionário:', error);
       
