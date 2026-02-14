@@ -1,9 +1,9 @@
 # Straxis SaaS - Sistema de Gestão de Carga e Descarga
 
 **Data de Criação:** 26/01/2026  
-**Última Atualização:** 04/02/2026  
+**Última Atualização:** 13/02/2026  
 **Desenvolvedores Principais:** Kaynan e Renier
-**Versão:** Beta 1.33.7  
+**Versão:** Beta 1.48.1  
 **Status:** Em Desenvolvimento Ativo ✅
 
 
@@ -1215,6 +1215,54 @@ Propriedade privada - Todos os direitos reservados.
 
 ## 📊 Histórico de Desenvolvimento
 
+### 06/02/2026 - Melhorias Gerais e Correções (Beta 1.33.7 → Beta 1.48.1)
+**Desenvolvedor:** Renier Pantoja  
+**Versão:** Beta 1.48.1  
+**Mudanças:**
+- ✅ **Melhorias na Página de Funcionários**
+  - Refatoração completa do FuncionariosPageCore.tsx (3694 linhas otimizadas)
+  - Melhorias no CSS com 3296 linhas de estilização
+  - Correção de bugs no cadastro de funcionários
+  - Fix: Telefone e funções agora são salvos corretamente
+  - Backup criado (FuncionariosPageCore_BROKEN.tsx) para referência
+- ✅ **Melhorias na Página de Empresas**
+  - Adicionado 826 linhas de melhorias no EmpresasPageCore.tsx
+  - Novo arquivo CSS dedicado (EmpresasPageCore.css) com 546 linhas
+  - Interface mais robusta e responsiva
+- ✅ **Melhorias no Backend**
+  - Novos scripts utilitários criados:
+    - `consolidate-platform.js` (95 linhas) - Consolidação de dados da plataforma
+    - `fix-companies-deletedAt.js` (56 linhas) - Correção de soft delete
+    - `fix-company-users.js` (174 linhas) - Correção de usuários de empresas
+    - `fix-platform-companies.js` (54 linhas) - Correção de empresas da plataforma
+    - `fix-user-companyid.js` (40 linhas) - Correção de companyId de usuários
+    - `update-user-role.js` (70 linhas) - Atualização de roles de usuários
+  - Melhorias no `empresa.controller.ts` (374 linhas modificadas)
+  - Melhorias no `user.controller.ts` (43 linhas modificadas)
+  - Atualizações nos modelos `empresa.model.ts` e `user.model.ts`
+  - Melhorias no `auth.service.ts` (8 linhas adicionadas)
+  - Novas rotas em `empresa.routes.ts` (28 linhas modificadas)
+- ✅ **Melhorias no Frontend**
+  - Atualizado Sidebar.tsx (95 linhas modificadas)
+  - Melhorias no Dock.tsx (57 linhas) e Dock.css (30 linhas)
+  - Melhorias no Toast.tsx (12 linhas)
+  - Novo arquivo de estilos: `toast-mobile.css` (86 linhas)
+  - Melhorias no TrabalhosPageCore.tsx (79 linhas)
+  - Backup criado: TrabalhosPageCore_BACKUP.tsx
+- ✅ **Ferramentas de Teste**
+  - Criado `test-api-http.js` (60 linhas) - Testes de API HTTP
+  - Criado `test-empresas-api.js` (72 linhas) - Testes específicos de empresas
+  - Criado `debug-auth.html` (121 linhas) - Debug de autenticação
+- ✅ **Configurações**
+  - Atualizado `vite.config.ts` (6 linhas modificadas)
+  - Melhorias no `api.service.ts` (2 linhas)
+  - Atualizado README.md (34 linhas)
+- ✅ **Estatísticas do Commit**
+  - 35 arquivos modificados
+  - 9.938 linhas adicionadas
+  - 2.630 linhas removidas
+  - Refatoração massiva focada em estabilidade e correção de bugs
+
 ### 04/02/2026 - Correções Críticas WhatsApp e Limpeza (Beta 1.33.3 → Beta 1.33.7)
 **Desenvolvedor:** Kaynan Moreira  
 **Versão:** Beta 1.33.7  
@@ -1332,9 +1380,9 @@ Propriedade privada - Todos os direitos reservados.
 
 ---
 
-**Status do Projeto:** ✅ Beta 1.33.7 - WhatsApp Estável + Limpeza de Código  
+**Status do Projeto:** ✅ Beta 1.48.1 - Melhorias Gerais e Correções de Bugs  
 **Próximo Passo:** Implementar fallbacks de chaves para Alpha v1.1  
-**Desenvolvedor Atual:** Kaynan Moreira e Renier  
-**Última Atualização:** 04/02/2026 17:01
+**Desenvolvedor Atual:** Kaynan Moreira e Renier Pantoja  
+**Última Atualização:** 13/02/2026 23:26
 
 **Nota:** Este README é atualizado automaticamente registrando mudanças e releases.

@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogIn, AlertCircle } from 'lucide-react';
+import { LogIn, AlertCircle, ArrowLeft, Sparkles } from 'lucide-react';
 import { authService } from '../services/auth.service';
+import './LoginPage.css';
 
 const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -17,7 +18,7 @@ const LoginPage: React.FC = () => {
     
     try {
       await authService.signIn(email, password);
-      navigate('/dashboard');
+      navigate('/app/dashboard');
     } catch (error: any) {
       console.error('Erro no login:', error);
       setError(error.message || 'Erro ao fazer login');
@@ -28,6 +29,19 @@ const LoginPage: React.FC = () => {
 
   return (
     <div className="login-page">
+      {/* Animated Background */}
+      <div className="login-animated-bg">
+        <div className="login-bg-gradient-1"></div>
+        <div className="login-bg-gradient-2"></div>
+        <div className="login-bg-gradient-3"></div>
+      </div>
+
+      {/* Back to Home */}
+      <button className="back-to-home" onClick={() => navigate('/')}>
+        <ArrowLeft className="w-5 h-5" />
+        <span>Voltar</span>
+      </button>
+
       <div className="login-container">
         <div className="login-card">
           {/* Logo */}
@@ -37,7 +51,7 @@ const LoginPage: React.FC = () => {
 
           {/* Header */}
           <div className="login-header">
-            <h1 className="login-title">Straxis SaaS</h1>
+            <h1 className="login-title">Bem-vindo ao Straxis</h1>
             <p className="login-subtitle">
               Sistema de Gestão de Carga e Descarga
             </p>
@@ -96,192 +110,16 @@ const LoginPage: React.FC = () => {
               )}
             </button>
           </form>
+
+          {/* Footer */}
+          <div className="login-footer">
+            <div className="login-badge">
+              <Sparkles className="badge-icon" />
+              <span>Assistente IA Integrado</span>
+            </div>
+          </div>
         </div>
       </div>
-
-      <style>{`
-        .login-page {
-          min-height: 100vh;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          padding: 1rem;
-        }
-
-        .login-container {
-          width: 100%;
-          max-width: 420px;
-        }
-
-        .login-card {
-          background: rgba(255, 255, 255, 0.95);
-          backdrop-filter: blur(10px);
-          border-radius: 24px;
-          padding: 2.5rem;
-          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-          animation: slideUp 0.5s ease;
-        }
-
-        @keyframes slideUp {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        .login-logo {
-          display: flex;
-          justify-content: center;
-          margin-bottom: 1.5rem;
-        }
-
-        .logo-image {
-          width: 80px;
-          height: 80px;
-          border-radius: 16px;
-          box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
-          object-fit: cover;
-        }
-
-        .login-header {
-          text-align: center;
-          margin-bottom: 2rem;
-        }
-
-        .login-title {
-          font-size: 2rem;
-          font-weight: 800;
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-          margin-bottom: 0.5rem;
-        }
-
-        .login-subtitle {
-          color: #666;
-          font-size: 0.875rem;
-          font-weight: 500;
-        }
-
-        .login-form {
-          display: flex;
-          flex-direction: column;
-          gap: 1.25rem;
-        }
-
-        .form-group {
-          display: flex;
-          flex-direction: column;
-          gap: 0.5rem;
-        }
-
-        .form-group label {
-          font-weight: 600;
-          color: #333;
-          font-size: 0.875rem;
-        }
-
-        .form-group input {
-          width: 100%;
-          padding: 0.875rem 1rem;
-          border: 2px solid #e0e0e0;
-          border-radius: 12px;
-          font-size: 1rem;
-          transition: all 0.2s ease;
-          background: white;
-        }
-
-        .form-group input:focus {
-          outline: none;
-          border-color: #667eea;
-          box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
-        }
-
-        .form-group input:disabled {
-          background: #f5f5f5;
-          cursor: not-allowed;
-        }
-
-        .btn-login,
-        .btn-dev {
-          width: 100%;
-          padding: 0.875rem 1.5rem;
-          border: none;
-          border-radius: 12px;
-          font-size: 1rem;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 0.5rem;
-        }
-
-        .btn-login {
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          color: white;
-          box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-        }
-
-        .btn-login:hover:not(:disabled) {
-          transform: translateY(-2px);
-          box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
-        }
-
-        .btn-login:active:not(:disabled) {
-          transform: translateY(0);
-        }
-
-        .btn-login:disabled {
-          opacity: 0.7;
-          cursor: not-allowed;
-        }
-
-        .error-banner {
-          display: flex;
-          align-items: center;
-          gap: 0.75rem;
-          padding: 0.875rem 1rem;
-          background: #fee;
-          border: 1px solid #fcc;
-          border-radius: 12px;
-          color: #c33;
-          font-size: 0.875rem;
-          font-weight: 500;
-        }
-
-        .spinner {
-          width: 20px;
-          height: 20px;
-          border: 3px solid rgba(255, 255, 255, 0.3);
-          border-top-color: white;
-          border-radius: 50%;
-          animation: spin 0.8s linear infinite;
-        }
-
-        @keyframes spin {
-          to {
-            transform: rotate(360deg);
-          }
-        }
-
-        @media (max-width: 480px) {
-          .login-card {
-            padding: 2rem 1.5rem;
-          }
-
-          .login-title {
-            font-size: 1.75rem;
-          }
-        }
-      `}</style>
     </div>
   );
 };

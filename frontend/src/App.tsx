@@ -8,6 +8,7 @@ import './styles/straxis-tokens.css';
 import './styles/toast-mobile.css';
 import CoreLayout from './layouts/CoreLayout';
 import LoginPage from './pages/LoginPage';
+import LandingPage from './pages/LandingPage';
 import DashboardPageCore from './pages/DashboardPageCore';
 import TestPage from './pages/TestPage';
 import TrabalhosPageCore from './pages/TrabalhosPageCore';
@@ -24,13 +25,15 @@ import { CargosPage } from './pages/CargosPage';
 import { ConfiguracaoFechamentoPage } from './pages/ConfiguracaoFechamentoPage';
 import { FechamentoPage } from './pages/FechamentoPage';
 import { HistoricoFechamentosPage } from './pages/HistoricoFechamentosPage';
+import { LoadingProvider } from './contexts/LoadingContext';
 
 function App() {
   return (
     <AuthProvider>
       <ThemeProvider>
-        <ToastProvider />
-        <OfflineIndicator />
+        <LoadingProvider>
+          <ToastProvider />
+          <OfflineIndicator />
         <BrowserRouter
           future={{
             v7_startTransition: true,
@@ -38,12 +41,13 @@ function App() {
           }}
         >
         <Routes>
-          {/* Rota pública */}
+          {/* Rotas públicas */}
+          <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
           
           {/* Rotas protegidas com CORE layout */}
-          <Route path="/" element={<CoreLayout />}>
-            <Route index element={<Navigate to="/dashboard" replace />} />
+          <Route path="/app" element={<CoreLayout />}>
+            <Route index element={<Navigate to="/app/dashboard" replace />} />
             <Route path="dashboard" element={<DashboardPageCore />} />
             <Route path="test" element={<TestPage />} />
             <Route path="trabalhos" element={<TrabalhosPageCore />} />
@@ -64,9 +68,10 @@ function App() {
           </Route>
           
           {/* Rota 404 */}
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
+    </LoadingProvider>
     </ThemeProvider>
     </AuthProvider>
   );

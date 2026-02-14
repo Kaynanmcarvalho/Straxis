@@ -32,18 +32,18 @@ interface MenuItem {
 }
 
 const menuItems: MenuItem[] = [
-  { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard', roles: ['admin_platform', 'owner', 'user'] },
-  { label: 'Trabalhos', icon: Package, path: '/trabalhos', roles: ['admin_platform', 'owner', 'user'] },
-  { label: 'Agendamentos', icon: Calendar, path: '/agenda', roles: ['admin_platform', 'owner', 'user'] },
-  { label: 'Funcionários', icon: Users, path: '/funcionarios', roles: ['admin_platform', 'owner', 'user'] },
-  { label: 'Fechamento', icon: FileText, path: '/fechamento/historico', roles: ['admin_platform', 'owner'] },
-  { label: 'Relatórios', icon: FileText, path: '/relatorios', roles: ['admin_platform', 'owner', 'user'] },
-  { label: 'WhatsApp', icon: MessageSquare, path: '/whatsapp', roles: ['admin_platform', 'owner'] },
-  { label: 'IA', icon: Brain, path: '/ia-config', roles: ['admin_platform', 'owner'] },
-  { label: 'Cargos', icon: Shield, path: '/cargos', roles: ['admin_platform', 'owner'] },
-  { label: 'Usuários', icon: UserCog, path: '/usuarios', roles: ['admin_platform', 'owner'] },
-  { label: 'Empresas', icon: Building2, path: '/empresas', roles: ['admin_platform'] },
-  { label: 'Logs', icon: ScrollText, path: '/logs', roles: ['admin_platform', 'owner'] }
+  { label: 'Dashboard', icon: LayoutDashboard, path: '/app/dashboard', roles: ['admin_platform', 'owner', 'user'] },
+  { label: 'Trabalhos', icon: Package, path: '/app/trabalhos', roles: ['admin_platform', 'owner', 'user'] },
+  { label: 'Agendamentos', icon: Calendar, path: '/app/agenda', roles: ['admin_platform', 'owner', 'user'] },
+  { label: 'Funcionários', icon: Users, path: '/app/funcionarios', roles: ['admin_platform', 'owner', 'user'] },
+  { label: 'Fechamento', icon: FileText, path: '/app/fechamento/historico', roles: ['admin_platform', 'owner'] },
+  { label: 'Relatórios', icon: FileText, path: '/app/relatorios', roles: ['admin_platform', 'owner', 'user'] },
+  { label: 'WhatsApp', icon: MessageSquare, path: '/app/whatsapp', roles: ['admin_platform', 'owner'] },
+  { label: 'IA', icon: Brain, path: '/app/ia-config', roles: ['admin_platform', 'owner'] },
+  { label: 'Cargos', icon: Shield, path: '/app/cargos', roles: ['admin_platform', 'owner'] },
+  { label: 'Usuários', icon: UserCog, path: '/app/usuarios', roles: ['admin_platform', 'owner'] },
+  { label: 'Empresas', icon: Building2, path: '/app/empresas', roles: ['admin_platform'] },
+  { label: 'Logs', icon: ScrollText, path: '/app/logs', roles: ['admin_platform', 'owner'] }
 ];
 
 export const Sidebar: React.FC<SidebarProps> = ({ userRole, isOpen = false, onClose, onCollapseChange }) => {
@@ -165,15 +165,15 @@ export const Sidebar: React.FC<SidebarProps> = ({ userRole, isOpen = false, onCl
         <div className="sidebar-footer">
           <div 
             className="version-info"
-            title="Última atualização: 06/02/2026 - Fix: Telefone e funções agora são salvos corretamente no cadastro"
+            title="Última atualização: 13/02/2026 - Feature: Landing page premium estilo Apple com animações e design responsivo"
           >
             {!isCollapsed ? (
               <>
                 <span className="version-label">Versão</span>
-                <span className="version-number">Beta 1.48.1</span>
+                <span className="version-number">Beta 1.49.0</span>
               </>
             ) : (
-              <span className="version-number-collapsed">v1.48.1</span>
+              <span className="version-number-collapsed">v1.49.0</span>
             )}
           </div>
         </div>
