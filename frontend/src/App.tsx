@@ -13,6 +13,7 @@ import LandingPage from './pages/LandingPage';
 import DashboardPageCore from './pages/DashboardPageCore';
 import TestPage from './pages/TestPage';
 import TrabalhosPageCore from './pages/TrabalhosPageCore';
+import CentralExecucaoPage from './pages/CentralExecucaoPage';
 import AgendamentosPageCore from './pages/AgendamentosPageCore';
 import AgendaPage from './pages/AgendaPage';
 import PlanejamentoPage from './pages/PlanejamentoPage';
@@ -55,9 +56,9 @@ function App() {
               <Route index element={<Navigate to="/app/dashboard" replace />} />
               <Route path="dashboard" element={<ErrorBoundary><DashboardPageCore /></ErrorBoundary>} />
               <Route path="test" element={<TestPage />} />
-              <Route path="trabalhos" element={<ErrorBoundary><TrabalhosPageCore /></ErrorBoundary>} />
+              <Route path="trabalhos" element={<ErrorBoundary><CentralExecucaoPage /></ErrorBoundary>} />
               <Route path="agendamentos" element={<ErrorBoundary><AgendamentosPageCore /></ErrorBoundary>} />
-              <Route path="agenda" element={<PlanejamentoPage />} />
+              <Route path="agenda" element={<AgendaPage />} />
               <Route path="funcionarios" element={<ErrorBoundary><GestaoPessoasPage /></ErrorBoundary>} />
               <Route path="relatorios" element={<ErrorBoundary><RelatoriosPageCore /></ErrorBoundary>} />
               <Route path="clientes" element={<ErrorBoundary><ClientesPremiumPage /></ErrorBoundary>} />

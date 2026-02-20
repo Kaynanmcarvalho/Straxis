@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { 
   Plus,
-  Minus,
-  Search,
+  ChevronLeft,
+  ChevronRight,
   Clock,
   MapPin,
   Truck,
@@ -11,569 +11,555 @@ import {
   AlertCircle,
   X,
   Sparkles,
-  TrendingUp,
   XCircle,
-  Sunrise,
-  Sun,
-  Moon,
-  ArrowRight,
-  Users,
-  ChevronRight,
-  Calendar
+  PlayCircle,
+  AlertTriangle,
+  Minus
 } from 'lucide-react';
 import { Dock } from '../components/core/Dock';
+import { useAuth } from '../contexts/AuthContext';
+import { agendamentoService } from '../services/agendamento.service';
+import { Agendamento, AgendamentoConflito } from '../types/agendamento.types';
+import { AutocompleteCliente } from '../components/common/AutocompleteCliente';
 import './AgendaPage.css';
-import './AgendaPageModal.css';
-
-type OrigemAgendamento = 'ia' | 'manual';
-type StatusAgendamento = 'pendente' | 'confirmado' | 'em_execucao' | 'cancelado';
-type PeriodoDia = 'manha' | 'tarde' | 'noite';
-
-interface Agendamento {
-  id: string;
-  cliente: string;
-  local: string;
-  data: Date;
-  periodoInicio: string;
-  periodoFim: string;
-  periodo: PeriodoDia;
-  tipo: 'carga' | 'descarga';
-  volumeEstimado: number;
-  origem: OrigemAgendamento;
-  status: StatusAgendamento;
-  conflitos?: { id: string; cliente: string }[];
-  criadoEm: Date;
-}
 
 const AgendaPage: React.FC = () => {
+  const { user } = useAuth();
   const [agendamentos, setAgendamentos] = useState<Agendamento[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filtroStatus, setFiltroStatus] = useState<'todos' | 'pendente' | 'confirmado' | 'conflito'>('todos');
+  const [loading, setLoading] = useState(true);
+  const [diaSelecionado, setDiaSelecionado] = useState(0); // 0 = hoje
   const [modalAberto, setModalAberto] = useState(false);
-  const [mostrarClienteInput, setMostrarClienteInput] = useState(false);
-  const [mostrarDataInput, setMostrarDataInput] = useState(false);
-  const [mostrarLocalInput, setMostrarLocalInput] = useState(false);
+  const [modalAcao, setModalAcao] = useState<{
+    show: boolean;
+    tipo: 'aprovar' | 'rejeitar' | 'converter';
+    agendamentoId: string;
+  } | null>(null);
+  const [motivoRejeicao, setMotivoRejeicao] = useState('');
+  const scrollRef = useRef<HTMLDivElement>(null);
   
   // Form state
-  const [formCliente, setFormCliente] = useState('');
+  const [formClienteId, setFormClienteId] = useState('');
+  const [formClienteNome, setFormClienteNome] = useState('');
   const [formData, setFormData] = useState('');
   const [formHorarioInicio, setFormHorarioInicio] = useState('');
   const [formHorarioFim, setFormHorarioFim] = useState('');
   const [formTipo, setFormTipo] = useState<'carga' | 'descarga'>('descarga');
   const [formLocal, setFormLocal] = useState('');
   const [formTonelagem, setFormTonelagem] = useState('');
+  const [conflitosDetectados, setConflitosDetectados] = useState<AgendamentoConflito[]>([]);
 
-  // Carregar agendamentos reais do Firebase
+  const loadAgendamentos = useCallback(async () => {
+    if (!user?.companyId) return;
+    
+    try {
+      setLoading(true);
+      const data = await agendamentoService.list();
+      setAgendamentos(data);
+    } catch (error) {
+      console.error('Erro ao carregar agendamentos:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [user?.companyId]);
+
   useEffect(() => {
-    // TODO: Implementar carregamento de agendamentos do Firebase
-    // Por enquanto, inicializa vazio
-    setAgendamentos([]);
-  }, []);
+    loadAgendamentos();
+  }, [loadAgendamentos]);
 
-  // Filtrar e ordenar agendamentos
-  const agendamentosFiltrados = agendamentos
-    .filter(agendamento => {
-      const matchSearch = agendamento.cliente.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         agendamento.local.toLowerCase().includes(searchQuery.toLowerCase());
-      
-      let matchStatus = true;
-      if (filtroStatus === 'pendente') matchStatus = agendamento.status === 'pendente';
-      if (filtroStatus === 'confirmado') matchStatus = agendamento.status === 'confirmado';
-      if (filtroStatus === 'conflito') matchStatus = !!agendamento.conflitos && agendamento.conflitos.length > 0;
-      
-      return matchSearch && matchStatus;
-    })
-    .sort((a, b) => {
-      // Prioridade: pendentes primeiro, depois confirmados, depois em execução
-      const prioridade = { pendente: 0, confirmado: 1, em_execucao: 2, cancelado: 3 };
-      return prioridade[a.status] - prioridade[b.status];
-    });
-
-  // Agrupar por período
-  const agendamentosPorPeriodo = {
-    manha: agendamentosFiltrados.filter(a => a.periodo === 'manha'),
-    tarde: agendamentosFiltrados.filter(a => a.periodo === 'tarde'),
-    noite: agendamentosFiltrados.filter(a => a.periodo === 'noite'),
+  // Gerar dias da semana
+  const getDiasSemana = () => {
+    const dias = [];
+    const hoje = new Date();
+    
+    for (let i = -3; i <= 10; i++) {
+      const data = new Date(hoje);
+      data.setDate(hoje.getDate() + i);
+      dias.push({
+        offset: i,
+        data,
+        diaSemana: data.toLocaleDateString('pt-BR', { weekday: 'short' }).toUpperCase(),
+        dia: data.getDate(),
+        mes: data.toLocaleDateString('pt-BR', { month: 'short' }),
+        isHoje: i === 0
+      });
+    }
+    
+    return dias;
   };
 
-  const getPeriodoIcon = (periodo: PeriodoDia) => {
-    switch (periodo) {
-      case 'manha': return Sunrise;
-      case 'tarde': return Sun;
-      case 'noite': return Moon;
-    }
+  const dias = getDiasSemana();
+  const diaAtual = dias.find(d => d.offset === diaSelecionado);
+
+  // Filtrar agendamentos do dia selecionado
+  const agendamentosDoDia = agendamentos.filter(ag => {
+    const dataAg = new Date(ag.data);
+    const dataSel = diaAtual?.data;
+    if (!dataSel) return false;
+    
+    return dataAg.getDate() === dataSel.getDate() &&
+           dataAg.getMonth() === dataSel.getMonth() &&
+           dataAg.getFullYear() === dataSel.getFullYear();
+  }).sort((a, b) => a.horarioInicio.localeCompare(b.horarioInicio));
+
+  const totalPendentes = agendamentos.filter(a => a.status === 'pendente' || a.status === 'solicitado').length;
+  const totalConflitos = agendamentos.filter(a => a.conflitoDetectado).length;
+
+  const navegarDia = (direcao: number) => {
+    setDiaSelecionado(prev => prev + direcao);
+    if (navigator.vibrate) navigator.vibrate(10);
   };
 
-  const getPeriodoLabel = (periodo: PeriodoDia) => {
-    switch (periodo) {
-      case 'manha': return 'Manhã';
-      case 'tarde': return 'Tarde';
-      case 'noite': return 'Noite';
-    }
+  const selecionarDia = (offset: number) => {
+    setDiaSelecionado(offset);
+    if (navigator.vibrate) navigator.vibrate(10);
   };
 
   const abrirModalNovo = () => {
-    setFormCliente('');
-    setFormData('');
+    const dataInicial = diaAtual?.data || new Date();
+    setFormData(dataInicial.toISOString().split('T')[0]);
+    setFormClienteId('');
+    setFormClienteNome('');
     setFormHorarioInicio('');
     setFormHorarioFim('');
     setFormTipo('descarga');
     setFormLocal('');
     setFormTonelagem('');
+    setConflitosDetectados([]);
     setModalAberto(true);
   };
 
-  const fecharModal = () => {
-    setModalAberto(false);
-  };
-
-  const salvarAgendamento = () => {
-    if (!formCliente.trim() || !formData || !formHorarioInicio) {
-      alert('Cliente, data e horário são obrigatórios');
+  const salvarAgendamento = async () => {
+    if (!formClienteNome.trim() || !formData || !formHorarioInicio || !formHorarioFim || !formLocal.trim()) {
+      alert('Preencha todos os campos obrigatórios');
       return;
     }
-    // TODO: Integrar com Firebase
-    console.log('Salvando agendamento:', { 
-      formCliente, formData, formHorarioInicio, formHorarioFim, 
-      formTipo, formLocal, formTonelagem 
-    });
-    fecharModal();
+
+    if (!formTonelagem || parseFloat(formTonelagem) <= 0) {
+      alert('Tonelagem deve ser maior que zero');
+      return;
+    }
+
+    try {
+      const dataHora = new Date(formData);
+      
+      const resultado = await agendamentoService.create({
+        origem: 'manual',
+        clienteId: formClienteId || undefined,
+        clienteNome: formClienteNome,
+        data: dataHora,
+        horarioInicio: formHorarioInicio,
+        horarioFim: formHorarioFim,
+        tipo: formTipo,
+        localDescricao: formLocal,
+        tonelagem: parseFloat(formTonelagem),
+        valorEstimadoCentavos: 0,
+        funcionarios: [],
+        prioridade: 'normal',
+        conflitoDetectado: false,
+        conflitos: [],
+        convertidoEmTrabalho: false,
+        historico: []
+      });
+      
+      if (resultado.disponibilidade.conflitos.length > 0) {
+        setConflitosDetectados(resultado.disponibilidade.conflitos);
+      }
+      
+      await loadAgendamentos();
+      setModalAberto(false);
+      if (navigator.vibrate) navigator.vibrate([10, 50, 10]);
+    } catch (error) {
+      console.error('Erro ao criar agendamento:', error);
+      alert('Erro ao criar agendamento');
+    }
   };
 
-  const confirmarAgendamento = (id: string) => {
-    setAgendamentos(prev => prev.map(a => 
-      a.id === id ? { ...a, status: 'confirmado' as StatusAgendamento } : a
-    ));
+  const executarAcao = async () => {
+    if (!modalAcao) return;
+
+    try {
+      if (modalAcao.tipo === 'aprovar') {
+        await agendamentoService.aprovar(modalAcao.agendamentoId);
+      } else if (modalAcao.tipo === 'rejeitar') {
+        if (!motivoRejeicao.trim()) {
+          alert('Motivo da rejeição é obrigatório');
+          return;
+        }
+        await agendamentoService.rejeitar(modalAcao.agendamentoId, motivoRejeicao);
+      } else if (modalAcao.tipo === 'converter') {
+        await agendamentoService.converter(modalAcao.agendamentoId);
+      }
+      
+      await loadAgendamentos();
+      setModalAcao(null);
+      setMotivoRejeicao('');
+      if (navigator.vibrate) navigator.vibrate([10, 50, 10]);
+    } catch (error) {
+      console.error('Erro ao executar ação:', error);
+      alert('Erro ao executar ação');
+    }
   };
 
-  const rejeitarAgendamento = (id: string) => {
-    setAgendamentos(prev => prev.map(a => 
-      a.id === id ? { ...a, status: 'cancelado' as StatusAgendamento } : a
-    ));
-  };
-
-  const iniciarTrabalho = (id: string) => {
-    setAgendamentos(prev => prev.map(a => 
-      a.id === id ? { ...a, status: 'em_execucao' as StatusAgendamento } : a
-    ));
-  };
-
-  const totalPendentes = agendamentos.filter(a => a.status === 'pendente').length;
-  const totalConfirmados = agendamentos.filter(a => a.status === 'confirmado').length;
-  const totalConflitos = agendamentos.filter(a => a.conflitos && a.conflitos.length > 0).length;
+  if (loading) {
+    return (
+      <>
+        <div className="agenda-premium-container">
+          <div className="agenda-loading">
+            <div className="loading-spinner-premium" />
+          </div>
+        </div>
+        <Dock />
+      </>
+    );
+  }
 
   return (
     <>
-      <div className="page-container agenda-hub">
-        {/* Header Compacto */}
-        <header className="agenda-header">
-          <div className="agenda-title-group">
-            <h1 className="agenda-title">Compromissos</h1>
-            <div className="agenda-stats-inline">
-              <span className="stat-inline pendente">{totalPendentes}</span>
-              <span className="stat-inline confirmado">{totalConfirmados}</span>
-              {totalConflitos > 0 && <span className="stat-inline conflito">{totalConflitos}</span>}
-            </div>
+      <div className="agenda-premium-container">
+        {/* Header Premium com Profundidade */}
+        <header className="agenda-premium-header">
+          <div className="agenda-header-blur" />
+          <div className="agenda-header-content">
+            <h1 className="agenda-premium-title">Centro de Planejamento</h1>
+            <p className="agenda-premium-subtitle">
+              {diaAtual?.isHoje ? 'Hoje' : diaAtual?.diaSemana} • {agendamentosDoDia.length} compromisso{agendamentosDoDia.length !== 1 ? 's' : ''}
+              <br />
+              <span className="agenda-date-full">
+                {diaAtual?.data.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}
+              </span>
+            </p>
           </div>
-          <button className="btn-novo-agendamento" onClick={abrirModalNovo}>
-            <Plus className="icon" />
-          </button>
         </header>
 
-        {/* Busca Rápida */}
-        <div className="search-container">
-          <div className="search-wrapper">
-            <Search className="search-icon" />
-            <input
-              type="text"
-              className="search-input"
-              placeholder="Cliente ou local..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-            {searchQuery && (
-              <button className="search-clear" onClick={() => setSearchQuery('')}>
-                <X className="icon" />
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Filtros Compactos */}
-        <div className="filtros-status">
-          <button
-            className={`filtro-btn ${filtroStatus === 'todos' ? 'active' : ''}`}
-            onClick={() => setFiltroStatus('todos')}
-          >
-            Todos
-          </button>
-          <button
-            className={`filtro-btn ${filtroStatus === 'pendente' ? 'active' : ''}`}
-            onClick={() => setFiltroStatus('pendente')}
-          >
-            Pendentes
-          </button>
-          <button
-            className={`filtro-btn ${filtroStatus === 'confirmado' ? 'active' : ''}`}
-            onClick={() => setFiltroStatus('confirmado')}
-          >
-            Confirmados
-          </button>
-          {totalConflitos > 0 && (
-            <button
-              className={`filtro-btn ${filtroStatus === 'conflito' ? 'active' : ''}`}
-              onClick={() => setFiltroStatus('conflito')}
-            >
-              Conflitos
-            </button>
-          )}
-        </div>
-
-        {/* Fila Operacional */}
-        <div className="agenda-fila">
-          {['manha', 'tarde', 'noite'].map((periodoKey) => {
-            const periodo = periodoKey as PeriodoDia;
-            const agendamentosPeriodo = agendamentosPorPeriodo[periodo];
-            
-            if (agendamentosPeriodo.length === 0) return null;
-            
-            const PeriodoIcon = getPeriodoIcon(periodo);
-            
-            return (
-              <div key={periodo} className="periodo-section">
-                <div className="periodo-header">
-                  <PeriodoIcon className="periodo-icon" />
-                  <span className="periodo-label">{getPeriodoLabel(periodo)}</span>
-                  <span className="periodo-count">{agendamentosPeriodo.length}</span>
-                </div>
-
-                <div className="compromissos-list">
-                  {agendamentosPeriodo.map((agendamento) => {
-                    const temConflito = agendamento.conflitos && agendamento.conflitos.length > 0;
-                    const isPendente = agendamento.status === 'pendente';
-                    const isConfirmado = agendamento.status === 'confirmado';
-                    const isEmExecucao = agendamento.status === 'em_execucao';
-                    
-                    return (
-                      <div 
-                        key={agendamento.id} 
-                        className={`compromisso-card ${agendamento.status} ${temConflito ? 'conflito' : ''}`}
-                      >
-                        {/* Linha 1: Cliente + Horário */}
-                        <div className="compromisso-header">
-                          <h3 className="compromisso-cliente">{agendamento.cliente}</h3>
-                          <div className="compromisso-horario">
-                            <Clock className="icon" />
-                            <span>{agendamento.periodoInicio}</span>
-                          </div>
-                        </div>
-
-                        {/* Linha 2: Detalhes Operacionais */}
-                        <div className="compromisso-detalhes">
-                          <div className="detalhe-item">
-                            <MapPin className="icon" />
-                            <span>{agendamento.local}</span>
-                          </div>
-                          <div className="detalhe-item">
-                            <Truck className="icon" />
-                            <span>{agendamento.tipo === 'carga' ? 'Carga' : 'Descarga'}</span>
-                          </div>
-                          <div className="detalhe-item">
-                            <Package className="icon" />
-                            <span>{agendamento.volumeEstimado}t</span>
-                          </div>
-                        </div>
-
-                        {/* Badges e Alertas */}
-                        <div className="compromisso-badges">
-                          {agendamento.origem === 'ia' && (
-                            <div className="badge-ia">
-                              <Sparkles className="icon" />
-                              <span>IA</span>
-                            </div>
-                          )}
-                          {temConflito && (
-                            <div className="badge-conflito">
-                              <AlertCircle className="icon" />
-                              <span>Conflito com {agendamento.conflitos![0].cliente}</span>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Ações Diretas */}
-                        {isPendente && (
-                          <div className="compromisso-acoes">
-                            <button 
-                              className="acao-btn confirmar"
-                              onClick={() => confirmarAgendamento(agendamento.id)}
-                            >
-                              <CheckCircle2 className="icon" />
-                              <span>Confirmar</span>
-                            </button>
-                            <button 
-                              className="acao-btn rejeitar"
-                              onClick={() => rejeitarAgendamento(agendamento.id)}
-                            >
-                              <XCircle className="icon" />
-                              <span>Rejeitar</span>
-                            </button>
-                          </div>
-                        )}
-
-                        {isConfirmado && (
-                          <div className="compromisso-acoes">
-                            <button 
-                              className="acao-btn iniciar"
-                              onClick={() => iniciarTrabalho(agendamento.id)}
-                            >
-                              <ArrowRight className="icon" />
-                              <span>Iniciar Trabalho</span>
-                            </button>
-                          </div>
-                        )}
-
-                        {isEmExecucao && (
-                          <div className="compromisso-status-execucao">
-                            <TrendingUp className="icon" />
-                            <span>Em execução</span>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
+        {/* Insights Inteligentes */}
+        {(totalPendentes > 0 || totalConflitos > 0) && (
+          <div className="agenda-insights">
+            {totalPendentes > 0 && (
+              <div className="insight-card pendente">
+                <AlertCircle size={20} />
+                <div className="insight-text">
+                  <strong>{totalPendentes} solicitaç{totalPendentes === 1 ? 'ão' : 'ões'} aguardando aprovação</strong>
+                  <span>Revisar agendamentos pendentes</span>
                 </div>
               </div>
-            );
-          })}
-        </div>
-
-        {/* Empty State */}
-        {agendamentosFiltrados.length === 0 && (
-          <div className="empty-state-agenda">
-            <div className="empty-icon">
-              <Clock className="icon" />
-            </div>
-            <h3 className="empty-titulo">
-              {searchQuery ? 'Nenhum compromisso encontrado' : 'Nenhum compromisso hoje'}
-            </h3>
-            <p className="empty-descricao">
-              {searchQuery 
-                ? 'Tente buscar por outro cliente ou local' 
-                : 'Adicione um compromisso para começar'}
-            </p>
-            {!searchQuery && (
-              <button className="btn-empty-action" onClick={abrirModalNovo}>
-                <Plus className="icon" />
-                <span>Novo Compromisso</span>
-              </button>
+            )}
+            {totalConflitos > 0 && (
+              <div className="insight-card conflito">
+                <AlertTriangle size={20} />
+                <div className="insight-text">
+                  <strong>{totalConflitos} conflito{totalConflitos !== 1 ? 's' : ''} detectado{totalConflitos !== 1 ? 's' : ''}</strong>
+                  <span>Atenção necessária</span>
+                </div>
+              </div>
             )}
           </div>
         )}
+
+        {/* Navegação de Dias Premium */}
+        <div className="agenda-nav-dias">
+          <button 
+            className="nav-dia-btn"
+            onClick={() => navegarDia(-1)}
+            aria-label="Dia anterior"
+          >
+            <ChevronLeft size={20} strokeWidth={2.5} />
+          </button>
+
+          <div className="dias-scroll-container" ref={scrollRef}>
+            <div className="dias-scroll">
+              {dias.map((dia) => (
+                <button
+                  key={dia.offset}
+                  className={`dia-pill ${dia.offset === diaSelecionado ? 'active' : ''} ${dia.isHoje ? 'hoje' : ''}`}
+                  onClick={() => selecionarDia(dia.offset)}
+                >
+                  <span className="dia-semana">{dia.diaSemana}</span>
+                  <span className="dia-numero">{dia.dia}</span>
+                  {dia.isHoje && <div className="dia-indicator" />}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <button 
+            className="nav-dia-btn"
+            onClick={() => navegarDia(1)}
+            aria-label="Próximo dia"
+          >
+            <ChevronRight size={20} strokeWidth={2.5} />
+          </button>
+        </div>
+
+        {/* Timeline Vertical Premium */}
+        <div className="agenda-timeline-container">
+          {agendamentosDoDia.length === 0 ? (
+            <div className="agenda-empty-premium">
+              <div className="empty-icon-premium">
+                <Clock size={48} strokeWidth={1.5} />
+              </div>
+              <h3 className="empty-title-premium">
+                {diaAtual?.isHoje ? 'Hoje está livre' : 'Nenhum compromisso'}
+              </h3>
+              <p className="empty-subtitle-premium">
+                {diaAtual?.isHoje 
+                  ? 'Organize sua próxima operação ou cobrança'
+                  : 'Não há compromissos agendados para este dia'
+                }
+              </p>
+              <button className="btn-empty-premium" onClick={abrirModalNovo}>
+                <Plus size={20} strokeWidth={2.5} />
+                <span>Criar compromisso</span>
+              </button>
+            </div>
+          ) : (
+            <div className="agenda-timeline">
+              {agendamentosDoDia.map((agendamento, index) => {
+                const isPendente = agendamento.status === 'pendente' || agendamento.status === 'solicitado';
+                const isAprovado = agendamento.status === 'aprovado';
+                const isConvertido = agendamento.status === 'convertido';
+                const temConflito = agendamento.conflitoDetectado;
+                const isIA = agendamento.origem === 'ia' || agendamento.origem === 'whatsapp';
+                
+                return (
+                  <div key={agendamento.id} className="timeline-entry-premium">
+                    {/* Linha vertical */}
+                    {index < agendamentosDoDia.length - 1 && <div className="timeline-line" />}
+                    
+                    {/* Marcador circular */}
+                    <div className={`timeline-marker ${agendamento.status} ${temConflito ? 'conflito' : ''}`}>
+                      <div className="marker-inner" />
+                    </div>
+
+                    {/* Bloco de Agendamento Premium */}
+                    <div className={`agendamento-block ${agendamento.tipo} ${agendamento.status} ${temConflito ? 'com-conflito' : ''}`}>
+                      {/* Barra lateral de prioridade */}
+                      {agendamento.prioridade === 'alta' && <div className="priority-bar alta" />}
+                      {agendamento.prioridade === 'critica' && <div className="priority-bar critica" />}
+                      
+                      {/* Camada 1: Horário */}
+                      <div className="block-horario">
+                        <Clock size={16} strokeWidth={2} />
+                        <span>{agendamento.horarioInicio}</span>
+                        <span className="horario-separator">—</span>
+                        <span>{agendamento.horarioFim}</span>
+                      </div>
+
+                      {/* Camada 2: Cliente e Badges */}
+                      <div className="block-header">
+                        <h3 className="block-cliente">{agendamento.clienteNome}</h3>
+                        <div className="block-badges">
+                          {isIA && (
+                            <div className="badge-ia-premium">
+                              <Sparkles size={12} strokeWidth={2.5} />
+                              <span>IA</span>
+                            </div>
+                          )}
+                          {isPendente && (
+                            <div className="badge-status pendente">
+                              Aguardando
+                            </div>
+                          )}
+                          {isAprovado && (
+                            <div className="badge-status aprovado">
+                              Aprovado
+                            </div>
+                          )}
+                          {isConvertido && (
+                            <div className="badge-status convertido">
+                              Em execução
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Camada 3: Detalhes Operacionais */}
+                      <div className="block-detalhes">
+                        <div className="detalhe-row">
+                          <div className="detalhe-item-premium">
+                            <Truck size={14} strokeWidth={2} />
+                            <span>{agendamento.tipo === 'carga' ? 'Carga' : 'Descarga'}</span>
+                          </div>
+                          <div className="detalhe-item-premium">
+                            <Package size={14} strokeWidth={2} />
+                            <span>{agendamento.tonelagem}t</span>
+                          </div>
+                        </div>
+                        <div className="detalhe-row">
+                          <div className="detalhe-item-premium local">
+                            <MapPin size={14} strokeWidth={2} />
+                            <span>{agendamento.localDescricao}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Conflitos */}
+                      {temConflito && agendamento.conflitos.length > 0 && (
+                        <div className="block-conflitos">
+                          <AlertTriangle size={16} strokeWidth={2} />
+                          <span>{agendamento.conflitos.length} conflito{agendamento.conflitos.length !== 1 ? 's' : ''} detectado{agendamento.conflitos.length !== 1 ? 's' : ''}</span>
+                        </div>
+                      )}
+
+                      {/* Ações Premium */}
+                      {isPendente && (
+                        <div className="block-acoes-premium">
+                          <button 
+                            className="acao-premium aprovar"
+                            onClick={() => setModalAcao({ show: true, tipo: 'aprovar', agendamentoId: agendamento.id })}
+                          >
+                            <CheckCircle2 size={18} strokeWidth={2} />
+                            <span>Aprovar</span>
+                          </button>
+                          <button 
+                            className="acao-premium rejeitar"
+                            onClick={() => setModalAcao({ show: true, tipo: 'rejeitar', agendamentoId: agendamento.id })}
+                          >
+                            <XCircle size={18} strokeWidth={2} />
+                            <span>Rejeitar</span>
+                          </button>
+                        </div>
+                      )}
+
+                      {isAprovado && (
+                        <div className="block-acoes-premium">
+                          <button 
+                            className="acao-premium converter"
+                            onClick={() => setModalAcao({ show: true, tipo: 'converter', agendamentoId: agendamento.id })}
+                          >
+                            <PlayCircle size={18} strokeWidth={2} />
+                            <span>Converter em Trabalho</span>
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* FAB Premium */}
+        <button className="fab-premium" onClick={abrirModalNovo} aria-label="Novo compromisso">
+          <Plus size={24} strokeWidth={2.5} />
+        </button>
       </div>
 
-      {/* Modal - Agendamento Operacional iOS Premium */}
+      {/* Modal Premium */}
       {modalAberto && (
-        <div className="agenda-sheet-overlay" onClick={fecharModal}>
-          <div className="agenda-sheet-container" onClick={(e) => e.stopPropagation()}>
-            <div className="agenda-sheet-handle" />
+        <div className="modal-overlay-premium" onClick={() => setModalAberto(false)}>
+          <div className="modal-sheet-premium" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-handle" />
             
-            <div className="agenda-sheet-header">
-              <div className="agenda-header-content">
-                <h2 className="agenda-title">Novo Compromisso</h2>
-                <p className="agenda-subtitle">Adicionar à agenda</p>
+            <div className="modal-header-premium">
+              <div>
+                <h2 className="modal-title-premium">Novo Compromisso</h2>
+                <p className="modal-subtitle-premium">Adicionar à agenda</p>
               </div>
-              <button className="agenda-close-btn" onClick={fecharModal} aria-label="Fechar">
+              <button className="modal-close-premium" onClick={() => setModalAberto(false)}>
                 <X size={20} strokeWidth={2.5} />
               </button>
             </div>
             
-            <div className="agenda-sheet-body">
-              {/* Cliente */}
-              <div className="agenda-module">
-                {!mostrarClienteInput ? (
-                  <button 
-                    className={`agenda-cell ${formCliente ? 'filled' : ''}`}
-                    onClick={() => setMostrarClienteInput(true)}
-                  >
-                    <div className="agenda-cell-icon">
-                      <Users size={20} />
-                    </div>
-                    <div className="agenda-cell-content">
-                      {formCliente ? (
-                        <>
-                          <span className="agenda-cell-label-small">Cliente</span>
-                          <span className="agenda-cell-value">{formCliente}</span>
-                        </>
-                      ) : (
-                        <span className="agenda-cell-placeholder">Selecionar cliente</span>
-                      )}
-                    </div>
-                    <ChevronRight size={18} className="agenda-cell-chevron" />
-                  </button>
-                ) : (
-                  <input
-                    type="text"
-                    className="agenda-contextual-input"
-                    placeholder="Nome do cliente..."
-                    value={formCliente}
-                    onChange={(e) => setFormCliente(e.target.value)}
-                    onBlur={() => setMostrarClienteInput(false)}
-                    autoFocus
-                  />
-                )}
+            <div className="modal-body-premium">
+              <div className="form-module-premium">
+                <label className="form-label-premium">Cliente</label>
+                <AutocompleteCliente
+                  value={formClienteNome || ''}
+                  onChange={(value) => setFormClienteNome(value)}
+                  onSelect={(cliente) => {
+                    setFormClienteId(cliente.id);
+                    setFormClienteNome(cliente.nome);
+                  }}
+                  placeholder="Selecionar cliente..."
+                />
               </div>
 
-              {/* Data */}
-              <div className="agenda-module">
-                {!mostrarDataInput ? (
-                  <button 
-                    className={`agenda-cell ${formData ? 'filled' : ''}`}
-                    onClick={() => setMostrarDataInput(true)}
-                  >
-                    <div className="agenda-cell-icon">
-                      <Calendar size={20} />
-                    </div>
-                    <div className="agenda-cell-content">
-                      <span className="agenda-cell-label-small">Data</span>
-                      <span className="agenda-cell-value">
-                        {formData ? new Date(formData + 'T00:00').toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' }) : 'Selecionar'}
-                      </span>
-                    </div>
-                    <ChevronRight size={18} className="agenda-cell-chevron" />
-                  </button>
-                ) : (
-                  <input
-                    type="date"
-                    className="agenda-contextual-input"
-                    value={formData}
-                    onChange={(e) => setFormData(e.target.value)}
-                    onBlur={() => setMostrarDataInput(false)}
-                    autoFocus
-                  />
-                )}
+              <div className="form-module-premium">
+                <label className="form-label-premium">Data</label>
+                <input
+                  type="date"
+                  className="form-input-premium"
+                  value={formData}
+                  onChange={(e) => setFormData(e.target.value)}
+                />
               </div>
 
-              {/* Horário */}
-              <div className="agenda-module">
-                <div className="agenda-module-label">Horário</div>
-                <div className="agenda-time-picker">
-                  <div className="agenda-time-input-group">
-                    <input
-                      type="time"
-                      className="agenda-time-input"
-                      value={formHorarioInicio}
-                      onChange={(e) => setFormHorarioInicio(e.target.value)}
-                    />
-                    <span className="agenda-time-arrow">→</span>
-                    <input
-                      type="time"
-                      className="agenda-time-input"
-                      value={formHorarioFim}
-                      onChange={(e) => setFormHorarioFim(e.target.value)}
-                    />
-                  </div>
-                  {formHorarioInicio && formHorarioFim && (
-                    <div className="agenda-duration">
-                      Duração: {(() => {
-                        const [h1, m1] = formHorarioInicio.split(':').map(Number);
-                        const [h2, m2] = formHorarioFim.split(':').map(Number);
-                        const diff = (h2 * 60 + m2) - (h1 * 60 + m1);
-                        const hours = Math.floor(diff / 60);
-                        const mins = diff % 60;
-                        return `${hours}h${mins > 0 ? ` ${mins}min` : ''}`;
-                      })()}
-                    </div>
-                  )}
+              <div className="form-module-premium">
+                <label className="form-label-premium">Horário</label>
+                <div className="time-picker-premium">
+                  <input
+                    type="time"
+                    className="time-input-premium"
+                    value={formHorarioInicio}
+                    onChange={(e) => setFormHorarioInicio(e.target.value)}
+                  />
+                  <span className="time-arrow-premium">→</span>
+                  <input
+                    type="time"
+                    className="time-input-premium"
+                    value={formHorarioFim}
+                    onChange={(e) => setFormHorarioFim(e.target.value)}
+                  />
                 </div>
               </div>
 
-              {/* Tipo */}
-              <div className="agenda-module">
-                <div className="agenda-module-label">Tipo de operação</div>
-                <div className="agenda-segmented-control">
+              <div className="form-module-premium">
+                <label className="form-label-premium">Tipo de operação</label>
+                <div className="segmented-control-premium">
                   <button
-                    className={`agenda-segment ${formTipo === 'descarga' ? 'active' : ''}`}
+                    className={`segment-premium ${formTipo === 'descarga' ? 'active' : ''}`}
                     onClick={() => setFormTipo('descarga')}
                   >
                     <Truck size={18} />
                     <span>Descarga</span>
                   </button>
                   <button
-                    className={`agenda-segment ${formTipo === 'carga' ? 'active' : ''}`}
+                    className={`segment-premium ${formTipo === 'carga' ? 'active' : ''}`}
                     onClick={() => setFormTipo('carga')}
                   >
                     <Truck size={18} />
                     <span>Carga</span>
                   </button>
-                  <div 
-                    className="agenda-segment-indicator"
-                    style={{ transform: formTipo === 'carga' ? 'translateX(100%)' : 'translateX(0)' }}
-                  />
                 </div>
               </div>
 
-              {/* Local */}
-              <div className="agenda-module">
-                {!mostrarLocalInput ? (
-                  <button 
-                    className={`agenda-cell ${formLocal ? 'filled' : ''}`}
-                    onClick={() => setMostrarLocalInput(true)}
-                  >
-                    <div className="agenda-cell-icon">
-                      <MapPin size={20} />
-                    </div>
-                    <div className="agenda-cell-content">
-                      {formLocal ? (
-                        <>
-                          <span className="agenda-cell-label-small">Local</span>
-                          <span className="agenda-cell-value">{formLocal}</span>
-                        </>
-                      ) : (
-                        <span className="agenda-cell-placeholder">Local da operação</span>
-                      )}
-                    </div>
-                    <ChevronRight size={18} className="agenda-cell-chevron" />
-                  </button>
-                ) : (
-                  <input
-                    type="text"
-                    className="agenda-contextual-input"
-                    placeholder="Galpão, setor, pátio..."
-                    value={formLocal}
-                    onChange={(e) => setFormLocal(e.target.value)}
-                    onBlur={() => setMostrarLocalInput(false)}
-                    autoFocus
-                  />
-                )}
+              <div className="form-module-premium">
+                <label className="form-label-premium">Local da operação</label>
+                <input
+                  type="text"
+                  className="form-input-premium"
+                  placeholder="Galpão, setor, pátio..."
+                  value={formLocal}
+                  onChange={(e) => setFormLocal(e.target.value)}
+                />
               </div>
 
-              {/* Tonelagem */}
-              <div className="agenda-module">
-                <div className="agenda-module-label">Tonelagem prevista</div>
-                <div className="agenda-stepper">
+              <div className="form-module-premium">
+                <label className="form-label-premium">Tonelagem prevista</label>
+                <div className="stepper-premium">
                   <button 
-                    className="agenda-stepper-btn"
+                    className="stepper-btn-premium"
                     onClick={() => {
                       const current = parseFloat(formTonelagem) || 0;
                       if (current > 0) setFormTonelagem((current - 0.5).toFixed(1));
                     }}
-                    disabled={!formTonelagem || parseFloat(formTonelagem) <= 0}
                   >
                     <Minus size={20} strokeWidth={2.5} />
                   </button>
-                  <div className="agenda-stepper-value">
+                  <div className="stepper-value-premium">
                     <input
                       type="number"
                       inputMode="decimal"
-                      className="agenda-stepper-input"
+                      className="stepper-input-premium"
                       placeholder="0.0"
                       value={formTonelagem}
                       onChange={(e) => setFormTonelagem(e.target.value)}
                     />
-                    <span className="agenda-stepper-unit">t</span>
+                    <span className="stepper-unit-premium">t</span>
                   </div>
                   <button 
-                    className="agenda-stepper-btn"
+                    className="stepper-btn-premium"
                     onClick={() => {
                       const current = parseFloat(formTonelagem) || 0;
                       setFormTonelagem((current + 0.5).toFixed(1));
@@ -583,25 +569,85 @@ const AgendaPage: React.FC = () => {
                   </button>
                 </div>
               </div>
+
+              {conflitosDetectados.length > 0 && (
+                <div className="alert-conflitos-premium">
+                  <AlertTriangle size={20} />
+                  <div>
+                    <strong>{conflitosDetectados.length} conflito(s) detectado(s)</strong>
+                    {conflitosDetectados.map((c, i) => (
+                      <p key={i}>{c.descricao}</p>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
-            <div className="agenda-sheet-footer">
-              <button className="agenda-cancel-link" onClick={fecharModal}>
+            <div className="modal-footer-premium">
+              <button className="btn-cancel-premium" onClick={() => setModalAberto(false)}>
                 Cancelar
               </button>
               <button 
-                className="agenda-primary-btn"
+                className="btn-primary-premium"
                 onClick={salvarAgendamento}
-                disabled={!formCliente || !formData || !formHorarioInicio}
               >
-                <span>Criar Compromisso</span>
+                Criar Compromisso
               </button>
             </div>
           </div>
         </div>
       )}
 
-      <Dock />
+      {/* Modal de Ação */}
+      {modalAcao && (
+        <div className="modal-overlay-premium" onClick={() => setModalAcao(null)}>
+          <div className="modal-sheet-premium modal-acao" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-handle" />
+            
+            <div className="modal-header-premium">
+              <div>
+                <h2 className="modal-title-premium">
+                  {modalAcao.tipo === 'aprovar' && 'Aprovar Agendamento'}
+                  {modalAcao.tipo === 'rejeitar' && 'Rejeitar Agendamento'}
+                  {modalAcao.tipo === 'converter' && 'Converter em Trabalho'}
+                </h2>
+              </div>
+              <button className="modal-close-premium" onClick={() => setModalAcao(null)}>
+                <X size={20} strokeWidth={2.5} />
+              </button>
+            </div>
+            
+            <div className="modal-body-premium">
+              {modalAcao.tipo === 'rejeitar' && (
+                <div className="form-module-premium">
+                  <label className="form-label-premium">Motivo da rejeição</label>
+                  <textarea
+                    className="form-textarea-premium"
+                    placeholder="Descreva o motivo..."
+                    value={motivoRejeicao}
+                    onChange={(e) => setMotivoRejeicao(e.target.value)}
+                    rows={4}
+                  />
+                </div>
+              )}
+            </div>
+
+            <div className="modal-footer-premium">
+              <button className="btn-cancel-premium" onClick={() => setModalAcao(null)}>
+                Cancelar
+              </button>
+              <button 
+                className="btn-primary-premium"
+                onClick={executarAcao}
+              >
+                Confirmar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <Dock style={{ display: (modalAberto || modalAcao) ? 'none' : 'flex' }} />
     </>
   );
 };

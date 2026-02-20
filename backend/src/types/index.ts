@@ -92,20 +92,99 @@ export interface TrabalhoFuncionario {
 }
 
 // Agendamento Types
+export type AgendamentoOrigem = 'manual' | 'ia' | 'whatsapp' | 'recorrente';
+export type AgendamentoStatus = 
+  | 'solicitado'      // Criado, aguardando validação
+  | 'pendente'        // Validado, aguardando aprovação
+  | 'aprovado'        // Aprovado, aguardando conversão
+  | 'rejeitado'       // Rejeitado com motivo
+  | 'reagendado'      // Reagendado para nova data
+  | 'cancelado'       // Cancelado
+  | 'convertido';     // Convertido em trabalho
+
+export type AgendamentoPrioridade = 'normal' | 'alta' | 'critica';
+
+export interface AgendamentoConflito {
+  agendamentoId: string;
+  tipo: 'horario' | 'capacidade' | 'recurso' | 'cliente_duplicado';
+  descricao: string;
+  severidade: 'baixa' | 'media' | 'alta';
+}
+
 export interface Agendamento {
   id: string;
   companyId: string;
+  
+  // Origem e rastreamento
+  origem: AgendamentoOrigem;
+  solicitadoPor: string;  // userId ou 'ia' ou 'whatsapp'
+  whatsappMessageId?: string;  // Se veio do WhatsApp
+  
+  // Cliente
+  clienteId?: string;
+  clienteNome: string;
+  clienteTelefone?: string;
+  
+  // Data e horário
   data: Date;
+  horarioInicio: string;  // HH:mm
+  horarioFim: string;     // HH:mm
+  duracao: number;        // minutos
+  
+  // Operação
   tipo: 'carga' | 'descarga';
+  localDescricao: string;
   tonelagem: number;
   valorEstimadoCentavos: number;
+  
+  // Recursos
   funcionarios: string[];
-  status: 'pendente' | 'confirmado' | 'cancelado' | 'concluido';
+  equipamentos?: string[];
+  
+  // Status e aprovação
+  status: AgendamentoStatus;
+  prioridade: AgendamentoPrioridade;
+  
+  // Aprovação/Rejeição
+  aprovadoPor?: string;
+  aprovadoEm?: Date;
+  rejeitadoPor?: string;
+  rejeitadoEm?: Date;
+  motivoRejeicao?: string;
+  
+  // Reagendamento
+  reagendadoDe?: string;  // ID do agendamento original
+  reagendadoPor?: string;
+  reagendadoEm?: Date;
+  motivoReagendamento?: string;
+  
+  // Conflitos
+  conflitoDetectado: boolean;
+  conflitos: AgendamentoConflito[];
+  
+  // Conversão em trabalho
+  convertidoEmTrabalho: boolean;
+  trabalhoId?: string;
+  convertidoEm?: Date;
+  convertidoPor?: string;
+  
+  // Observações e notas
   observacoes?: string;
+  notasInternas?: string;
+  
+  // Auditoria
   createdBy: string;
   createdAt: Date;
   updatedAt: Date;
   deletedAt: Date | null;
+  
+  // Histórico de mudanças
+  historico: {
+    timestamp: Date;
+    userId: string;
+    acao: string;
+    detalhes: string;
+  }[];
 }
 
 // Funcionario Types

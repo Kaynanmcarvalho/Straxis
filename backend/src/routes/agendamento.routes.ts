@@ -16,6 +16,12 @@ router.use(tenantMiddleware);
 router.get('/', AgendamentoController.list);
 
 /**
+ * GET /api/agendamentos/disponibilidade
+ * Verifica disponibilidade
+ */
+router.get('/disponibilidade', AgendamentoController.verificarDisponibilidade);
+
+/**
  * GET /api/agendamentos/:id
  * Busca agendamento por ID
  */
@@ -26,6 +32,24 @@ router.get('/:id', AgendamentoController.getById);
  * Cria novo agendamento
  */
 router.post('/', AgendamentoController.create);
+
+/**
+ * POST /api/agendamentos/:id/aprovar
+ * Aprova agendamento
+ */
+router.post('/:id/aprovar', AgendamentoController.aprovar);
+
+/**
+ * POST /api/agendamentos/:id/rejeitar
+ * Rejeita agendamento
+ */
+router.post('/:id/rejeitar', AgendamentoController.rejeitar);
+
+/**
+ * POST /api/agendamentos/:id/converter
+ * Converte agendamento em trabalho
+ */
+router.post('/:id/converter', AgendamentoController.converter);
 
 /**
  * PUT /api/agendamentos/:id

@@ -1,5 +1,5 @@
 import { apiService } from './api.service';
-import { Agendamento } from '../types/agendamento.types';
+import { Agendamento, AgendamentoConflito } from '../types/agendamento.types';
 
 export const agendamentoService = {
   /**
@@ -8,7 +8,6 @@ export const agendamentoService = {
   async list(): Promise<Agendamento[]> {
     try {
       const response = await apiService.get('/agendamentos');
-      // Garantir que sempre retorna um array
       if (response?.data?.data && Array.isArray(response.data.data)) {
         return response.data.data;
       }
@@ -36,9 +35,18 @@ export const agendamentoService = {
   /**
    * Cria novo agendamento
    */
-  async create(agendamentoData: Partial<Agendamento>): Promise<Agendamento> {
+  async create(agendamentoData: Partial<Agendamento>): Promise<{
+    agendamento: Agendamento;
+    disponibilidade: {
+      conflitos: AgendamentoConflito[];
+      capacidadeDisponivel: number;
+    };
+  }> {
     const response = await apiService.post('/agendamentos', agendamentoData);
-    return response.data.data;
+    return {
+      agendamento: response.data.data,
+      disponibilidade: response.data.disponibilidade
+    };
   },
 
   /**
@@ -60,8 +68,58 @@ export const agendamentoService = {
    */
   async updateStatus(
     id: string,
-    status: 'pendente' | 'confirmado' | 'cancelado' | 'concluido'
+    status: 'solicitado' | 'pendente' | 'aprovado' | 'rejeitado' | 'reagendado' | 'cancelado' | 'convertido',
+    motivo?: string
   ): Promise<void> {
-    await apiService.patch(`/agendamentos/${id}/status`, { status });
+    await apiService.patch(`/agendamentos/${id}/status`, { status, motivo });
+  },
+
+  /**
+   * Aprova agendamento
+   */
+  async aprovar(id: string): Promise<void> {
+    await apiService.post(`/agendamentos/${id}/aprovar`, {});
+  },
+
+  /**
+   * Rejeita agendamento
+   */
+  async rejeitar(id: string, motivo: string): Promise<void> {
+    await apiService.post(`/agendamentos/${id}/rejeitar`, { motivo });
+  },
+
+  /**
+   * Converte agendamento em trabalho
+   */
+  async converter(id: string): Promise<{
+    trabalho: any;
+    agendamento: Agendamento;
+  }> {
+    const response = await apiService.post(`/agendamentos/${id}/converter`, {});
+    return response.data.data;
+  },
+
+  /**
+   * Verifica disponibilidade
+   */
+  async verificarDisponibilidade(
+    data: Date,
+    horarioInicio: string,
+    horarioFim: string,
+    tonelagem: number
+  ): Promise<{
+    disponivel: boolean;
+    conflitos: AgendamentoConflito[];
+    capacidadeDisponivel: number;
+  }> {
+    const params = new URLSearchParams({
+      data: data.toISOString(),
+      horarioInicio,
+      horarioFim,
+      tonelagem: tonelagem.toString()
+    });
+    
+    const response = await apiService.get(`/agendamentos/disponibilidade?${params}`);
+    return response.data.data;
   },
 };

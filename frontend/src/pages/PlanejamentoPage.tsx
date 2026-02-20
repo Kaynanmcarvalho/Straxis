@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { 
   Plus,
   Filter,
@@ -14,6 +14,9 @@ import {
 } from 'lucide-react';
 import { Dock } from '../components/core/Dock';
 import { AutocompleteCliente } from '../components/common/AutocompleteCliente';
+import { useAuth } from '../contexts/AuthContext';
+import { agendamentoService } from '../services/agendamento.service';
+import { Agendamento } from '../types/agendamento.types';
 import './PlanejamentoPage.css';
 import './AgendaPageModal.css';
 
@@ -26,6 +29,7 @@ interface Compromisso {
   clienteId?: string;
   local?: string;
   valor?: number;
+  tonelagem?: number;
   status: 'pendente' | 'confirmado' | 'em_andamento' | 'concluido';
   prioridade?: 'critica' | 'alta' | 'normal';
   conflito?: { id: string; horario: string; titulo: string };
@@ -33,6 +37,7 @@ interface Compromisso {
 }
 
 const PlanejamentoPage: React.FC = () => {
+  const { user } = useAuth();
   const [semanaAtual, setSemanaAtual] = useState(0);
   const [compromissos, setCompromissos] = useState<Compromisso[]>([]);
   const [modalAberto, setModalAberto] = useState(false);
@@ -46,6 +51,7 @@ const PlanejamentoPage: React.FC = () => {
   const [formTipo, setFormTipo] = useState<'descarga' | 'carga' | 'cobranca' | 'reuniao'>('descarga');
   const [formLocal, setFormLocal] = useState('');
   const [formValor, setFormValor] = useState('');
+  const [formTonelagem, setFormTonelagem] = useState('');
   const [formPrioridade, setFormPrioridade] = useState<'normal' | 'alta' | 'critica'>('normal');
   
   // Swipe states
@@ -53,59 +59,44 @@ const PlanejamentoPage: React.FC = () => {
   const [swipeX, setSwipeX] = useState(0);
   const touchStartX = useRef(0);
 
-  useEffect(() => {
-    carregarCompromissos();
-  }, [semanaAtual]);
-
-  const carregarCompromissos = async () => {
+  const carregarCompromissos = useCallback(async () => {
+    if (!user?.companyId) return;
+    
     setLoading(true);
     try {
-      // TODO: Integrar com Firebase/API
-      // Mock data para demonstração
-      await new Promise(resolve => setTimeout(resolve, 500));
+      const agendamentos = await agendamentoService.list();
       
-      const mockData: Compromisso[] = [
-        {
-          id: '1',
-          horario: '08:00',
-          tipo: 'descarga',
-          titulo: 'Container #4521',
-          cliente: 'Ambrev',
-          local: 'Galpão A',
-          valor: 12500,
-          status: 'confirmado',
-          prioridade: 'critica',
-          data: new Date()
-        },
-        {
-          id: '2',
-          horario: '10:30',
-          tipo: 'cobranca',
-          titulo: 'Cliente XP',
-          cliente: 'XP Investimentos',
-          valor: 8300,
-          status: 'pendente',
-          data: new Date()
-        },
-        {
-          id: '3',
-          horario: '14:00',
-          tipo: 'carga',
-          titulo: 'Exportação JBS',
-          cliente: 'JBS',
-          local: 'Porto Santos',
-          status: 'confirmado',
-          data: new Date()
-        }
-      ];
+      // Converter agendamentos para compromissos
+      const compromissosConvertidos: Compromisso[] = agendamentos.map(ag => {
+        const dataObj = new Date(ag.data);
+        
+        return {
+          id: ag.id,
+          horario: ag.horarioInicio,
+          tipo: ag.tipo as 'carga' | 'descarga',
+          titulo: `${ag.tipo === 'carga' ? 'Carga' : 'Descarga'} - ${ag.tonelagem}t`,
+          cliente: ag.clienteNome,
+          clienteId: ag.clienteId,
+          local: ag.localDescricao,
+          valor: ag.valorEstimadoCentavos / 100,
+          tonelagem: ag.tonelagem,
+          status: ag.status as any,
+          prioridade: ag.prioridade as any,
+          data: dataObj,
+        };
+      });
       
-      setCompromissos(mockData);
+      setCompromissos(compromissosConvertidos);
     } catch (error) {
       console.error('Erro ao carregar compromissos:', error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.companyId]);
+
+  useEffect(() => {
+    carregarCompromissos();
+  }, [carregarCompromissos, semanaAtual]);
 
   const getDataSemana = () => {
     const hoje = new Date();
@@ -141,6 +132,7 @@ const PlanejamentoPage: React.FC = () => {
     setFormTipo('descarga');
     setFormLocal('');
     setFormValor('');
+    setFormTonelagem('');
     setFormPrioridade('normal');
     setModalAberto(true);
   };
@@ -155,39 +147,63 @@ const PlanejamentoPage: React.FC = () => {
       return;
     }
 
-    const novoCompromisso: Compromisso = {
-      id: Date.now().toString(),
-      horario: formHorario,
-      tipo: formTipo,
-      titulo: formTipo === 'cobranca' ? formCliente : `${formTipo.charAt(0).toUpperCase() + formTipo.slice(1)} ${formCliente}`,
-      cliente: formCliente,
-      clienteId: formClienteId,
-      local: formLocal || undefined,
-      valor: formValor ? parseFloat(formValor) : undefined,
-      status: 'pendente',
-      prioridade: formPrioridade,
-      data: new Date(formData)
-    };
+    if (!formLocal) {
+      alert('Preencha o local');
+      return;
+    }
 
-    setCompromissos(prev => [...prev, novoCompromisso].sort((a, b) => 
-      a.horario.localeCompare(b.horario)
-    ));
-    
-    fecharModal();
-    if (navigator.vibrate) navigator.vibrate([10, 50, 10]);
+    if (!formTonelagem || parseFloat(formTonelagem) <= 0) {
+      alert('Preencha a tonelagem (maior que zero)');
+      return;
+    }
+
+    try {
+      const dataHora = new Date(`${formData}T${formHorario}`);
+      const horarioFim = new Date(dataHora);
+      horarioFim.setHours(horarioFim.getHours() + 2); // 2 horas de duração padrão
+      
+      await agendamentoService.create({
+        clienteNome: formCliente,
+        clienteId: formClienteId || undefined,
+        data: dataHora,
+        horarioInicio: formHorario,
+        horarioFim: horarioFim.toTimeString().slice(0, 5),
+        tipo: formTipo === 'carga' || formTipo === 'descarga' ? formTipo : 'descarga',
+        localDescricao: formLocal,
+        tonelagem: parseFloat(formTonelagem),
+        valorEstimadoCentavos: formValor ? Math.round(parseFloat(formValor) * 100) : 0,
+        funcionarios: [],
+        prioridade: formPrioridade,
+      });
+      
+      await carregarCompromissos();
+      fecharModal();
+      if (navigator.vibrate) navigator.vibrate([10, 50, 10]);
+    } catch (error) {
+      console.error('Erro ao salvar compromisso:', error);
+      alert('Erro ao salvar compromisso');
+    }
   };
 
-  const confirmarCompromisso = (id: string) => {
-    setCompromissos(prev => prev.map(c => 
-      c.id === id ? { ...c, status: 'confirmado' as const } : c
-    ));
-    if (navigator.vibrate) navigator.vibrate(20);
+  const confirmarCompromisso = async (id: string) => {
+    try {
+      await agendamentoService.updateStatus(id, 'confirmado');
+      await carregarCompromissos();
+      if (navigator.vibrate) navigator.vibrate(20);
+    } catch (error) {
+      console.error('Erro ao confirmar compromisso:', error);
+    }
   };
 
-  const cancelarCompromisso = (id: string) => {
+  const cancelarCompromisso = async (id: string) => {
     if (confirm('Cancelar este compromisso?')) {
-      setCompromissos(prev => prev.filter(c => c.id !== id));
-      if (navigator.vibrate) navigator.vibrate([10, 30, 10]);
+      try {
+        await agendamentoService.delete(id);
+        await carregarCompromissos();
+        if (navigator.vibrate) navigator.vibrate([10, 30, 10]);
+      } catch (error) {
+        console.error('Erro ao cancelar compromisso:', error);
+      }
     }
   };
 
@@ -246,6 +262,18 @@ const PlanejamentoPage: React.FC = () => {
 
   const semana = getDataSemana();
   const isHoje = semanaAtual === 0;
+  
+  // Filtrar compromissos da data selecionada
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+  
+  const compromissosHoje = compromissos.filter(c => {
+    const dataCompromisso = new Date(c.data);
+    dataCompromisso.setHours(0, 0, 0, 0);
+    return dataCompromisso.getTime() === hoje.getTime();
+  });
+  
+  const temCompromissosHoje = compromissosHoje.length > 0;
 
   return (
     <>
@@ -304,8 +332,15 @@ const PlanejamentoPage: React.FC = () => {
                   <path d="M24 16v8l6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
                 </svg>
               </div>
-              <h3 className="empty-title-minimal">Hoje está livre</h3>
-              <p className="empty-subtitle-minimal">Organize sua próxima operação ou cobrança</p>
+              <h3 className="empty-title-minimal">
+                {isHoje ? 'Hoje está livre' : 'Nenhum compromisso'}
+              </h3>
+              <p className="empty-subtitle-minimal">
+                {isHoje 
+                  ? 'Organize sua próxima operação ou cobrança'
+                  : 'Não há compromissos neste período'
+                }
+              </p>
               <div className="empty-actions-minimal">
                 <button className="btn-empty-primary-minimal" onClick={abrirModal}>
                   Criar compromisso
@@ -520,6 +555,20 @@ const PlanejamentoPage: React.FC = () => {
                     placeholder="0,00"
                     value={formValor}
                     onChange={(e) => setFormValor(e.target.value)}
+                  />
+                </div>
+              )}
+
+              {/* Tonelagem */}
+              {(formTipo === 'carga' || formTipo === 'descarga') && (
+                <div className="agenda-module">
+                  <div className="agenda-module-label">Tonelagem prevista</div>
+                  <input
+                    type="number"
+                    className="agenda-contextual-input"
+                    placeholder="0.0"
+                    value={formTonelagem}
+                    onChange={(e) => setFormTonelagem(e.target.value)}
                   />
                 </div>
               )}

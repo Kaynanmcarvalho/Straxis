@@ -24,7 +24,7 @@ import {
 } from 'lucide-react';
 import { Dock } from '../components/core/Dock';
 import { AutocompleteCliente } from '../components/common/AutocompleteCliente';
-import { trabalhoService } from '../services/trabalho.service';
+import trabalhoService from '../services/trabalho.service';
 import './TrabalhosPageCore.css';
 
 interface Funcionario {

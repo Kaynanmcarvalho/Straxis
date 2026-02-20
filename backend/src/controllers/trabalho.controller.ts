@@ -26,9 +26,15 @@ export class TrabalhoController {
         'companies',
         companyId,
         'trabalhos',
-        [{ field: 'deletedAt', operator: '==', value: null }],
-        { orderBy: { field: 'data', direction: 'desc' } }
+        [{ field: 'deletedAt', operator: '==', value: null }]
       );
+      
+      // Ordenar no código
+      trabalhos.sort((a, b) => {
+        const dateA = new Date(a.createdAt).getTime();
+        const dateB = new Date(b.createdAt).getTime();
+        return dateB - dateA; // desc
+      });
 
       res.json({
         success: true,
