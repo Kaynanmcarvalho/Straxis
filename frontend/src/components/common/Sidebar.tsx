@@ -165,15 +165,15 @@ export const Sidebar: React.FC<SidebarProps> = ({ userRole, isOpen = false, onCl
         <div className="sidebar-footer">
           <div 
             className="version-info"
-            title="Última atualização: 19/02/2026 - Major: Centro de Gestão Operacional de Pessoas - Reconstrução completa nível executivo, arquitetura editorial estratégica, panorama operacional inteligente, lista iOS Settings nativa, indicadores de carga com rings animados, perfil colaborador bottom sheet full height, métricas operacionais, linha do tempo, gestão avançada, zero CRUD, 100% comando organizacional"
+            title="Última atualização: 19/02/2026 - Major: Trabalhos Refatorado - Schema canônico com invariantes, status calculado no backend, integração agenda→trabalho com idempotência, timezone-aware, auditoria completa, registros de presença persistentes, histórico de alterações, pausas rastreáveis, prioridade automática por SLA"
           >
             {!isCollapsed ? (
               <>
                 <span className="version-label">Versão</span>
-                <span className="version-number">Beta 9.0.0</span>
+                <span className="version-number">Beta 13.0.0</span>
               </>
             ) : (
-              <span className="version-number-collapsed">v9.0.0</span>
+              <span className="version-number-collapsed">v13.0.0</span>
             )}
           </div>
         </div>

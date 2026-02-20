@@ -1,0 +1,111 @@
+.sheet-body {
+  padding: 24px;
+}
+
+.form-group-minimal {
+  margin-bottom: 20px;
+}
+
+.form-label-minimal {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #8E8E93;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+.form-input-minimal {
+  width: 100%;
+  height: 50px;
+  padding: 0 16px;
+  background: rgba(142,142,147,0.12);
+  border: none;
+  border-radius: 10px;
+  font-size: 17px;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+  color: #1D1D1F;
+  transition: all 200ms;
+}
+
+.form-input-minimal::placeholder {
+  color: #8E8E93;
+}
+
+.form-input-minimal:focus {
+  outline: none;
+  background: rgba(142,142,147,0.18);
+  box-shadow: 0 0 0 4px rgba(0,122,255,0.1);
+}
+
+.form-aviso-minimal {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  background: rgba(0,122,255,0.08);
+  border-radius: 10px;
+  font-size: 13px;
+  color: #1D1D1F;
+  margin-top: 16px;
+}
+
+.form-aviso-minimal svg {
+  color: #007AFF;
+  flex-shrink: 0;
+}
+
+.sheet-footer {
+  padding: 16px 24px 32px;
+  border-top: 1px solid rgba(0,0,0,0.06);
+}
+
+.btn-sheet-primary {
+  width: 100%;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: #007AFF;
+  border: none;
+  border-radius: 12px;
+  font-size: 17px;
+  font-weight: 600;
+  color: white;
+  cursor: pointer;
+  transition: all 200ms;
+}
+
+.btn-sheet-primary:hover:not(:disabled) {
+  background: #0051D5;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,122,255,0.3);
+}
+
+.btn-sheet-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Dark Mode */
+@media (prefers-color-scheme: dark) {
+  .form-input-minimal {
+    background: rgba(142,142,147,0.18);
+    color: #F5F5F7;
+  }
+  
+  .form-input-minimal:focus {
+    background: rgba(142,142,147,0.24);
+  }
+  
+  .form-aviso-minimal {
+    background: rgba(0,122,255,0.15);
+    color: #F5F5F7;
+  }
+  
+  .sheet-footer {
+    border-top-color: rgba(255,255,255,0.08);
+  }
+}

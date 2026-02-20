@@ -1,0 +1,416 @@
+/* Steps Premium CSS */
+
+.step-container {
+  padding: 24px 20px 32px;
+  min-height: 400px;
+  display: flex;
+  flex-direction: column;
+}
+
+.step-header {
+  margin-bottom: 32px;
+}
+
+.step-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1D1D1F;
+  margin: 0 0 8px 0;
+  letter-spacing: -0.3px;
+}
+
+.step-subtitle {
+  font-size: 15px;
+  font-weight: 400;
+  color: #8E8E93;
+  margin: 0;
+}
+
+/* Etapa 1 - Tipo de Cliente */
+.tipo-options {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.tipo-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  background: rgba(0,0,0,0.02);
+  border: 2px solid transparent;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+.tipo-card:hover {
+  background: rgba(0,0,0,0.04);
+  transform: translateY(-2px);
+}
+
+.tipo-card.selected {
+  background: rgba(0,122,255,0.08);
+  border-color: #007AFF;
+  box-shadow: 0 4px 16px rgba(0,122,255,0.15);
+}
+
+.tipo-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #007AFF, #0051D5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  flex-shrink: 0;
+}
+
+.tipo-content {
+  flex: 1;
+}
+
+.tipo-title {
+  font-size: 17px;
+  font-weight: 600;
+  color: #1D1D1F;
+  margin: 0 0 4px 0;
+}
+
+.tipo-description {
+  font-size: 13px;
+  color: #8E8E93;
+  margin: 0;
+}
+
+.tipo-check {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.check-circle {
+  width: 24px;
+  height: 24px;
+  border-radius: 12px;
+  background: #007AFF;
+  position: relative;
+}
+
+.check-circle::after {
+  content: '';
+  position: absolute;
+  left: 8px;
+  top: 4px;
+  width: 6px;
+  height: 11px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+/* Form Fields */
+.form-fields {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #8E8E93;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.form-input {
+  height: 50px;
+  padding: 0 16px;
+  background: rgba(142,142,147,0.10);
+  border: 1px solid rgba(0,0,0,0.06);
+  border-radius: 12px;
+  font-size: 17px;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+  color: #1D1D1F;
+  transition: all 200ms;
+}
+
+.form-input::placeholder {
+  color: #8E8E93;
+}
+
+.form-input:focus {
+  outline: none;
+  background: rgba(142,142,147,0.14);
+  border-color: rgba(0,122,255,0.3);
+  box-shadow: 0 0 0 4px rgba(0,122,255,0.08);
+}
+
+.form-hint {
+  font-size: 12px;
+  color: #8E8E93;
+  margin: 0;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 12px;
+}
+
+.form-divider {
+  height: 1px;
+  background: rgba(0,0,0,0.06);
+  margin: 8px 0;
+}
+
+.input-feedback {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  margin-top: 4px;
+}
+
+.input-feedback.success {
+  color: #34C759;
+}
+
+.btn-autofill {
+  width: 100%;
+  height: 50px;
+  background: linear-gradient(135deg, #007AFF, #0051D5);
+  border: none;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  color: white;
+  cursor: pointer;
+  transition: all 200ms;
+  box-shadow: 0 4px 12px rgba(0,122,255,0.25);
+}
+
+.btn-autofill:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(0,122,255,0.35);
+}
+
+.loading-autofill {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 16px;
+  background: rgba(0,122,255,0.06);
+  border-radius: 12px;
+  font-size: 14px;
+  color: #007AFF;
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.info-badge {
+  padding: 12px 16px;
+  background: rgba(0,122,255,0.08);
+  border-radius: 10px;
+  font-size: 13px;
+  color: #007AFF;
+}
+
+/* Etapa 4 - Revisão */
+.revisao-content {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  flex: 1;
+}
+
+.revisao-section {
+  background: rgba(0,0,0,0.02);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.revisao-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.revisao-section-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1D1D1F;
+  margin: 0;
+}
+
+.btn-edit {
+  width: 32px;
+  height: 32px;
+  border-radius: 16px;
+  background: rgba(0,0,0,0.04);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #007AFF;
+  cursor: pointer;
+  transition: all 200ms;
+}
+
+.btn-edit:hover {
+  background: rgba(0,0,0,0.08);
+}
+
+.revisao-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(0,0,0,0.04);
+}
+
+.revisao-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.revisao-label {
+  font-size: 13px;
+  color: #8E8E93;
+  font-weight: 500;
+}
+
+.revisao-value {
+  font-size: 15px;
+  color: #1D1D1F;
+  font-weight: 500;
+  text-align: right;
+  max-width: 60%;
+}
+
+/* Footer Buttons */
+.step-footer {
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid rgba(0,0,0,0.06);
+}
+
+.btn-next,
+.btn-save {
+  width: 100%;
+  height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: #007AFF;
+  border: none;
+  border-radius: 14px;
+  font-size: 17px;
+  font-weight: 600;
+  color: white;
+  cursor: pointer;
+  transition: all 200ms;
+  box-shadow: 0 4px 12px rgba(0,122,255,0.25);
+}
+
+.btn-next:hover:not(:disabled),
+.btn-save:hover:not(:disabled) {
+  background: #0051D5;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(0,122,255,0.35);
+}
+
+.btn-next:disabled,
+.btn-save:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Dark Mode */
+@media (prefers-color-scheme: dark) {
+  .step-title,
+  .tipo-title,
+  .revisao-section-title,
+  .revisao-value {
+    color: #F5F5F7;
+  }
+  
+  .step-subtitle,
+  .tipo-description,
+  .form-label,
+  .form-hint,
+  .revisao-label {
+    color: #98989D;
+  }
+  
+  .tipo-card {
+    background: rgba(255,255,255,0.04);
+  }
+  
+  .tipo-card:hover {
+    background: rgba(255,255,255,0.06);
+  }
+  
+  .tipo-card.selected {
+    background: rgba(10,132,255,0.15);
+    border-color: #0A84FF;
+  }
+  
+  .form-input {
+    background: rgba(142,142,147,0.14);
+    border-color: rgba(255,255,255,0.08);
+    color: #F5F5F7;
+  }
+  
+  .form-input:focus {
+    background: rgba(142,142,147,0.20);
+    border-color: rgba(10,132,255,0.4);
+  }
+  
+  .form-divider {
+    background: rgba(255,255,255,0.08);
+  }
+  
+  .revisao-section {
+    background: rgba(255,255,255,0.04);
+  }
+  
+  .revisao-item {
+    border-bottom-color: rgba(255,255,255,0.06);
+  }
+  
+  .btn-edit {
+    background: rgba(255,255,255,0.08);
+    color: #0A84FF;
+  }
+  
+  .btn-edit:hover {
+    background: rgba(255,255,255,0.12);
+  }
+  
+  .step-footer {
+    border-top-color: rgba(255,255,255,0.08);
+  }
+}

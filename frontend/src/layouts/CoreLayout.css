@@ -43,8 +43,11 @@
   background: #FFFFFF !important;
 }
 
-.core-content:has([class*="clientes-hub"]) {
-  background: #FFFFFF !important;
+.core-content:has([class*="clientes-hub"]),
+.core-content:has([class*="clientes-premium-page"]),
+.core-content:has([class*="clientes-redesign"]) {
+  background: #F5F5F7 !important;
+  padding: 0 !important;
 }
 
 .core-content:has([class*="agendamentos-coordenacao"]) {

@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { FirestoreService } from '../services/firestore.service';
 import { TrabalhoModel } from '../models/trabalho.model';
+import { TrabalhoCompleto } from '../types/trabalho.types';
 import { Trabalho } from '../types';
 
 export class TrabalhoController {
@@ -21,7 +22,7 @@ export class TrabalhoController {
       }
 
       // Buscar trabalhos da empresa
-      const trabalhos = await FirestoreService.querySubcollection<Trabalho>(
+      const trabalhos = await FirestoreService.querySubcollection<TrabalhoCompleto>(
         'companies',
         companyId,
         'trabalhos',
@@ -178,7 +179,7 @@ export class TrabalhoController {
       }
 
       // Verificar se trabalho existe
-      const trabalhoExistente = await FirestoreService.getSubcollectionDoc<Trabalho>(
+      const trabalhoExistente = await FirestoreService.getSubcollectionDoc<any>(
         'companies',
         companyId,
         'trabalhos',
@@ -198,15 +199,11 @@ export class TrabalhoController {
       delete updates.companyId;
       delete updates.createdBy;
 
-      // Recalcular totais se funcionários ou valorRecebido foram alterados
-      if (updates.funcionarios || updates.valorRecebidoCentavos !== undefined) {
-        const trabalhoAtualizado = {
-          ...trabalhoExistente,
-          ...updates,
-        };
-        const { totalPagoCentavos, lucroCentavos } = TrabalhoModel.calculateTotals(trabalhoAtualizado);
-        updates.totalPagoCentavos = totalPagoCentavos;
-        updates.lucroCentavos = lucroCentavos;
+      // Recalcular lucro se valores mudaram
+      if (updates.valorRecebidoCentavos !== undefined || updates.totalPagoCentavos !== undefined) {
+        const valorRecebido = updates.valorRecebidoCentavos ?? trabalhoExistente.valorRecebidoCentavos ?? 0;
+        const totalPago = updates.totalPagoCentavos ?? trabalhoExistente.totalPagoCentavos ?? 0;
+        updates.lucroCentavos = valorRecebido - totalPago;
       }
 
       // Atualizar updatedAt
@@ -460,6 +457,294 @@ export class TrabalhoController {
       res.status(500).json({
         success: false,
         error: 'Erro ao deletar trabalho permanentemente',
+        message: error.message,
+      });
+    }
+  }
+
+  /**
+   * POST /trabalhos/:id/iniciar - Inicia trabalho
+   */
+  static async iniciar(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const companyId = req.auth?.companyId;
+
+      if (!companyId) {
+        res.status(400).json({
+          success: false,
+          error: 'CompanyId é obrigatório',
+          code: 2001,
+        });
+        return;
+      }
+
+      // Verificar se trabalho existe
+      const trabalho = await FirestoreService.getSubcollectionDoc<any>(
+        'companies',
+        companyId,
+        'trabalhos',
+        id
+      );
+
+      if (!trabalho) {
+        res.status(404).json({
+          success: false,
+          error: 'Trabalho não encontrado',
+          code: 3003,
+        });
+        return;
+      }
+
+      const status = trabalho.status || 'rascunho';
+      if (status !== 'planejado' && status !== 'agendado') {
+        res.status(400).json({
+          success: false,
+          error: 'Trabalho não está no status planejado',
+          code: 2001,
+        });
+        return;
+      }
+
+      await FirestoreService.updateSubcollectionDoc(
+        'companies',
+        companyId,
+        'trabalhos',
+        id,
+        {
+          status: 'em_andamento',
+          startedAt: new Date(),
+          updatedAt: new Date(),
+        }
+      );
+
+      res.json({
+        success: true,
+        message: 'Trabalho iniciado com sucesso',
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        success: false,
+        error: 'Erro ao iniciar trabalho',
+        message: error.message,
+      });
+    }
+  }
+
+  /**
+   * POST /trabalhos/:id/pausar - Pausa trabalho
+   */
+  static async pausar(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const { motivo } = req.body;
+      const companyId = req.auth?.companyId;
+
+      if (!companyId) {
+        res.status(400).json({
+          success: false,
+          error: 'CompanyId é obrigatório',
+          code: 2001,
+        });
+        return;
+      }
+
+      const trabalho = await FirestoreService.getSubcollectionDoc<any>(
+        'companies',
+        companyId,
+        'trabalhos',
+        id
+      );
+
+      if (!trabalho) {
+        res.status(404).json({
+          success: false,
+          error: 'Trabalho não encontrado',
+          code: 3003,
+        });
+        return;
+      }
+
+      const status = trabalho.status || 'rascunho';
+      if (status !== 'em_andamento' && status !== 'em_execucao') {
+        res.status(400).json({
+          success: false,
+          error: 'Trabalho não está em execução',
+          code: 2001,
+        });
+        return;
+      }
+
+      const pausas = trabalho.pausas || [];
+      pausas.push({
+        inicio: new Date(),
+        motivo: motivo || 'Não informado',
+      });
+
+      await FirestoreService.updateSubcollectionDoc(
+        'companies',
+        companyId,
+        'trabalhos',
+        id,
+        {
+          status: 'pausado',
+          pausas,
+          updatedAt: new Date(),
+        }
+      );
+
+      res.json({
+        success: true,
+        message: 'Trabalho pausado com sucesso',
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        success: false,
+        error: 'Erro ao pausar trabalho',
+        message: error.message,
+      });
+    }
+  }
+
+  /**
+   * POST /trabalhos/:id/retomar - Retoma trabalho pausado
+   */
+  static async retomar(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const companyId = req.auth?.companyId;
+
+      if (!companyId) {
+        res.status(400).json({
+          success: false,
+          error: 'CompanyId é obrigatório',
+          code: 2001,
+        });
+        return;
+      }
+
+      const trabalho = await FirestoreService.getSubcollectionDoc<any>(
+        'companies',
+        companyId,
+        'trabalhos',
+        id
+      );
+
+      if (!trabalho) {
+        res.status(404).json({
+          success: false,
+          error: 'Trabalho não encontrado',
+          code: 3003,
+        });
+        return;
+      }
+
+      const status = trabalho.status || 'rascunho';
+      if (status !== 'pausado') {
+        res.status(400).json({
+          success: false,
+          error: 'Trabalho não está pausado',
+          code: 2001,
+        });
+        return;
+      }
+
+      const pausas = trabalho.pausas || [];
+      if (pausas.length > 0) {
+        const ultimaPausa = pausas[pausas.length - 1];
+        if (!ultimaPausa.fim) {
+          ultimaPausa.fim = new Date();
+        }
+      }
+
+      await FirestoreService.updateSubcollectionDoc(
+        'companies',
+        companyId,
+        'trabalhos',
+        id,
+        {
+          status: 'em_andamento',
+          pausas,
+          updatedAt: new Date(),
+        }
+      );
+
+      res.json({
+        success: true,
+        message: 'Trabalho retomado com sucesso',
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        success: false,
+        error: 'Erro ao retomar trabalho',
+        message: error.message,
+      });
+    }
+  }
+
+  /**
+   * POST /trabalhos/:id/finalizar - Finaliza trabalho
+   */
+  static async finalizar(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const companyId = req.auth?.companyId;
+
+      if (!companyId) {
+        res.status(400).json({
+          success: false,
+          error: 'CompanyId é obrigatório',
+          code: 2001,
+        });
+        return;
+      }
+
+      const trabalho = await FirestoreService.getSubcollectionDoc<any>(
+        'companies',
+        companyId,
+        'trabalhos',
+        id
+      );
+
+      if (!trabalho) {
+        res.status(404).json({
+          success: false,
+          error: 'Trabalho não encontrado',
+          code: 3003,
+        });
+        return;
+      }
+
+      const status = trabalho.status || 'rascunho';
+      if (status !== 'em_andamento' && status !== 'em_execucao' && status !== 'pausado') {
+        res.status(400).json({
+          success: false,
+          error: 'Trabalho não pode ser finalizado neste status',
+          code: 2001,
+        });
+        return;
+      }
+
+      await FirestoreService.updateSubcollectionDoc(
+        'companies',
+        companyId,
+        'trabalhos',
+        id,
+        {
+          status: 'concluido',
+          finishedAt: new Date(),
+          updatedAt: new Date(),
+        }
+      );
+
+      res.json({
+        success: true,
+        message: 'Trabalho finalizado com sucesso',
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        success: false,
+        error: 'Erro ao finalizar trabalho',
         message: error.message,
       });
     }

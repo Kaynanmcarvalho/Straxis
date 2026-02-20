@@ -1,0 +1,122 @@
+/**
+ * Insight Card - Alerta Editorial Premium
+ * Luxo silencioso, zero amarelo chapado
+ */
+
+.insight-card-editorial {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 149, 0, 0.06) 0%,
+    rgba(255, 149, 0, 0.04) 100%
+  );
+  border: 1px solid rgba(255, 149, 0, 0.12);
+  border-radius: 12px;
+  margin: 16px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.insight-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.insight-icon {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: rgba(255, 149, 0, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #FF9500;
+}
+
+.insight-texto {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--apple-dark, #1D1D1F);
+  line-height: 1.5;
+  margin: 6px 0 0 0;
+}
+
+.insight-dismiss {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 12px;
+  background: rgba(142, 142, 147, 0.12);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--apple-gray, #8E8E93);
+  cursor: pointer;
+  transition: all 180ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.insight-dismiss:hover {
+  background: rgba(142, 142, 147, 0.18);
+  transform: scale(1.05);
+}
+
+.insight-dismiss:active {
+  transform: scale(0.95);
+}
+
+.insight-cta {
+  align-self: flex-start;
+  padding: 10px 20px;
+  background: transparent;
+  border: 1.5px solid #FF9500;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #FF9500;
+  cursor: pointer;
+  transition: all 180ms cubic-bezier(0.4, 0, 0.2, 1);
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+}
+
+.insight-cta:hover {
+  background: #FF9500;
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(255, 149, 0, 0.25);
+}
+
+.insight-cta:active {
+  transform: scale(0.98);
+}
+
+/* Dark Mode - DESABILITADO */
+
+/* Responsividade */
+@media (min-width: 768px) {
+  .insight-card-editorial {
+    flex-direction: row;
+    align-items: center;
+    padding: 16px 24px;
+    margin: 16px 24px;
+  }
+  
+  .insight-content {
+    flex: 1;
+  }
+  
+  .insight-texto {
+    font-size: 15px;
+    margin: 0;
+  }
+  
+  .insight-cta {
+    align-self: auto;
+  }
+}

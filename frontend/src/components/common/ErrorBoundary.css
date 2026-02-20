@@ -1,0 +1,129 @@
+/**
+ * Error Boundary - Estilos Apple-like
+ */
+
+.error-boundary-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 32px;
+  background: #F5F5F7;
+}
+
+.error-boundary-content {
+  max-width: 480px;
+  width: 100%;
+  text-align: center;
+  background: #FFFFFF;
+  border-radius: 16px;
+  padding: 48px 32px;
+  box-shadow: 
+    0 4px 16px rgba(0, 0, 0, 0.08),
+    0 8px 32px rgba(0, 0, 0, 0.04);
+}
+
+.error-boundary-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 24px;
+  border-radius: 40px;
+  background: linear-gradient(135deg, #FF3B30 0%, #FF453A 100%);
+  color: white;
+}
+
+.error-boundary-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1D1D1F;
+  margin: 0 0 12px 0;
+  letter-spacing: -0.5px;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+}
+
+.error-boundary-message {
+  font-size: 17px;
+  font-weight: 400;
+  color: #8E8E93;
+  margin: 0 0 32px 0;
+  line-height: 1.5;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+}
+
+.error-boundary-details {
+  margin: 24px 0;
+  padding: 16px;
+  background: rgba(255, 59, 48, 0.05);
+  border-radius: 12px;
+  text-align: left;
+}
+
+.error-boundary-details summary {
+  font-size: 14px;
+  font-weight: 600;
+  color: #FF3B30;
+  cursor: pointer;
+  user-select: none;
+  margin-bottom: 12px;
+}
+
+.error-boundary-details pre {
+  font-size: 12px;
+  color: #1D1D1F;
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+}
+
+.error-boundary-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 50px;
+  padding: 0 32px;
+  background: linear-gradient(135deg, #007AFF 0%, #0051D5 100%);
+  border: none;
+  border-radius: 12px;
+  font-size: 17px;
+  font-weight: 600;
+  color: white;
+  cursor: pointer;
+  transition: all 180ms cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 8px rgba(0, 122, 255, 0.25);
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+}
+
+.error-boundary-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.35);
+}
+
+.error-boundary-button:active {
+  transform: scale(0.98);
+}
+
+/* Responsividade */
+@media (min-width: 768px) {
+  .error-boundary-content {
+    padding: 64px 48px;
+  }
+  
+  .error-boundary-icon {
+    width: 96px;
+    height: 96px;
+    margin-bottom: 32px;
+  }
+  
+  .error-boundary-title {
+    font-size: 34px;
+  }
+  
+  .error-boundary-message {
+    font-size: 19px;
+  }
+}

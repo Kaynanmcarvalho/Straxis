@@ -133,47 +133,19 @@
   --z-dock: 1700;
 }
 
-/* ========== DARK MODE ========== */
-@media (prefers-color-scheme: dark) {
-  :root {
-    /* Dark Neutrals */
-    --straxis-dark-0: #000000;
-    --straxis-dark-100: #0A0A0A;
-    --straxis-dark-200: #1C1C1E;
-    --straxis-dark-300: #2C2C2E;
-    --straxis-dark-400: #3A3A3C;
-    --straxis-dark-500: #48484A;
+/* ========== DARK MODE - DESABILITADO ========== */
+/* Forçando tema claro em todo o sistema */
 
-    /* Vibrant Colors for Dark */
-    --straxis-blue-500: #0A84FF;
-    --straxis-blue-600: #409CFF;
-    --straxis-green-500: #30D158;
-    --straxis-orange-500: #FF9F0A;
-    --straxis-red-500: #FF453A;
+/* Forçar tema claro globalmente */
+* {
+  color-scheme: light !important;
+}
 
-    /* Surface Colors */
-    --color-background: var(--straxis-dark-0);
-    --color-surface: var(--straxis-dark-200);
-    --color-surface-elevated: var(--straxis-dark-300);
-    --color-surface-glass: rgba(28, 28, 30, 0.8);
-
-    /* Text Colors */
-    --color-text-primary: #F5F5F7;
-    --color-text-secondary: #98989D;
-    --color-text-tertiary: #636366;
-    --color-text-inverse: var(--straxis-dark-200);
-
-    /* Border Colors */
-    --color-border: rgba(255, 255, 255, 0.08);
-    --color-border-strong: rgba(255, 255, 255, 0.16);
-    --color-border-translucent: rgba(255, 255, 255, 0.04);
-
-    /* Shadows (lighter for dark mode) */
-    --shadow-01: 0 1px 2px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.05);
-    --shadow-02: 0 2px 8px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.06);
-    --shadow-03: 0 4px 16px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.08);
-    --shadow-04: 0 8px 32px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.1);
-  }
+html,
+body,
+#root {
+  background: #FFFFFF !important;
+  color: #1D1D1F !important;
 }
 
 /* ========== UTILITY CLASSES ========== */

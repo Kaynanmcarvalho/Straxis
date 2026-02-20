@@ -1,0 +1,306 @@
+/**
+ * Clientes Premium - Arquitetura Impecável
+ * Centro de Relacionamento & Receita
+ * Beta 10.0.0 - Reconstrução Estrutural
+ */
+
+:root {
+  /* Cores Apple */
+  --apple-blue: #007AFF;
+  --apple-green: #34C759;
+  --apple-red: #FF3B30;
+  --apple-orange: #FF9500;
+  --apple-gray: #8E8E93;
+  --apple-gray-light: #C7C7CC;
+  --apple-dark: #1D1D1F;
+  --apple-light: #F5F5F7;
+  --apple-white: #FFFFFF;
+  
+  /* Sombras Sutis */
+  --shadow-subtle: 0 1px 3px rgba(0,0,0,0.04);
+  --shadow-soft: 0 2px 8px rgba(0,0,0,0.06);
+  
+  /* Transições */
+  --transition: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  
+  /* Espaçamentos Fixos */
+  --space-safe: 32px;
+  --space-section: 32px;
+  --space-block: 24px;
+  --space-item: 16px;
+  --space-tight: 12px;
+  --space-xs: 8px;
+}
+
+/* ========================================
+   BASE
+   ======================================== */
+
+.clientes-premium-page.clientes-redesign-v2 {
+  min-height: 100vh !important;
+  background: #F5F5F7 !important;
+  padding: 0 !important;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif !important;
+  -webkit-font-smoothing: antialiased !important;
+}
+
+.clientes-redesign-v2 * {
+  box-sizing: border-box !important;
+}
+
+/* ========================================
+   HEADER EDITORIAL - ESTRUTURA CORRIGIDA
+   ======================================== */
+
+.clientes-redesign-v2 .clientes-premium-header {
+  padding: var(--space-safe) var(--space-item) var(--space-block) !important;
+  background: #FFFFFF !important;
+}
+
+.header-title-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-tight);
+}
+
+.header-title {
+  font-size: 34px;
+  font-weight: 700;
+  color: var(--apple-dark);
+  letter-spacing: -0.5px;
+  margin: 0;
+  line-height: 1.1;
+}
+
+.btn-add-circular {
+  width: 44px;
+  height: 44px;
+  border-radius: 22px;
+  background: var(--apple-blue);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0,122,255,0.25);
+  transition: all var(--transition);
+  flex-shrink: 0;
+}
+
+.btn-add-circular:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 16px rgba(0,122,255,0.35);
+}
+
+.btn-add-circular:active {
+  transform: scale(0.95);
+}
+
+.header-metrics {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  flex-wrap: wrap;
+}
+
+.metric-item {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--apple-gray);
+  white-space: nowrap;
+}
+
+.metric-divider {
+  font-size: 13px;
+  color: var(--apple-gray-light);
+}
+
+/* ========================================
+   BARRA DE AÇÃO - BUSCA PREMIUM
+   ======================================== */
+
+.action-bar {
+  padding: 0 var(--space-item) var(--space-block);
+  background: var(--apple-white);
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+}
+
+.search-premium {
+  position: relative;
+  width: 100%;
+}
+
+.search-premium .search-input {
+  width: 100%;
+  height: 44px;
+  padding: 0 40px;
+  background: rgba(142,142,147,0.10);
+  border: 1px solid rgba(0,0,0,0.04);
+  border-radius: 10px;
+  font-size: 15px;
+  font-family: inherit;
+  color: var(--apple-dark);
+  transition: all var(--transition);
+}
+
+.search-premium .search-input::placeholder {
+  color: var(--apple-gray);
+}
+
+.search-premium .search-input:focus {
+  outline: none;
+  background: rgba(142,142,147,0.14);
+  border-color: rgba(0,122,255,0.2);
+}
+
+.search-premium .search-icon {
+  position: absolute;
+  left: 14px;
+  top: 13px;
+  color: var(--apple-gray);
+  pointer-events: none;
+}
+
+.search-premium .search-clear {
+  position: absolute;
+  right: 14px;
+  top: 12px;
+  width: 20px;
+  height: 20px;
+  border-radius: 10px;
+  background: var(--apple-gray-light);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.search-premium .search-clear:hover {
+  background: var(--apple-gray);
+}
+
+/* ========================================
+   LISTA DE CLIENTES PREMIUM
+   ======================================== */
+
+.clientes-redesign-v2 .clientes-lista-premium {
+  background: #FFFFFF !important;
+  margin-top: var(--space-section) !important;
+}
+
+/* ========================================
+   ESTADO VAZIO IMERSIVO
+   ======================================== */
+
+.empty-state-premium {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px var(--space-block);
+  text-align: center;
+  background: var(--apple-white);
+  margin-top: var(--space-section);
+  min-height: 400px;
+}
+
+.empty-title {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--apple-dark);
+  margin: 0 0 var(--space-xs) 0;
+  letter-spacing: -0.3px;
+}
+
+.empty-subtitle {
+  font-size: 15px;
+  font-weight: 400;
+  color: var(--apple-gray);
+  margin: 0 0 var(--space-section) 0;
+  max-width: 280px;
+  line-height: 1.5;
+}
+
+.btn-empty-primary {
+  width: 100%;
+  max-width: 280px;
+  height: 50px;
+  background: var(--apple-blue);
+  border: none;
+  border-radius: 12px;
+  font-size: 17px;
+  font-weight: 600;
+  color: white;
+  cursor: pointer;
+  margin-bottom: var(--space-tight);
+  transition: all var(--transition);
+  box-shadow: 0 2px 8px rgba(0,122,255,0.20);
+}
+
+.btn-empty-primary:hover {
+  background: #0051D5;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,122,255,0.30);
+}
+
+.btn-empty-secondary {
+  width: 100%;
+  max-width: 280px;
+  height: 50px;
+  background: transparent;
+  border: 1px solid rgba(0,0,0,0.10);
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--apple-dark);
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.btn-empty-secondary:hover {
+  background: rgba(0,0,0,0.04);
+  border-color: rgba(0,0,0,0.14);
+}
+
+/* ========================================
+   RESPONSIVIDADE
+   ======================================== */
+
+@media (min-width: 768px) {
+  .clientes-premium-header {
+    padding: var(--space-safe) var(--space-block) var(--space-block);
+  }
+  
+  .header-title {
+    font-size: 40px;
+  }
+  
+  .metric-item {
+    font-size: 15px;
+  }
+  
+  .action-bar {
+    padding: 0 var(--space-block) var(--space-block);
+  }
+  
+  .search-premium .search-input {
+    font-size: 17px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .clientes-premium-page {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+}
+
+/* ========================================
+   DARK MODE - DESABILITADO
+   Forçando tema claro sempre
+   ======================================== */

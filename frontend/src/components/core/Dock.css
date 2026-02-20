@@ -48,15 +48,7 @@
   will-change: transform;
 }
 
-@media (prefers-color-scheme: dark) {
-  .dock {
-    background: rgba(28, 28, 30, 0.8);
-    border-color: rgba(255, 255, 255, 0.08);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4),
-                0 4px 16px rgba(0, 0, 0, 0.3),
-                inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  }
-}
+/* Dark Mode - DESABILITADO */
 
 :root[data-theme="dark"] .dock {
   background: rgba(28, 28, 30, 0.8);
@@ -95,15 +87,13 @@
   transition: all 150ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
+/* Dark Mode - DESABILITADO */
+
 :root[data-theme="dark"] .dock-item {
-  color: #98989D;
+  color: #86868B;
 }
 
-@media (prefers-color-scheme: dark) {
-  .dock-item {
-    color: #98989D;
-  }
-}
+/* Dark Mode - DESABILITADO */
 
 /* Responsive item sizing - Always 5 items */
 @media (max-width: 359px) {
@@ -142,14 +132,10 @@
   transform: translateY(-2px) scale(1.05);
 }
 
-@media (prefers-color-scheme: dark) {
-  .dock-item:hover {
-    background: rgba(255, 255, 255, 0.08);
-  }
-}
+/* Dark Mode - DESABILITADO */
 
 :root[data-theme="dark"] .dock-item:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.04);
 }
 
 .dock-item:active {
@@ -161,29 +147,19 @@
   color: #007AFF;
 }
 
+/* Dark Mode - DESABILITADO */
+
 :root[data-theme="dark"] .dock-item.active {
-  color: #0A84FF;
+  color: #007AFF;
 }
 
-@media (prefers-color-scheme: dark) {
-  .dock-item.active {
-    color: #0A84FF;
-  }
-}
+/* Dark Mode - DESABILITADO */
 
 .dock-item.active:hover {
   background: rgba(0, 122, 255, 0.08);
 }
 
-@media (prefers-color-scheme: dark) {
-  .dock-item.active:hover {
-    background: rgba(10, 132, 255, 0.12);
-  }
-}
-
-:root[data-theme="dark"] .dock-item.active:hover {
-  background: rgba(10, 132, 255, 0.12);
-}
+/* Dark Mode - DESABILITADO */
 
 /* Logout item - estilo especial */
 .dock-item.logout-item {
@@ -195,24 +171,15 @@
   color: #DC2626;
 }
 
-@media (prefers-color-scheme: dark) {
-  .dock-item.logout-item {
-    color: #F87171;
-  }
-  
-  .dock-item.logout-item:hover {
-    background: rgba(248, 113, 113, 0.12);
-    color: #FCA5A5;
-  }
-}
+/* Dark Mode - DESABILITADO */
 
 :root[data-theme="dark"] .dock-item.logout-item {
-  color: #F87171;
+  color: #EF4444;
 }
 
 :root[data-theme="dark"] .dock-item.logout-item:hover {
-  background: rgba(248, 113, 113, 0.12);
-  color: #FCA5A5;
+  background: rgba(239, 68, 68, 0.08);
+  color: #DC2626;
 }
 
 .dock-item-icon {
@@ -259,14 +226,10 @@
   animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
-:root[data-theme="dark"] .dock-item-indicator {
-  background: #0A84FF;
-}
+/* Dark Mode - DESABILITADO */
 
-@media (prefers-color-scheme: dark) {
-  .dock-item-indicator {
-    background: #0A84FF;
-  }
+:root[data-theme="dark"] .dock-item-indicator {
+  background: #007AFF;
 }
 
 /* Scroll Indicators */

@@ -847,6 +847,7 @@ const TrabalhosPageCore: React.FC = () => {
       setMostrarNovoTrabalho(false);
       setNovoTrabalho({
         cliente: '',
+        clienteId: '',
         tipo: 'descarga',
         local: '',
         toneladas: '',
@@ -1095,6 +1096,7 @@ const TrabalhosPageCore: React.FC = () => {
     setMostrarNovoTrabalho(false);
     setNovoTrabalho({
       cliente: '',
+      clienteId: '',
       tipo: 'descarga',
       local: '',
       toneladas: '',

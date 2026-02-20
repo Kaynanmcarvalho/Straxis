@@ -1,0 +1,1082 @@
+/* ============================================
+   HUB DE RELACIONAMENTO OPERACIONAL v4.0.0
+   SISTEMA PROPRIETÁRIO PREMIUM
+   IDENTIDADE VISUAL FORTE E MEMORÁVEL
+   29/01/2026 - MAJOR REDESIGN
+   ============================================ */
+
+/* AMBIENTE PREMIUM - BRANCO PURO COM PROFUNDIDADE */
+.clientes-hub {
+  background: #FFFFFF !important;
+  min-height: 100vh !important;
+  padding: 0 !important;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", sans-serif !important;
+  color: #000000 !important;
+  -webkit-font-smoothing: antialiased !important;
+  -moz-osx-font-smoothing: grayscale !important;
+}
+
+.page-container.clientes-hub {
+  background: #FFFFFF !important;
+}
+
+/* ============================================
+   CABEÇALHO — IDENTIDADE FORTE
+   ============================================ */
+
+.clientes-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 28px 24px 20px !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
+  background: #FFFFFF !important;
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 10 !important;
+  backdrop-filter: blur(20px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+}
+
+.clientes-title-group {
+  display: flex !important;
+  align-items: baseline !important;
+  gap: 12px !important;
+}
+
+.clientes-title {
+  font-size: 34px !important;
+  font-weight: 700 !important;
+  color: #000000 !important;
+  margin: 0 !important;
+  letter-spacing: -1px !important;
+  line-height: 1 !important;
+}
+
+.clientes-counter {
+  display: flex !important;
+  align-items: baseline !important;
+  gap: 4px !important;
+  padding: 4px 10px !important;
+  background: rgba(0, 0, 0, 0.04) !important;
+  border-radius: 8px !important;
+}
+
+.counter-number {
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  color: #000000 !important;
+  font-variant-numeric: tabular-nums !important;
+}
+
+.counter-label {
+  font-size: 13px !important;
+  font-weight: 400 !important;
+  color: #666666 !important;
+}
+
+.btn-novo-cliente {
+  width: 44px !important;
+  height: 44px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: linear-gradient(135deg, #007AFF 0%, #0051D5 100%) !important;
+  border: none !important;
+  border-radius: 50% !important;
+  cursor: pointer !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3), 0 2px 4px rgba(0, 122, 255, 0.2) !important;
+}
+
+.btn-novo-cliente:hover {
+  transform: scale(1.05) !important;
+  box-shadow: 0 6px 16px rgba(0, 122, 255, 0.35), 0 3px 6px rgba(0, 122, 255, 0.25) !important;
+}
+
+.btn-novo-cliente:active {
+  transform: scale(0.95) !important;
+}
+
+.btn-novo-cliente .icon {
+  width: 22px !important;
+  height: 22px !important;
+  color: #FFFFFF !important;
+  stroke-width: 2.5 !important;
+}
+
+/* ============================================
+   BUSCA — SPOTLIGHT PREMIUM
+   ============================================ */
+
+.search-container {
+  padding: 20px 24px !important;
+  background: #FFFFFF !important;
+}
+
+.search-wrapper {
+  position: relative !important;
+  display: flex !important;
+  align-items: center !important;
+  background: #F8F8F8 !important;
+  border: 1.5px solid rgba(0, 0, 0, 0.08) !important;
+  border-radius: 14px !important;
+  padding: 14px 18px !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
+}
+
+.search-wrapper:focus-within {
+  background: #FFFFFF !important;
+  border-color: #007AFF !important;
+  box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.1), 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+}
+
+.search-icon {
+  width: 18px !important;
+  height: 18px !important;
+  color: #666666 !important;
+  margin-right: 12px !important;
+  flex-shrink: 0 !important;
+  stroke-width: 2 !important;
+}
+
+.search-input {
+  flex: 1 !important;
+  border: none !important;
+  outline: none !important;
+  font-size: 16px !important;
+  font-weight: 400 !important;
+  color: #000000 !important;
+  background: transparent !important;
+}
+
+.search-input::placeholder {
+  color: #999999 !important;
+}
+
+.search-clear {
+  width: 24px !important;
+  height: 24px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: rgba(0, 0, 0, 0.08) !important;
+  border: none !important;
+  border-radius: 50% !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+}
+
+.search-clear:hover {
+  background: rgba(0, 0, 0, 0.12) !important;
+  transform: scale(1.05) !important;
+}
+
+.search-clear .icon {
+  width: 14px !important;
+  height: 14px !important;
+  color: #666666 !important;
+}
+
+/* ============================================
+   FILTROS — CONTROLE SOFISTICADO
+   ============================================ */
+
+.filtros-status {
+  display: flex !important;
+  gap: 8px !important;
+  padding: 0 24px 24px !important;
+  background: #FFFFFF !important;
+  overflow-x: auto !important;
+}
+
+.filtros-status::-webkit-scrollbar {
+  display: none !important;
+}
+
+.filtro-btn {
+  padding: 10px 18px !important;
+  background: transparent !important;
+  border: 1.5px solid rgba(0, 0, 0, 0.08) !important;
+  font-size: 15px !important;
+  font-weight: 500 !important;
+  color: #666666 !important;
+  cursor: pointer !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  white-space: nowrap !important;
+  border-radius: 12px !important;
+}
+
+.filtro-btn:hover {
+  color: #000000 !important;
+  border-color: rgba(0, 0, 0, 0.15) !important;
+  transform: translateY(-1px) !important;
+}
+
+.filtro-btn.active {
+  color: #FFFFFF !important;
+  background: #000000 !important;
+  border-color: #000000 !important;
+  font-weight: 600 !important;
+}
+
+/* ============================================
+   GRID DE CLIENTES — CATÁLOGO PREMIUM
+   ============================================ */
+
+.clientes-grid {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 12px !important;
+  padding: 0 24px 140px !important;
+  background: #FFFFFF !important;
+}
+
+/* ============================================
+   CARD DE CLIENTE — ENTIDADE VALIOSA
+   ============================================ */
+
+.cliente-card {
+  position: relative !important;
+  display: grid !important;
+  grid-template-columns: auto 1fr auto !important;
+  grid-template-rows: auto auto auto !important;
+  gap: 12px 16px !important;
+  padding: 20px !important;
+  background: #FFFFFF !important;
+  border: 1.5px solid rgba(0, 0, 0, 0.08) !important;
+  border-radius: 16px !important;
+  cursor: pointer !important;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.02) !important;
+}
+
+.cliente-card:hover {
+  border-color: rgba(0, 0, 0, 0.15) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12), 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+  transform: translateY(-2px) !important;
+}
+
+.cliente-card:active {
+  transform: translateY(0) !important;
+}
+
+/* AVATAR COM IDENTIDADE — REDESIGN PREMIUM v2.0 */
+.cliente-avatar {
+  grid-row: 1 / 3 !important;
+  grid-column: 1 !important;
+  width: 64px !important;
+  height: 64px !important;
+  border-radius: 18px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: linear-gradient(135deg, #007AFF 0%, #0051D5 100%) !important;
+  flex-shrink: 0 !important;
+  box-shadow: 
+    0 8px 24px rgba(0, 122, 255, 0.28),
+    0 2px 8px rgba(0, 122, 255, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+
+/* Brilho sutil no topo */
+.cliente-avatar::before {
+  content: '' !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  height: 50% !important;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, transparent 100%) !important;
+  pointer-events: none !important;
+}
+
+.avatar-initials {
+  font-size: 22px !important;
+  font-weight: 700 !important;
+  color: #FFFFFF !important;
+  letter-spacing: 1.5px !important;
+  text-transform: uppercase !important;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.15) !important;
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+/* INFORMAÇÕES PRINCIPAIS */
+.cliente-info {
+  grid-row: 1 / 3 !important;
+  grid-column: 2 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 6px !important;
+  min-width: 0 !important;
+}
+
+.cliente-nome {
+  font-size: 19px !important;
+  font-weight: 600 !important;
+  color: #000000 !important;
+  margin: 0 !important;
+  letter-spacing: -0.4px !important;
+  line-height: 1.2 !important;
+}
+
+.cliente-telefone,
+.cliente-endereco {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  font-size: 14px !important;
+  font-weight: 400 !important;
+  color: #666666 !important;
+}
+
+.cliente-telefone .icon,
+.cliente-endereco .icon {
+  width: 14px !important;
+  height: 14px !important;
+  flex-shrink: 0 !important;
+  stroke-width: 2 !important;
+}
+
+/* STATUS COM COR INTELIGENTE */
+.cliente-status-badge {
+  grid-row: 1 !important;
+  grid-column: 3 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  padding: 6px 12px !important;
+  border-radius: 10px !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  height: fit-content !important;
+  white-space: nowrap !important;
+}
+
+.status-dot {
+  width: 6px !important;
+  height: 6px !important;
+  border-radius: 50% !important;
+}
+
+/* MÉTRICAS INTEGRADAS */
+.cliente-stats {
+  grid-row: 3 !important;
+  grid-column: 1 / 4 !important;
+  display: flex !important;
+  gap: 20px !important;
+  padding-top: 12px !important;
+  border-top: 1px solid rgba(0, 0, 0, 0.06) !important;
+}
+
+.stat-item {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+
+.stat-item .icon {
+  width: 14px !important;
+  height: 14px !important;
+  color: #666666 !important;
+  stroke-width: 2 !important;
+}
+
+.stat-value {
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  color: #000000 !important;
+  font-variant-numeric: tabular-nums !important;
+}
+
+.stat-label {
+  font-size: 13px !important;
+  font-weight: 400 !important;
+  color: #666666 !important;
+}
+
+/* ÚLTIMO CONTATO */
+.cliente-ultimo-contato {
+  grid-row: 2 !important;
+  grid-column: 3 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  color: #999999 !important;
+  justify-self: end !important;
+}
+
+.cliente-ultimo-contato .icon {
+  width: 12px !important;
+  height: 12px !important;
+}
+
+/* CHEVRON SUTIL */
+.cliente-chevron {
+  position: absolute !important;
+  right: 20px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  width: 18px !important;
+  height: 18px !important;
+  color: #CCCCCC !important;
+  opacity: 0 !important;
+  transition: all 0.2s ease !important;
+}
+
+.cliente-card:hover .cliente-chevron {
+  opacity: 1 !important;
+  transform: translateY(-50%) translateX(4px) !important;
+}
+
+/* ============================================
+   ESTADO VAZIO — ELEGANTE
+   ============================================ */
+
+.empty-state-clientes {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 100px 24px !important;
+  text-align: center !important;
+}
+
+.empty-icon {
+  width: 80px !important;
+  height: 80px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: #F8F8F8 !important;
+  border-radius: 20px !important;
+  margin-bottom: 24px !important;
+  border: 1.5px solid rgba(0, 0, 0, 0.06) !important;
+}
+
+.empty-icon .icon {
+  width: 40px !important;
+  height: 40px !important;
+  color: #999999 !important;
+  stroke-width: 1.5 !important;
+}
+
+.empty-titulo {
+  font-size: 22px !important;
+  font-weight: 600 !important;
+  color: #000000 !important;
+  margin: 0 0 8px 0 !important;
+  letter-spacing: -0.5px !important;
+}
+
+.empty-descricao {
+  font-size: 16px !important;
+  font-weight: 400 !important;
+  color: #666666 !important;
+  margin: 0 0 32px 0 !important;
+  max-width: 320px !important;
+  line-height: 1.5 !important;
+}
+
+.btn-empty-action {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 14px 24px !important;
+  background: linear-gradient(135deg, #007AFF 0%, #0051D5 100%) !important;
+  color: #FFFFFF !important;
+  border: none !important;
+  border-radius: 12px !important;
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3) !important;
+}
+
+.btn-empty-action:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 16px rgba(0, 122, 255, 0.35) !important;
+}
+
+.btn-empty-action .icon {
+  width: 18px !important;
+  height: 18px !important;
+}
+
+/* ============================================
+   MODAL — PROFUNDIDADE PREMIUM
+   ============================================ */
+
+.modal-overlay {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  background: rgba(0, 0, 0, 0.5) !important;
+  backdrop-filter: blur(12px) !important;
+  z-index: 2000 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 20px !important;
+  animation: fadeIn 0.2s ease !important;
+}
+
+.modal-content {
+  width: 100% !important;
+  max-width: 500px !important;
+  max-height: 90vh !important;
+  background: #FFFFFF !important;
+  border-radius: 20px !important;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.3), 0 12px 32px rgba(0, 0, 0, 0.2) !important;
+  overflow: hidden !important;
+  animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  border: 1.5px solid rgba(0, 0, 0, 0.08) !important;
+}
+
+.modal-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 24px 24px 20px !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
+}
+
+.modal-title {
+  font-size: 22px !important;
+  font-weight: 600 !important;
+  color: #000000 !important;
+  margin: 0 !important;
+  letter-spacing: -0.5px !important;
+}
+
+.modal-close {
+  width: 36px !important;
+  height: 36px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: #F8F8F8 !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  border-radius: 10px !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+}
+
+.modal-close:hover {
+  background: #EEEEEE !important;
+  transform: scale(1.05) !important;
+}
+
+.modal-close .icon {
+  width: 18px !important;
+  height: 18px !important;
+  color: #000000 !important;
+}
+
+.modal-body {
+  padding: 24px !important;
+  overflow-y: auto !important;
+  max-height: calc(90vh - 100px) !important;
+}
+
+/* ============================================
+   PERFIL DO CLIENTE — REGISTRO PREMIUM
+   ============================================ */
+
+.cliente-perfil {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 24px !important;
+}
+
+.perfil-header {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 16px !important;
+  padding-bottom: 24px !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
+}
+
+.perfil-avatar-large {
+  width: 112px !important;
+  height: 112px !important;
+  border-radius: 28px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: linear-gradient(135deg, #007AFF 0%, #0051D5 100%) !important;
+  box-shadow: 
+    0 12px 32px rgba(0, 122, 255, 0.32),
+    0 4px 12px rgba(0, 122, 255, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+
+/* Brilho sutil no topo */
+.perfil-avatar-large::before {
+  content: '' !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  height: 50% !important;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, transparent 100%) !important;
+  pointer-events: none !important;
+}
+
+.avatar-initials-large {
+  font-size: 42px !important;
+  font-weight: 700 !important;
+  color: #FFFFFF !important;
+  letter-spacing: 2.5px !important;
+  text-transform: uppercase !important;
+  text-shadow: 0 3px 6px rgba(0, 0, 0, 0.18) !important;
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+.perfil-status-badge {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 8px 16px !important;
+  border-radius: 12px !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+}
+
+.perfil-info-grid {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 12px !important;
+}
+
+.perfil-info-item {
+  display: flex !important;
+  align-items: center !important;
+  gap: 14px !important;
+  padding: 18px !important;
+  background: #F8F8F8 !important;
+  border: 1px solid rgba(0, 0, 0, 0.06) !important;
+  border-radius: 14px !important;
+}
+
+.perfil-info-item .icon {
+  width: 18px !important;
+  height: 18px !important;
+  color: #666666 !important;
+  flex-shrink: 0 !important;
+}
+
+.info-content {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 4px !important;
+}
+
+.info-label {
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  color: #999999 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+}
+
+.info-value {
+  font-size: 16px !important;
+  font-weight: 500 !important;
+  color: #000000 !important;
+}
+
+.perfil-stats-grid {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 12px !important;
+}
+
+.perfil-stat-card {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 10px !important;
+  padding: 24px 16px !important;
+  background: #F8F8F8 !important;
+  border: 1px solid rgba(0, 0, 0, 0.06) !important;
+  border-radius: 16px !important;
+  text-align: center !important;
+}
+
+.perfil-stat-card .icon {
+  width: 24px !important;
+  height: 24px !important;
+  color: #666666 !important;
+}
+
+.stat-value-large {
+  font-size: 28px !important;
+  font-weight: 700 !important;
+  color: #000000 !important;
+  font-variant-numeric: tabular-nums !important;
+  line-height: 1 !important;
+}
+
+.perfil-acoes {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 12px !important;
+  padding-top: 8px !important;
+}
+
+.btn-acao-perfil {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  padding: 16px !important;
+  border: none !important;
+  border-radius: 14px !important;
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.btn-acao-perfil.whatsapp {
+  background: #25D366 !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 4px 12px rgba(37, 211, 102, 0.3) !important;
+}
+
+.btn-acao-perfil.whatsapp:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 16px rgba(37, 211, 102, 0.35) !important;
+}
+
+.btn-acao-perfil.agendar {
+  background: #007AFF !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3) !important;
+}
+
+.btn-acao-perfil.agendar:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 16px rgba(0, 122, 255, 0.35) !important;
+}
+
+.btn-acao-perfil .icon {
+  width: 18px !important;
+  height: 18px !important;
+}
+
+/* ============================================
+   FORMULÁRIO — ENTRADA PREMIUM
+   ============================================ */
+
+.cliente-form {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 20px !important;
+}
+
+.form-group {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+}
+
+.form-label {
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  color: #000000 !important;
+  letter-spacing: -0.2px !important;
+}
+
+.form-input {
+  padding: 16px 18px !important;
+  background: #F8F8F8 !important;
+  border: 1.5px solid rgba(0, 0, 0, 0.08) !important;
+  border-radius: 14px !important;
+  font-size: 16px !important;
+  font-weight: 400 !important;
+  color: #000000 !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  outline: none !important;
+}
+
+.form-input:focus {
+  background: #FFFFFF !important;
+  border-color: #007AFF !important;
+  box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.1) !important;
+}
+
+.form-input::placeholder {
+  color: #999999 !important;
+}
+
+.form-aviso {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  padding: 14px 16px !important;
+  background: rgba(255, 149, 0, 0.08) !important;
+  border: 1px solid rgba(255, 149, 0, 0.15) !important;
+  border-radius: 12px !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  color: #FF9500 !important;
+}
+
+.form-aviso .icon {
+  width: 16px !important;
+  height: 16px !important;
+  flex-shrink: 0 !important;
+}
+
+.btn-salvar-cliente {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  padding: 18px 24px !important;
+  background: linear-gradient(135deg, #007AFF 0%, #0051D5 100%) !important;
+  color: #FFFFFF !important;
+  border: none !important;
+  border-radius: 14px !important;
+  font-size: 17px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  margin-top: 8px !important;
+  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3) !important;
+}
+
+.btn-salvar-cliente:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 16px rgba(0, 122, 255, 0.35) !important;
+}
+
+.btn-salvar-cliente:active {
+  transform: translateY(0) !important;
+}
+
+.btn-salvar-cliente .icon {
+  width: 18px !important;
+  height: 18px !important;
+}
+
+/* ============================================
+   RESPONSIVIDADE PREMIUM
+   ============================================ */
+
+@media (max-width: 768px) {
+  .clientes-header {
+    padding: 24px 20px 18px !important;
+  }
+  
+  .clientes-title {
+    font-size: 30px !important;
+  }
+  
+  .search-container {
+    padding: 16px 20px !important;
+  }
+  
+  .filtros-status {
+    padding: 0 20px 20px !important;
+  }
+  
+  .clientes-grid {
+    padding: 0 20px 140px !important;
+    gap: 10px !important;
+  }
+  
+  .cliente-card {
+    padding: 16px !important;
+  }
+  
+  .cliente-avatar {
+    width: 56px !important;
+    height: 56px !important;
+    border-radius: 16px !important;
+  }
+  
+  .avatar-initials {
+    font-size: 18px !important;
+    letter-spacing: 1.2px !important;
+  }
+  
+  .perfil-avatar-large {
+    width: 96px !important;
+    height: 96px !important;
+    border-radius: 24px !important;
+  }
+  
+  .avatar-initials-large {
+    font-size: 36px !important;
+    letter-spacing: 2px !important;
+  }
+  
+  .cliente-nome {
+    font-size: 17px !important;
+  }
+}
+
+/* ============================================
+   ANIMAÇÕES SILENCIOSAS
+   ============================================ */
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.cliente-card {
+  animation: fadeInCard 0.3s ease !important;
+}
+
+@keyframes fadeInCard {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+
+/* ============================================
+   NOVOS ESTILOS - ALPHA 10.2.0
+   GESTÃO COMPLETA DE CLIENTES
+   ============================================ */
+
+/* Botões de Gestão no Perfil */
+.perfil-gestao {
+  display: flex !important;
+  gap: 12px !important;
+  margin-top: 24px !important;
+  padding-top: 24px !important;
+  border-top: 1px solid rgba(0, 0, 0, 0.06) !important;
+}
+
+.btn-gestao {
+  flex: 1 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  padding: 14px 20px !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  border-radius: 12px !important;
+  background: #F8F8F8 !important;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+}
+
+.btn-gestao:hover {
+  background: #EFEFEF !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+}
+
+.btn-gestao:active {
+  transform: translateY(0) !important;
+}
+
+.btn-gestao:disabled {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+}
+
+.btn-gestao.editar {
+  color: #007AFF !important;
+}
+
+.btn-gestao.desativar {
+  color: #FF3B30 !important;
+}
+
+.btn-gestao .icon {
+  width: 18px !important;
+  height: 18px !important;
+}
+
+/* Botão Histórico */
+.btn-acao-perfil.historico {
+  background: linear-gradient(135deg, #5856D6, #4A47C4) !important;
+}
+
+/* Form de Edição */
+.form-acoes {
+  display: flex !important;
+  gap: 12px !important;
+  margin-top: 24px !important;
+}
+
+.btn-cancelar {
+  flex: 1 !important;
+  padding: 14px 20px !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  border-radius: 12px !important;
+  background: #F8F8F8 !important;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  color: #666666 !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+}
+
+.btn-cancelar:hover {
+  background: #EFEFEF !important;
+}
+
+/* Textarea */
+.form-input[rows] {
+  resize: vertical !important;
+  min-height: 80px !important;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif !important;
+}
+
+/* Info Item Full Width */
+.perfil-info-item.full-width {
+  grid-column: 1 / -1 !important;
+}
+
+.perfil-info-item.full-width .info-value {
+  white-space: pre-wrap !important;
+  word-break: break-word !important;
+}
+
+/* Loading State */
+.btn-salvar-cliente:disabled,
+.btn-gestao:disabled {
+  opacity: 0.6 !important;
+  cursor: not-allowed !important;
+}

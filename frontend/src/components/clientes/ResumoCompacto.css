@@ -1,0 +1,92 @@
+/**
+ * Resumo Compacto - Apple Health/Wallet Style
+ * Zero caixas quadradas, divisores sutis, tipografia forte
+ */
+
+.resumo-compacto-apple {
+  display: flex;
+  align-items: stretch;
+  background: var(--apple-white, #FFFFFF);
+  padding: 20px 16px;
+  gap: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.resumo-compacto-apple::-webkit-scrollbar {
+  display: none;
+}
+
+.resumo-item-compacto {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 16px;
+  min-width: 100px;
+  flex-shrink: 0;
+}
+
+.resumo-label-compacto {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--apple-gray, #8E8E93);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.resumo-valor-compacto {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--apple-dark, #1D1D1F);
+  letter-spacing: -0.6px;
+  line-height: 1;
+  text-align: center;
+}
+
+.resumo-valor-compacto.destaque {
+  background: linear-gradient(135deg, #007AFF 0%, #0051D5 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.resumo-divisor {
+  width: 1px;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(0, 0, 0, 0.08) 20%,
+    rgba(0, 0, 0, 0.08) 80%,
+    transparent 100%
+  );
+  flex-shrink: 0;
+}
+
+/* Dark Mode - DESABILITADO */
+
+/* Responsividade */
+@media (min-width: 768px) {
+  .resumo-compacto-apple {
+    padding: 24px;
+    justify-content: center;
+    overflow-x: visible;
+  }
+  
+  .resumo-item-compacto {
+    min-width: 120px;
+    padding: 0 20px;
+  }
+  
+  .resumo-label-compacto {
+    font-size: 12px;
+  }
+  
+  .resumo-valor-compacto {
+    font-size: 28px;
+  }
+}

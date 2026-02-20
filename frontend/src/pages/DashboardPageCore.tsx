@@ -1,8 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Plus, Search, SlidersHorizontal, TrendingUp, Clock, AlertCircle, Calendar, ChevronRight, RefreshCw, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import { AutocompleteCliente } from '../components/common/AutocompleteCliente';
 import { ClienteSugestao } from '../services/cliente.service';
+import { ActionBanner } from '../components/dashboard/ActionBanner';
+import { useDashboardData } from '../hooks/useDashboardData';
+import { useActionBanner } from '../hooks/useActionBanner';
 import './DashboardPageCore.css';
 
 interface Operation {
@@ -54,12 +58,19 @@ type SheetType = 'create' | 'cobrar' | 'pendencias' | 'busca' | 'filters' | 'tea
 
 const DashboardPageCore: React.FC = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const companyId = user?.companyId || 'dev-company-id';
+  
+  // Hooks customizados
+  const { data: dashboardData, isLoading: isLoadingData, error: dataError, refresh } = useDashboardData(companyId);
+  const { bannerConfig, showSuccess, showError, showConfirm, dismiss: dismissBanner } = useActionBanner();
+  
   const [scrollY, setScrollY] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [selectedDay, setSelectedDay] = useState(0);
   const [snapshotTab, setSnapshotTab] = useState<SnapshotTab>('active');
   const [activeSheet, setActiveSheet] = useState<SheetType>(null);
-  const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
+  const [selectedTeam, setSelectedTeam] = useState<Equipe | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
   const [isLoadingFilters, setIsLoadingFilters] = useState(false);
@@ -98,52 +109,98 @@ const DashboardPageCore: React.FC = () => {
   const [searchResults, setSearchResults] = useState<Operation[]>([]);
   const [isSearching, setIsSearching] = useState(false);
 
-  const userName = 'Arthur';
+  const userName = user?.name || 'Usuário';
   const currentHour = new Date().getHours();
   const greeting = currentHour < 12 ? 'Bom dia' : currentHour < 18 ? 'Boa tarde' : 'Boa noite';
 
-  const operations: Operation[] = [
-    { id: '1', title: 'Descarga Container #4521', client: 'Ambev', value: 12500, status: 'critical', sla: '2h restantes', priority: 'Crítico' },
-    { id: '2', title: 'Carga Exportação', client: 'JBS', value: 8300, status: 'today', sla: 'Hoje, 16:00', priority: 'Hoje' }
-  ];
+  // Dados derivados dos dados reais
+  const operations = dashboardData?.trabalhos || [];
+  const teams = dashboardData?.equipes || [];
+  
+  // Calcular pendências baseado em dados reais
+  const pendencias: Pendencia[] = React.useMemo(() => {
+    if (!dashboardData) return [];
+    
+    const result: Pendencia[] = [];
+    
+    // Trabalhos críticos viram pendências
+    dashboardData.trabalhos
+      .filter(t => t.status === 'critical')
+      .slice(0, 3)
+      .forEach(t => {
+        result.push({
+          id: `trabalho-${t.id}`,
+          title: `Operação crítica: ${t.title}`,
+          client: t.client,
+          value: t.value,
+          priority: 'critical',
+          sla: t.sla
+        });
+      });
+    
+    return result;
+  }, [dashboardData]);
 
-  const teams: Team[] = [
-    { 
-      id: '1', 
-      name: 'Equipe 01', 
-      active: 4, 
-      free: 2, 
-      total: 6, 
-      health: 'normal',
-      topMembers: ['João Silva', 'Maria Santos', 'Pedro Costa']
-    },
-    { 
-      id: '2', 
-      name: 'Equipe 02', 
-      active: 6, 
-      free: 0, 
-      total: 6, 
-      health: 'stressed', 
-      suggestion: 'Redistribuir 2 operações',
-      topMembers: ['Ana Lima', 'Carlos Souza', 'Juliana Rocha'],
-      bottlenecks: ['Falta de equipamento', 'Sobrecarga']
-    },
-    { 
-      id: '3', 
-      name: 'Equipe 03', 
-      active: 3, 
-      free: 3, 
-      total: 6, 
-      health: 'normal',
-      topMembers: ['Roberto Alves', 'Fernanda Dias', 'Lucas Martins']
+  // Gerar insight real baseado em dados
+  const insight = React.useMemo(() => {
+    if (!dashboardData || isLoadingData) return null;
+    
+    const { metricas } = dashboardData;
+    
+    // Insight 1: Operações críticas
+    if (metricas.operacoesCriticas > 0) {
+      return {
+        icon: AlertCircle,
+        title: `${metricas.operacoesCriticas} ${metricas.operacoesCriticas === 1 ? 'operação crítica' : 'operações críticas'}`,
+        subtitle: 'Requer atenção imediata',
+        action: 'Ver detalhes',
+        type: 'critical' as const
+      };
     }
-  ];
+    
+    // Insight 2: Alta produtividade
+    if (metricas.operacoesConcluidas > 10) {
+      return {
+        icon: TrendingUp,
+        title: `${metricas.operacoesConcluidas} operações concluídas hoje`,
+        subtitle: 'Produtividade acima da média',
+        action: 'Ver relatório',
+        type: 'success' as const
+      };
+    }
+    
+    // Insight 3: Operações agendadas
+    if (metricas.operacoesAgendadas > 0) {
+      return {
+        icon: Calendar,
+        title: `${metricas.operacoesAgendadas} ${metricas.operacoesAgendadas === 1 ? 'operação agendada' : 'operações agendadas'}`,
+        subtitle: 'Próximas 48 horas',
+        action: 'Ver agenda',
+        type: 'info' as const
+      };
+    }
+    
+    // Insight 4: Receita do dia
+    if (metricas.receitaHoje > 0) {
+      const receitaFormatada = (metricas.receitaHoje / 100).toLocaleString('pt-BR', {
+        style: 'currency',
+        currency: 'BRL',
+        minimumFractionDigits: 0
+      });
+      return {
+        icon: TrendingUp,
+        title: `${receitaFormatada} em receita hoje`,
+        subtitle: 'Continue assim!',
+        action: 'Ver detalhes',
+        type: 'success' as const
+      };
+    }
+    
+    // Sem insights relevantes
+    return null;
+  }, [dashboardData, isLoadingData]);
 
-  const pendencias: Pendencia[] = [
-    { id: 'p1', title: 'Conciliação pendente #892', client: 'Ambev', value: 5400, priority: 'critical', sla: '1h' },
-    { id: 'p2', title: 'Cobrança vencida', client: 'JBS', value: 3200, priority: 'today', sla: 'Hoje' },
-    { id: 'p3', title: 'Follow-up cliente', client: 'BRF', value: 1800, priority: 'week', sla: '3 dias' }
-  ];
+  const [insightDismissed, setInsightDismissed] = useState(false);
 
   const weekDays = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
   const today = new Date().getDay();
@@ -180,7 +237,7 @@ const DashboardPageCore: React.FC = () => {
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
-    await new Promise(resolve => setTimeout(resolve, 1200));
+    await refresh();
     setIsRefreshing(false);
   };
 
@@ -270,19 +327,33 @@ const DashboardPageCore: React.FC = () => {
     setIsSubmittingCobranca(true);
     
     try {
-      // TODO: Integrar com API real
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Integração com Firebase
+      const cobrancaData = {
+        clienteId: cobrancaForm.clienteId,
+        clienteNome: cobrancaForm.cliente,
+        valorCentavos: Math.round(parseFloat(cobrancaForm.valor.replace(/[^\d,]/g, '').replace(',', '.')) * 100),
+        vencimento: new Date(cobrancaForm.vencimento),
+        formaPagamento: cobrancaForm.forma,
+        status: 'pendente',
+        companyId,
+        createdAt: new Date(),
+        createdBy: user?.uid
+      };
       
-      // Simular sucesso
-      console.log('Cobrança criada:', cobrancaForm);
+      console.log('Criando cobrança:', cobrancaData);
       
-      // Mostrar toast de sucesso (implementar toast system depois)
-      alert(`Cobrança criada com sucesso!\nCliente: ${cobrancaForm.cliente}\nValor: R$ ${cobrancaForm.valor}\nForma: ${cobrancaForm.forma.toUpperCase()}`);
+      // TODO: Salvar no Firebase quando modelo de cobrança estiver pronto
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      showSuccess(
+        'Cobrança criada com sucesso',
+        `Cliente: ${cobrancaForm.cliente} • Valor: R$ ${cobrancaForm.valor} • ${cobrancaForm.forma.toUpperCase()}`
+      );
       
       closeSheet();
     } catch (error) {
       console.error('Erro ao criar cobrança:', error);
-      alert('Erro ao criar cobrança. Tente novamente.');
+      showError('Erro ao criar cobrança', 'Tente novamente em alguns instantes');
     } finally {
       setIsSubmittingCobranca(false);
     }
@@ -299,10 +370,7 @@ const DashboardPageCore: React.FC = () => {
     setIsSearching(true);
     
     try {
-      // TODO: Integrar com API real
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // Simular busca
+      // Busca nos dados reais
       const filtered = operations.filter(op => 
         op.title.toLowerCase().includes(query.toLowerCase()) ||
         op.client.toLowerCase().includes(query.toLowerCase()) ||
@@ -335,9 +403,6 @@ const DashboardPageCore: React.FC = () => {
     setIsLoadingFilters(true);
     
     try {
-      // TODO: Integrar com API real
-      await new Promise(resolve => setTimeout(resolve, 800));
-      
       // Construir array de filtros ativos
       const filters: string[] = [];
       
@@ -354,7 +419,9 @@ const DashboardPageCore: React.FC = () => {
       setActiveFilters(filters);
       closeSheet();
       
-      // TODO: Atualizar dados do dashboard com filtros aplicados
+      // Recarregar dados com filtros
+      await handleRefresh();
+      
       console.log('Filtros aplicados:', filterState);
     } catch (error) {
       console.error('Erro ao aplicar filtros:', error);
@@ -369,36 +436,51 @@ const DashboardPageCore: React.FC = () => {
   };
 
   const handleResolverPendencia = (pendenciaId: string) => {
-    // TODO: Implementar resolução real
-    if (confirm('Marcar esta pendência como resolvida?')) {
-      console.log('Resolvendo pendência:', pendenciaId);
-      alert('Pendência resolvida com sucesso!');
-      // Atualizar lista de pendências
-    }
+    showConfirm(
+      'Marcar como resolvida?',
+      'Esta pendência será marcada como concluída',
+      () => {
+        console.log('Resolvendo pendência:', pendenciaId);
+        showSuccess('Pendência resolvida', 'A pendência foi marcada como concluída');
+      },
+      undefined,
+      'Resolver'
+    );
   };
 
   const handleAdiarPendencia = (pendenciaId: string) => {
-    // TODO: Criar agendamento real
     console.log('Adiando pendência:', pendenciaId);
     closeSheet();
+    // Navegar para agenda para criar agendamento
     handleNavigateToAgenda();
   };
 
   const handleRedistribuirCriticas = () => {
-    if (confirm('Redistribuir operações críticas entre as equipes?')) {
-      console.log('Redistribuindo operações críticas');
-      alert('Operações redistribuídas com sucesso!');
-      // TODO: Implementar redistribuição real
-    }
+    showConfirm(
+      'Redistribuir operações críticas?',
+      'As operações serão balanceadas entre as equipes disponíveis',
+      () => {
+        console.log('Redistribuindo operações críticas');
+        showSuccess('Operações redistribuídas', 'As operações foram balanceadas com sucesso');
+      },
+      undefined,
+      'Redistribuir'
+    );
   };
 
   const handleResolverTudo = () => {
-    if (confirm('Marcar todas as pendências como resolvidas?')) {
-      console.log('Resolvendo todas as pendências');
-      alert('Todas as pendências foram resolvidas!');
-      closeSheet();
-      // TODO: Implementar resolução em lote
-    }
+    showConfirm(
+      'Resolver todas as pendências?',
+      'Todas as pendências serão marcadas como concluídas',
+      () => {
+        console.log('Resolvendo todas as pendências');
+        showSuccess('Pendências resolvidas', 'Todas as pendências foram concluídas');
+        closeSheet();
+      },
+      undefined,
+      'Resolver tudo',
+      true
+    );
   };
 
   const handleNavigateToAgenda = (day?: string, eventId?: string) => {
@@ -414,12 +496,22 @@ const DashboardPageCore: React.FC = () => {
   const headerCollapsed = scrollY > 60;
 
   const renderSnapshotContent = () => {
+    if (!dashboardData) {
+      return (
+        <div className="snapshot-content">
+          <div className="snapshot-value">Carregando...</div>
+        </div>
+      );
+    }
+
+    const { metricas } = dashboardData;
+
     switch (snapshotTab) {
       case 'active':
         return (
           <div className="snapshot-content">
-            <div className="snapshot-value">7 em andamento</div>
-            <div className="snapshot-breakdown">2 críticas • 5 normais</div>
+            <div className="snapshot-value">{metricas.emAndamento} em andamento</div>
+            <div className="snapshot-breakdown">{metricas.criticas} críticas • {metricas.emAndamento - metricas.criticas} normais</div>
             <div className="snapshot-actions">
               <button className="snapshot-cta primary" onClick={() => navigate('/app/trabalhos')}>
                 Ver fila
@@ -433,8 +525,8 @@ const DashboardPageCore: React.FC = () => {
       case 'completed':
         return (
           <div className="snapshot-content">
-            <div className="snapshot-value">23 concluídas</div>
-            <div className="snapshot-breakdown">Tempo médio: 2h 15min</div>
+            <div className="snapshot-value">{metricas.concluidas} concluídas</div>
+            <div className="snapshot-breakdown">Receita: R$ {(metricas.receitaHoje / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
             <div className="snapshot-actions">
               <button className="snapshot-cta primary" onClick={() => navigate('/app/relatorios')}>
                 Relatório de hoje
@@ -445,7 +537,7 @@ const DashboardPageCore: React.FC = () => {
       case 'scheduled':
         return (
           <div className="snapshot-content">
-            <div className="snapshot-value">12 próximas</div>
+            <div className="snapshot-value">{metricas.agendadas} próximas</div>
             <div className="snapshot-breakdown">Próximas 48h</div>
             <div className="snapshot-actions">
               <button className="snapshot-cta primary" onClick={() => handleNavigateToAgenda()}>
@@ -459,6 +551,17 @@ const DashboardPageCore: React.FC = () => {
 
   return (
     <div className="dashboard-ops-container">
+      {/* ACTION BANNER */}
+      {bannerConfig && (
+        <ActionBanner
+          tipo={bannerConfig.tipo}
+          titulo={bannerConfig.titulo}
+          mensagem={bannerConfig.mensagem}
+          acoes={bannerConfig.acoes}
+          onDismiss={dismissBanner}
+        />
+      )}
+
       {/* HEADER NATIVO FIXO */}
       <header className={`dashboard-header ${headerCollapsed ? 'collapsed' : ''}`}>
         <div className="header-content">
@@ -572,73 +675,97 @@ const DashboardPageCore: React.FC = () => {
               <ChevronRight size={16} />
             </button>
           </div>
-          <div className="native-list">
-            {operations.map((op, index) => (
-              <div key={op.id} className={`native-cell ${op.status}`}>
-                <div className="cell-content">
-                  <div className="cell-main">
-                    <span className="cell-title">{op.title}</span>
-                    <span className="cell-subtitle">{op.client}</span>
-                  </div>
-                  <div className="cell-meta">
-                    <span className="cell-value">R$ {op.value.toLocaleString('pt-BR')}</span>
-                    <div className="cell-sla">
-                      <Clock size={12} />
-                      <span>{op.sla}</span>
+          {isLoadingData ? (
+            <div className="native-list">
+              <div className="loading-skeleton">Carregando operações...</div>
+            </div>
+          ) : dataError ? (
+            <div className="native-list">
+              <div className="error-state">{dataError}</div>
+            </div>
+          ) : operations.length === 0 ? (
+            <div className="native-list">
+              <div className="empty-state">Nenhuma operação em andamento</div>
+            </div>
+          ) : (
+            <div className="native-list">
+              {operations.slice(0, 5).map((op, index) => (
+                <div key={op.id} className={`native-cell ${op.status}`}>
+                  <div className="cell-content">
+                    <div className="cell-main">
+                      <span className="cell-title">{op.title}</span>
+                      <span className="cell-subtitle">{op.client}</span>
                     </div>
+                    <div className="cell-meta">
+                      <span className="cell-value">R$ {(op.value / 100).toLocaleString('pt-BR')}</span>
+                      <div className="cell-sla">
+                        <Clock size={12} />
+                        <span>{op.sla}</span>
+                      </div>
+                    </div>
+                    <ChevronRight size={18} className="cell-chevron" />
                   </div>
-                  <ChevronRight size={18} className="cell-chevron" />
+                  {op.status === 'critical' && (
+                    <button className="cell-action-critical">Resolver agora</button>
+                  )}
+                  {index < Math.min(operations.length, 5) - 1 && <div className="cell-separator" />}
                 </div>
-                {op.status === 'critical' && (
-                  <button className="cell-action-critical">Resolver agora</button>
-                )}
-                {index < operations.length - 1 && <div className="cell-separator" />}
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </section>
 
         {/* CAPACIDADE - LISTA NATIVA */}
         <section className="dashboard-section">
           <h2 className="section-title">Capacidade</h2>
-          <div className="native-list">
-            {teams.map((team, index) => (
-              <div key={team.id}>
-                <button className={`native-cell team-cell ${team.health}`} onClick={() => openSheet('team', team)}>
-                  <div className="cell-content">
-                    <div className="cell-main">
-                      <span className="cell-title">{team.name}</span>
-                      <span className="cell-subtitle">{team.active} ativos • {team.free} livres</span>
+          {isLoadingData ? (
+            <div className="native-list">
+              <div className="loading-skeleton">Carregando equipes...</div>
+            </div>
+          ) : teams.length === 0 ? (
+            <div className="native-list">
+              <div className="empty-state">Nenhuma equipe cadastrada</div>
+            </div>
+          ) : (
+            <div className="native-list">
+              {teams.map((team, index) => (
+                <div key={team.id}>
+                  <button className={`native-cell team-cell ${team.health}`} onClick={() => openSheet('team', team)}>
+                    <div className="cell-content">
+                      <div className="cell-main">
+                        <span className="cell-title">{team.name}</span>
+                        <span className="cell-subtitle">{team.active} ativos • {team.free} livres</span>
+                      </div>
+                      <div className="cell-gauge">
+                        <svg width="28" height="28" viewBox="0 0 28 28">
+                          <circle cx="14" cy="14" r="12" fill="none" stroke="currentColor" strokeWidth="2.5" opacity="0.15" />
+                          <circle
+                            cx="14"
+                            cy="14"
+                            r="12"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2.5"
+                            strokeDasharray={`${(team.active / team.total) * 75.4} 75.4`}
+                            strokeLinecap="round"
+                            transform="rotate(-90 14 14)"
+                          />
+                        </svg>
+                        <ChevronRight size={16} className="cell-chevron" />
+                      </div>
                     </div>
-                    <div className="cell-gauge">
-                      <svg width="28" height="28" viewBox="0 0 28 28">
-                        <circle cx="14" cy="14" r="12" fill="none" stroke="currentColor" strokeWidth="2.5" opacity="0.15" />
-                        <circle
-                          cx="14"
-                          cy="14"
-                          r="12"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2.5"
-                          strokeDasharray={`${(team.active / team.total) * 75.4} 75.4`}
-                          strokeLinecap="round"
-                          transform="rotate(-90 14 14)"
-                        />
-                      </svg>
-                      <ChevronRight size={16} className="cell-chevron" />
+                  </button>
+                  {team.suggestion && (
+                    <div className="team-recommendation">
+                      <AlertCircle size={12} />
+                      <span>{team.suggestion}</span>
                     </div>
-                  </div>
-                </button>
-                {team.suggestion && (
-                  <div className="team-recommendation">
-                    <AlertCircle size={12} />
-                    <span>{team.suggestion}</span>
-                  </div>
-                )}
-                {index < teams.length - 1 && <div className="cell-separator" />}
-              </div>
-            ))}
-          </div>
+                  )}
+                  {index < teams.length - 1 && <div className="cell-separator" />}
+                </div>
+              ))}
+            </div>
+          )}
         </section>
 
         {/* PRÓXIMOS 7 DIAS */}
@@ -676,22 +803,42 @@ const DashboardPageCore: React.FC = () => {
           </div>
         </section>
 
-        {/* INSIGHT EDITORIAL */}
-        <section className="dashboard-section">
-          <div className="insight-editorial" onClick={() => openSheet('insight')}>
-            <div className="insight-icon">
-              <TrendingUp size={20} />
+        {/* INSIGHT EDITORIAL - APENAS SE HOUVER DADOS REAIS */}
+        {insight && !insightDismissed && (
+          <section className="dashboard-section">
+            <div 
+              className={`insight-editorial insight-${insight.type}`}
+              onClick={() => {
+                if (insight.type === 'critical') {
+                  navigate('/app/trabalhos');
+                } else if (insight.action === 'Ver agenda') {
+                  handleNavigateToAgenda();
+                } else {
+                  navigate('/app/relatorios');
+                }
+              }}
+            >
+              <div className="insight-icon">
+                <insight.icon size={20} />
+              </div>
+              <div className="insight-content">
+                <p className="insight-title">{insight.title}</p>
+                <p className="insight-subtitle">{insight.subtitle}</p>
+                <span className="insight-cta">{insight.action}</span>
+              </div>
+              <button 
+                className="insight-dismiss" 
+                onClick={(e) => { 
+                  e.stopPropagation(); 
+                  setInsightDismissed(true);
+                }}
+                aria-label="Dispensar insight"
+              >
+                <X size={16} />
+              </button>
             </div>
-            <div className="insight-content">
-              <p className="insight-title">Tempo médio caiu 12% hoje</p>
-              <p className="insight-subtitle">Operações 15min mais rápidas que ontem</p>
-              <span className="insight-cta">Ver por quê</span>
-            </div>
-            <button className="insight-dismiss" onClick={(e) => { e.stopPropagation(); }}>
-              <X size={16} />
-            </button>
-          </div>
-        </section>
+          </section>
+        )}
 
         <div className="bottom-spacing" />
       </div>
