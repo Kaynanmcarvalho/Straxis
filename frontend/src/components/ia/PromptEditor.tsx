@@ -4,39 +4,26 @@ import { Card, CardHeader, CardTitle, CardContent } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
 import { apiService } from '../../services/api.service';
+import { iaService } from '../../services/ia.service';
 
-interface PromptEditorProps {
-  companyId?: string;
-}
-
-export const PromptEditor: React.FC<PromptEditorProps> = ({ companyId }) => {
-  // Usa o companyId do usuário logado se não for passado
-  const userCompanyId = companyId || localStorage.getItem('companyId') || '';
-  
+export const PromptEditor: React.FC = () => {
   const [prompt, setPrompt] = useState('');
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
   const [charCount, setCharCount] = useState(0);
 
   useEffect(() => {
-    if (userCompanyId) {
-      loadPrompt();
-    }
-  }, [userCompanyId]);
+    loadPrompt();
+  }, []);
 
   useEffect(() => {
     setCharCount(prompt.length);
   }, [prompt]);
 
   const loadPrompt = async () => {
-    if (!userCompanyId) {
-      console.warn('No companyId available');
-      return;
-    }
-    
     try {
-      const response = await apiService.get(`/empresas/${userCompanyId}`) as any;
-      setPrompt(response.config?.iaPrompt || '');
+      const config = await iaService.getConfig();
+      setPrompt(config.iaPrompt || '');
     } catch (error) {
       console.error('Error loading prompt:', error);
     }

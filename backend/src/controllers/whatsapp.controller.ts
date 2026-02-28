@@ -18,7 +18,9 @@ export class WhatsAppController {
    */
   static async connect(req: Request, res: Response): Promise<void> {
     try {
+      console.log(`\n📱 [WhatsApp Controller] POST /connect`);
       const companyId = req.auth?.companyId;
+      console.log(`🏢 [WhatsApp Controller] companyId: ${companyId}`);
 
       if (!companyId) {
         res.status(400).json({
@@ -37,29 +39,6 @@ export class WhatsAppController {
         message: 'Conexão iniciada. Escaneie o QR Code no WhatsApp.',
       });
     } catch (error: any) {
-      // Verificar se é erro de cooldown
-      if (error.message.includes('Cooldown ativo')) {
-        const hoursMatch = error.message.match(/(\d+) horas/);
-        const remainingHours = hoursMatch ? parseInt(hoursMatch[1]) : 48;
-        
-        res.status(429).json({
-          success: false,
-          error: 'COOLDOWN_ACTIVE',
-          code: 'WHATSAPP_COOLDOWN',
-          message: 'Número em cooldown por erro 515',
-          data: {
-            remainingHours,
-            reason: 'Erro 515 - Número temporariamente bloqueado pelo WhatsApp',
-            actions: [
-              'Desconecte TODOS os dispositivos no celular',
-              'Use WhatsApp normalmente (envie/receba mensagens)',
-              `Aguarde ${remainingHours} horas antes de tentar novamente`,
-            ],
-          },
-        });
-        return;
-      }
-
       res.status(500).json({
         success: false,
         error: 'Erro ao conectar WhatsApp',
@@ -73,10 +52,18 @@ export class WhatsAppController {
    */
   static async disconnect(req: Request, res: Response): Promise<void> {
     try {
-      const { sessionId } = req.body;
+      console.log(`\n🔌 [WhatsApp Controller] POST /disconnect`);
+      console.log(`📦 [WhatsApp Controller] Body:`, JSON.stringify(req.body));
+      
+      const { sessionId, force } = req.body;
       const companyId = req.auth?.companyId;
 
+      console.log(`🏢 [WhatsApp Controller] companyId: ${companyId}`);
+      console.log(`🔑 [WhatsApp Controller] sessionId: ${sessionId}`);
+      console.log(`💪 [WhatsApp Controller] force: ${force}`);
+
       if (!companyId) {
+        console.log(`❌ [WhatsApp Controller] CompanyId não encontrado`);
         res.status(400).json({
           success: false,
           error: 'CompanyId é obrigatório',
@@ -85,7 +72,21 @@ export class WhatsAppController {
         return;
       }
 
+      // Force disconnect: desconecta todas as sessões da empresa
+      if (force) {
+        console.log(`💪 [WhatsApp Controller] Forçando desconexão de todas as sessões de ${companyId}...`);
+        await WhatsAppService.forceDisconnect(companyId);
+        await WhatsAppService.gracefulDisconnect(companyId);
+        console.log(`✅ [WhatsApp Controller] Force disconnect concluído para ${companyId}`);
+        res.json({
+          success: true,
+          message: 'Todas as sessões desconectadas com sucesso',
+        });
+        return;
+      }
+
       if (!sessionId) {
+        console.log(`❌ [WhatsApp Controller] SessionId não fornecido e force não ativado`);
         res.status(400).json({
           success: false,
           error: 'SessionId é obrigatório',
@@ -94,13 +95,16 @@ export class WhatsAppController {
         return;
       }
 
+      console.log(`🔌 [WhatsApp Controller] Desconectando sessão ${sessionId}...`);
       await WhatsAppService.disconnect(companyId, sessionId);
+      console.log(`✅ [WhatsApp Controller] Sessão ${sessionId} desconectada`);
 
       res.json({
         success: true,
         message: 'Desconectado com sucesso',
       });
     } catch (error: any) {
+      console.error(`❌ [WhatsApp Controller] Erro ao desconectar:`, error.message);
       res.status(500).json({
         success: false,
         error: 'Erro ao desconectar WhatsApp',
@@ -141,11 +145,32 @@ export class WhatsAppController {
   }
 
   /**
+   * DELETE /whatsapp/cooldown - Remove o cooldown manualmente
+   */
+  static async resetCooldown(req: Request, res: Response): Promise<void> {
+    try {
+      WhatsAppService.removeCooldown();
+
+      res.json({
+        success: true,
+        message: 'Cooldown removido com sucesso. Você pode tentar conectar novamente.',
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        success: false,
+        error: 'Erro ao remover cooldown',
+        message: error.message,
+      });
+    }
+  }
+
+  /**
    * GET /whatsapp/status - Obtém status da conexão
    */
   static async getStatus(req: Request, res: Response): Promise<void> {
     try {
       const companyId = req.auth?.companyId;
+      console.log(`📊 [WhatsApp Controller] GET /status - companyId: ${companyId}`);
 
       if (!companyId) {
         res.status(400).json({

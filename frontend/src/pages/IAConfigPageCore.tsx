@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Brain, Zap, DollarSign, Shield, Settings, Loader, ChevronDown, Server, RefreshCw, CheckCircle, XCircle } from 'lucide-react';
+import { Brain, Shield, Settings, Loader, ChevronDown, Server, RefreshCw, CheckCircle, XCircle } from 'lucide-react';
 import { CoreCard, CoreCardHeader, CoreCardTitle, CoreCardDescription } from '../components/core/CoreCard';
 import { Dock } from '../components/core/Dock';
-import { iaService, IAConfig, IAUsage, fetchLocalModels, checkLocalServerHealth } from '../services/ia.service';
+import { iaService, IAConfig, fetchLocalModels, checkLocalServerHealth } from '../services/ia.service';
 import { useToast } from '../hooks/useToast';
 import './IAConfigPageCore.css';
 
@@ -68,13 +68,6 @@ const IAConfigPageCore: React.FC = () => {
     antiHallucination: true,
   });
 
-  const [usage, setUsage] = useState<IAUsage>({
-    requestsToday: 0,
-    costToday: 0,
-    requestsMonth: 0,
-    costMonth: 0,
-  });
-
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showModelSelector, setShowModelSelector] = useState(false);
@@ -92,22 +85,14 @@ const IAConfigPageCore: React.FC = () => {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [configData, usageData] = await Promise.all([
+      const [configData] = await Promise.all([
         iaService.getConfig(),
-        iaService.getUsage(),
       ]);
       
       // Só atualizar se configData existir e tiver dados válidos
       if (configData && Object.keys(configData).length > 0) {
         setConfig(configData);
       }
-      
-      setUsage(usageData || {
-        requestsToday: 0,
-        costToday: 0,
-        requestsMonth: 0,
-        costMonth: 0,
-      });
       
       // Se o provider for local, carregar modelos automaticamente
       if (configData?.provider === 'local' && configData?.localProvider) {
@@ -119,13 +104,7 @@ const IAConfigPageCore: React.FC = () => {
         title: 'Erro',
         message: 'Erro ao carregar configurações de IA',
       });
-      // Garantir que usage tenha valores padrão mesmo em caso de erro
-      setUsage({
-        requestsToday: 0,
-        costToday: 0,
-        requestsMonth: 0,
-        costMonth: 0,
-      });
+      // Garantir estado padrão em caso de erro
     } finally {
       setLoading(false);
     }
@@ -389,14 +368,6 @@ const IAConfigPageCore: React.FC = () => {
     }).format(value);
   };
 
-  // Garantir que usage nunca seja undefined
-  const safeUsage = usage || {
-    requestsToday: 0,
-    costToday: 0,
-    requestsMonth: 0,
-    costMonth: 0,
-  };
-
   if (loading) {
     return (
       <>
@@ -425,33 +396,6 @@ const IAConfigPageCore: React.FC = () => {
             <span className="status-text">{config?.enabled ? 'Ativo' : 'Inativo'}</span>
           </div>
         </header>
-
-        {/* Usage Stats */}
-        <div className="stats-grid">
-          <div className="stat-card">
-            <div className="stat-header">
-              <Zap className="stat-icon" />
-              <span className="stat-label">Hoje</span>
-            </div>
-            <div className="stat-values">
-              <span className="stat-primary">{safeUsage.requestsToday}</span>
-              <span className="stat-secondary">requisições</span>
-            </div>
-            <div className="stat-cost">{formatCurrency(safeUsage.costToday)}</div>
-          </div>
-
-          <div className="stat-card">
-            <div className="stat-header">
-              <DollarSign className="stat-icon" />
-              <span className="stat-label">Mês</span>
-            </div>
-            <div className="stat-values">
-              <span className="stat-primary">{safeUsage.requestsMonth}</span>
-              <span className="stat-secondary">requisições</span>
-            </div>
-            <div className="stat-cost">{formatCurrency(safeUsage.costMonth)}</div>
-          </div>
-        </div>
 
         {/* Content */}
         <div className="page-content">
@@ -677,16 +621,16 @@ const IAConfigPageCore: React.FC = () => {
               </div>
               <input
                 type="range"
-                min="50"
+                min="1"
                 max="500"
-                step="50"
+                step="1"
                 value={config?.costLimit}
                 onChange={(e) => updateCostLimit(Number(e.target.value))}
                 disabled={saving}
                 className="cost-slider"
               />
               <div className="cost-marks">
-                <span>R$ 50</span>
+                <span>R$ 1</span>
                 <span>R$ 500</span>
               </div>
             </div>

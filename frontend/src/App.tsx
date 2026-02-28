@@ -25,6 +25,7 @@ import UsuariosPage from './pages/UsuariosPage';
 import EmpresasPageCore from './pages/EmpresasPageCore';
 import WhatsAppPageCore from './pages/WhatsAppPageCore';
 import IAConfigPageCore from './pages/IAConfigPageCore';
+import IAConfigPage from './pages/IAConfigPage';
 import LogsPage from './pages/LogsPage';
 import { CargosPage } from './pages/CargosPage';
 import { ConfiguracaoFechamentoPage } from './pages/ConfiguracaoFechamentoPage';
@@ -70,6 +71,7 @@ function App() {
               <Route path="empresas" element={<EmpresasPageCore />} />
               <Route path="whatsapp" element={<WhatsAppPageCore />} />
               <Route path="ia-config" element={<IAConfigPageCore />} />
+              <Route path="ia-settings" element={<IAConfigPage />} />
               <Route path="logs" element={<LogsPage />} />
             </Route>
             

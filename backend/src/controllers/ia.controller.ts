@@ -1,6 +1,8 @@
 import { Request, Response } from 'express';
 import { iaService } from '../services/ia.service';
 import { localAIService } from '../services/localAI.service';
+import { openrouterService } from '../services/openrouter.service';
+import { kimiService } from '../services/kimi.service';
 import admin from 'firebase-admin';
 
 export class IAController {
@@ -14,6 +16,15 @@ export class IAController {
       }
 
       const result = await iaService.processQuery(message, companyId, userId);
+
+      // Se IA desativada, retornar status indicando
+      if (!result.response || result.model === 'disabled') {
+        return res.status(200).json({
+          response: '',
+          disabled: true,
+          message: 'IA está desativada para esta empresa'
+        });
+      }
 
       res.json({
         response: result.response,
@@ -68,6 +79,10 @@ export class IAController {
           autoResponse: config.iaAutoResponse ?? true,
           costLimit: config.iaCostLimit || 100,
           antiHallucination: config.iaAntiHallucination ?? true,
+          ignoreStatus: config.iaIgnoreStatus ?? true,
+          ignoreGroups: config.iaIgnoreGroups ?? true,
+          ignoredNumbers: config.iaIgnoredNumbers || [],
+          iaPrompt: config.iaPrompt || '',
         }
       });
     } catch (error: any) {
@@ -150,7 +165,10 @@ export class IAController {
         model,
         autoResponse,
         costLimit,
-        antiHallucination 
+        antiHallucination,
+        ignoreStatus,
+        ignoreGroups,
+        ignoredNumbers
       } = req.body;
 
       // Apenas Dono_Empresa pode atualizar config
@@ -167,6 +185,9 @@ export class IAController {
       if (autoResponse !== undefined) updates['config.iaAutoResponse'] = autoResponse;
       if (costLimit !== undefined) updates['config.iaCostLimit'] = costLimit;
       if (antiHallucination !== undefined) updates['config.iaAntiHallucination'] = antiHallucination;
+      if (ignoreStatus !== undefined) updates['config.iaIgnoreStatus'] = ignoreStatus;
+      if (ignoreGroups !== undefined) updates['config.iaIgnoreGroups'] = ignoreGroups;
+      if (ignoredNumbers !== undefined) updates['config.iaIgnoredNumbers'] = ignoredNumbers;
 
       // Verificar se há algo para atualizar
       if (Object.keys(updates).length === 0) {
@@ -238,6 +259,26 @@ export class IAController {
     } catch (error: any) {
       console.error('Error checking local server health:', error);
       res.status(500).json({ error: 'Failed to check server health', message: error.message });
+    }
+  }
+
+  async getOpenRouterModels(req: Request, res: Response) {
+    try {
+      const models = openrouterService.getAvailableModels();
+      res.json({ data: models });
+    } catch (error: any) {
+      console.error('Error fetching OpenRouter models:', error);
+      res.status(500).json({ error: 'Failed to fetch OpenRouter models', message: error.message });
+    }
+  }
+
+  async getKimiModels(req: Request, res: Response) {
+    try {
+      const models = kimiService.getAvailableModels();
+      res.json({ data: models });
+    } catch (error: any) {
+      console.error('Error fetching Kimi models:', error);
+      res.status(500).json({ error: 'Failed to fetch Kimi models', message: error.message });
     }
   }
 }

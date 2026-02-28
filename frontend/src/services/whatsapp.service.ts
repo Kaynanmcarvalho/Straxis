@@ -24,6 +24,13 @@ export const whatsappService = {
   },
 
   /**
+   * Força desconexão de todas as sessões
+   */
+  async forceDisconnect(): Promise<void> {
+    await apiService.post('/whatsapp/disconnect', { force: true });
+  },
+
+  /**
    * Obtém status da conexão
    */
   async getStatus(): Promise<{ connected: boolean; lastActivity: Date | null }> {

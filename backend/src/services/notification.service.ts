@@ -52,14 +52,14 @@ class NotificationService {
 
     const notification: Omit<Notification, 'id'> = {
       companyId: data.companyId,
-      userId: data.userId,
+      userId: data.userId || null,
       type: data.type,
       priority: data.priority || 'medium',
       title: data.title,
       message: data.message,
       read: false,
       createdAt: now,
-      expiresAt
+      ...(expiresAt ? { expiresAt } : {})
     };
 
     const docRef = await firestore.collection(this.COLLECTION).add(notification);

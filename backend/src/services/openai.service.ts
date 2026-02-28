@@ -25,24 +25,42 @@ class OpenAIService {
       throw new Error('OpenAI service not initialized');
     }
 
-    const completion = await this.client.chat.completions.create({
-      model: this.config.model,
-      messages: [
-        { role: 'system', content: context },
-        { role: 'user', content: prompt }
-      ],
-      temperature: 0.7,
-      max_tokens: 500
-    });
+    console.log(`[OpenAI] Enviando query para ${this.config.model}...`);
 
-    const tokensUsed = completion.usage?.total_tokens || 0;
-    const estimatedCostCentavos = this.calculateCost(this.config.model, tokensUsed);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 30000); // 30s timeout
 
-    return {
-      response: completion.choices[0]?.message?.content || '',
-      tokensUsed,
-      estimatedCostCentavos
-    };
+    try {
+      const completion = await this.client.chat.completions.create({
+        model: this.config.model,
+        messages: [
+          { role: 'system', content: context },
+          { role: 'user', content: prompt }
+        ],
+        temperature: 0.7,
+        max_tokens: 500
+      }, { signal: controller.signal as any });
+
+      clearTimeout(timeout);
+
+      const tokensUsed = completion.usage?.total_tokens || 0;
+      const estimatedCostCentavos = this.calculateCost(this.config.model, tokensUsed);
+
+      console.log(`[OpenAI] Resposta recebida. Tokens: ${tokensUsed}`);
+
+      return {
+        response: completion.choices[0]?.message?.content || '',
+        tokensUsed,
+        estimatedCostCentavos
+      };
+    } catch (error: any) {
+      clearTimeout(timeout);
+      if (error.name === 'AbortError' || error.message?.includes('abort')) {
+        throw new Error('OpenAI timeout: resposta demorou mais de 30 segundos');
+      }
+      console.error(`[OpenAI] Erro:`, error.message);
+      throw error;
+    }
   }
 
   private calculateCost(model: string, tokens: number): number {

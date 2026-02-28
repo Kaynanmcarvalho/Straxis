@@ -2,7 +2,7 @@ import React from 'react';
 import { Brain } from 'lucide-react';
 import { IAConfig } from '../components/ia/IAConfig';
 import { PromptEditor } from '../components/ia/PromptEditor';
-import { UsageStats } from '../components/ia/UsageStats';
+import { IAFilters } from '../components/ia/IAFilters';
 import { FadeInUp, StaggerList, StaggerItem } from '../components/ui/Animations';
 
 const IAConfigPage: React.FC = () => {
@@ -36,7 +36,7 @@ const IAConfigPage: React.FC = () => {
         </StaggerItem>
 
         <StaggerItem>
-          <UsageStats />
+          <IAFilters />
         </StaggerItem>
       </StaggerList>
     </div>

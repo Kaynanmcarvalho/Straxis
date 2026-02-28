@@ -47,6 +47,12 @@ router.get('/status', WhatsAppController.getStatus);
 router.get('/cooldown', WhatsAppController.getCooldownStatus);
 
 /**
+ * DELETE /api/whatsapp/cooldown
+ * Remove cooldown manualmente
+ */
+router.delete('/cooldown', WhatsAppController.resetCooldown);
+
+/**
  * POST /api/whatsapp/send
  * Envia mensagem
  * Rate limits: diário, por minuto e cooldown

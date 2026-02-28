@@ -46,4 +46,10 @@ router.post('/local/models', iaController.getLocalModels.bind(iaController));
 // POST /api/ia/local/health - Verificar saúde do servidor local
 router.post('/local/health', iaController.checkLocalHealth.bind(iaController));
 
+// GET /api/ia/openrouter/models - Listar modelos OpenRouter
+router.get('/openrouter/models', iaController.getOpenRouterModels.bind(iaController));
+
+// GET /api/ia/kimi/models - Listar modelos Kimi
+router.get('/kimi/models', iaController.getKimiModels.bind(iaController));
+
 export default router;

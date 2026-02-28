@@ -9,6 +9,10 @@ export interface IAConfig {
   autoResponse: boolean;
   costLimit: number;
   antiHallucination: boolean;
+  ignoreStatus: boolean;
+  ignoreGroups: boolean;
+  ignoredNumbers: string[];
+  iaPrompt?: string;
 }
 
 export interface IAUsage {
@@ -35,6 +39,9 @@ class IAService {
         autoResponse: true,
         costLimit: 100,
         antiHallucination: true,
+        ignoreStatus: true,
+        ignoreGroups: true,
+        ignoredNumbers: [],
       };
     }
   }

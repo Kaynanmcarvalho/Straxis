@@ -1,16 +1,20 @@
 import { openaiService } from './openai.service';
 import { geminiService } from './gemini.service';
 import { localAIService } from './localAI.service';
+import { openrouterService } from './openrouter.service';
+import { kimiService } from './kimi.service';
 import admin from 'firebase-admin';
 import { retryWithBackoff, isRetryableError } from '../utils/retry.util';
 import { notificationService } from './notification.service';
 import { LogService } from './log.service';
 
+type IAProvider = 'openai' | 'gemini' | 'local' | 'openrouter' | 'kimi';
+
 interface IAQueryResult {
   response: string;
   tokensUsed: number;
   estimatedCostCentavos: number;
-  provider: 'openai' | 'gemini' | 'local';
+  provider: IAProvider;
   model: string;
   modelCategory: 'cheap' | 'medium' | 'expensive';
 }
@@ -21,6 +25,8 @@ class IAService {
     companyId: string,
     userId: string
   ): Promise<IAQueryResult> {
+    // Garantir que userId nunca seja undefined
+    const safeUserId = userId || 'system';
     try {
       // Buscar configuração da empresa
       const companyDoc = await admin.firestore()
@@ -35,12 +41,22 @@ class IAService {
       const company = companyDoc.data();
       const config = company?.config || {};
 
-      // Verificar se IA está ativada
+      // Verificar se IA está ativada - não responder nada se desativada
       if (!config.iaEnabled) {
-        throw new Error('IA is not enabled for this company');
+        return {
+          response: '',
+          tokensUsed: 0,
+          estimatedCostCentavos: 0,
+          provider: 'openai' as IAProvider,
+          model: 'disabled',
+          modelCategory: 'cheap' as const
+        };
       }
 
-      const provider = config.iaProvider as 'openai' | 'gemini' | 'local';
+      // Verificar limite de custo ANTES de processar
+      await this.checkCostLimit(companyId);
+
+      const provider = config.iaProvider as IAProvider;
       const model = config.iaModel || (provider === 'openai' ? 'gpt-3.5-turbo' : 'gemini-pro');
 
       // Log de início
@@ -52,9 +68,12 @@ class IAService {
       }
 
       // Buscar dados do Firestore para contexto
+      console.log(`[IA] 📝 Construindo contexto...`);
       const context = await this.buildContext(companyId, config.iaPrompt);
+      console.log(`[IA] ✅ Contexto construído (${context.length} chars)`);
 
       // Processar com o provider selecionado com retry
+      console.log(`[IA] 🚀 Enviando para ${provider}...`);
       let result;
       try {
         result = await retryWithBackoff(async () => {
@@ -85,6 +104,10 @@ class IAService {
             
             openaiService.initialize(apiKey, model);
             return await openaiService.query(message, context);
+          } else if (provider === 'openrouter') {
+            return await openrouterService.query(message, context, model);
+          } else if (provider === 'kimi') {
+            return await kimiService.query(message, context, model);
           } else {
             const apiKey = process.env.GEMINI_API_KEY;
             if (!apiKey) throw new Error('Gemini API key not configured');
@@ -113,6 +136,10 @@ class IAService {
       modelCategory = openaiService.getModelCategory(model);
     } else if (provider === 'gemini') {
       modelCategory = geminiService.getModelCategory(model);
+    } else if (provider === 'openrouter') {
+      modelCategory = openrouterService.getModelCategory(model);
+    } else if (provider === 'kimi') {
+      modelCategory = kimiService.getModelCategory(model);
     } else if (provider === 'local') {
       modelCategory = 'cheap'; // Local é sempre "cheap" (grátis)
     }
@@ -120,7 +147,7 @@ class IAService {
     // Registrar uso de IA
     await this.recordUsage({
       companyId,
-      userId,
+      userId: safeUserId,
       provider,
       model,
       modelCategory,
@@ -131,7 +158,7 @@ class IAService {
     // Registrar em logs
     await this.logIAUsage({
       companyId,
-      userId,
+      userId: safeUserId,
       provider,
       model,
       tokensUsed: result.tokensUsed,
@@ -142,9 +169,6 @@ class IAService {
     console.log(`[IA] ✅ Query processada com sucesso`);
     console.log(`[IA] 💰 Custo: R$ ${(result.estimatedCostCentavos / 100).toFixed(4)}`);
 
-    // Verificar limite de custo
-    await this.checkCostLimit(companyId);
-
     return {
       response: validatedResponse,
       tokensUsed: result.tokensUsed,
@@ -154,31 +178,37 @@ class IAService {
       modelCategory
     };
     } catch (error) {
-      // Log do erro
-      await LogService.createLog({
-        companyId,
-        userId,
-        type: 'ia_usage',
-        action: 'failure',
-        details: {
-          error: (error as Error).message,
-          query: message.substring(0, 100)
-        }
-      });
+      // Log do erro (proteger contra undefined)
+      try {
+        await LogService.createLog({
+          companyId,
+          userId: safeUserId,
+          type: 'ia_usage',
+          action: 'failure',
+          details: {
+            error: (error as Error).message,
+            query: message.substring(0, 100)
+          }
+        });
+      } catch (logError) {
+        console.error('[IA] Erro ao registrar log de falha:', logError);
+      }
 
       // Notificar no painel
-      await notificationService.notifyIAFailure(companyId, (error as Error).message);
+      try {
+        await notificationService.notifyIAFailure(companyId, (error as Error).message);
+      } catch (notifError) {
+        console.error('[IA] Erro ao notificar falha:', notifError);
+      }
 
-      // Retornar mensagem de fallback
-      const fallbackMessage = await this.getFallbackMessage(companyId);
-      
+      // Não enviar mensagem de fallback - retornar vazio
       return {
-        response: fallbackMessage,
+        response: '',
         tokensUsed: 0,
         estimatedCostCentavos: 0,
-        provider: 'openai',
-        model: 'fallback',
-        modelCategory: 'cheap'
+        provider: 'openai' as IAProvider,
+        model: 'error',
+        modelCategory: 'cheap' as const
       };
     }
   }
@@ -186,7 +216,7 @@ class IAService {
   private async recordUsage(data: {
     companyId: string;
     userId: string;
-    provider: 'openai' | 'gemini' | 'local';
+    provider: IAProvider;
     model: string;
     modelCategory: 'cheap' | 'medium' | 'expensive';
     tokensUsed: number;
@@ -276,31 +306,56 @@ class IAService {
   }
 
   private async buildContext(companyId: string, customPrompt?: string): Promise<string> {
+    // Helper: query com timeout de 10s
+    const queryWithTimeout = async <T>(queryFn: () => Promise<T>, label: string): Promise<T | null> => {
+      try {
+        const result = await Promise.race([
+          queryFn(),
+          new Promise<never>((_, reject) => 
+            setTimeout(() => reject(new Error(`Timeout: ${label}`)), 10000)
+          )
+        ]);
+        return result;
+      } catch (error) {
+        console.warn(`[IA] ⚠️ ${label} falhou:`, (error as Error).message);
+        return null;
+      }
+    };
+
     // Buscar prompt global
-    const globalConfigDoc = await admin.firestore()
-      .collection('globalConfig')
-      .doc('system')
-      .get();
+    const globalConfigDoc = await queryWithTimeout(
+      () => admin.firestore().collection('globalConfig').doc('system').get(),
+      'globalConfig'
+    );
     
-    const globalPrompt = globalConfigDoc.data()?.iaGlobalPrompt || 
+    const globalPrompt = globalConfigDoc?.data()?.iaGlobalPrompt || 
       'Você é um assistente de gestão de operações de carga e descarga.';
 
-    // Buscar dados recentes da empresa
-    const trabalhos = await admin.firestore()
-      .collection(`companies/${companyId}/trabalhos`)
-      .orderBy('data', 'desc')
-      .limit(10)
-      .get();
-
-    const funcionarios = await admin.firestore()
-      .collection(`companies/${companyId}/funcionarios`)
-      .where('active', '==', true)
-      .get();
-
-    const agendamentos = await admin.firestore()
-      .collection(`companies/${companyId}/agendamentos`)
-      .where('status', '==', 'pendente')
-      .get();
+    // Buscar dados recentes da empresa (em paralelo, com timeout)
+    const [trabalhos, funcionarios, agendamentos] = await Promise.all([
+      queryWithTimeout(
+        () => admin.firestore()
+          .collection(`companies/${companyId}/trabalhos`)
+          .orderBy('data', 'desc')
+          .limit(10)
+          .get(),
+        'trabalhos'
+      ),
+      queryWithTimeout(
+        () => admin.firestore()
+          .collection(`companies/${companyId}/funcionarios`)
+          .where('active', '==', true)
+          .get(),
+        'funcionarios'
+      ),
+      queryWithTimeout(
+        () => admin.firestore()
+          .collection(`companies/${companyId}/agendamentos`)
+          .where('status', '==', 'pendente')
+          .get(),
+        'agendamentos'
+      ),
+    ]);
 
     // Construir contexto
     let context = `${globalPrompt}\n\n`;
@@ -310,16 +365,21 @@ class IAService {
     }
 
     context += `Dados da empresa:\n`;
-    context += `- Total de trabalhos recentes: ${trabalhos.size}\n`;
-    context += `- Funcionários ativos: ${funcionarios.size}\n`;
-    context += `- Agendamentos pendentes: ${agendamentos.size}\n\n`;
+    context += `- Total de trabalhos recentes: ${trabalhos?.size || 0}\n`;
+    context += `- Funcionários ativos: ${funcionarios?.size || 0}\n`;
+    context += `- Agendamentos pendentes: ${agendamentos?.size || 0}\n\n`;
 
     // Adicionar detalhes dos trabalhos
-    if (!trabalhos.empty) {
+    if (trabalhos && !trabalhos.empty) {
       context += `Trabalhos recentes:\n`;
       trabalhos.forEach(doc => {
-        const t = doc.data();
-        context += `- ${t.tipo} em ${new Date(t.data.toDate()).toLocaleDateString()}: ${t.tonelagem}t, R$ ${(t.valorRecebidoCentavos / 100).toFixed(2)}\n`;
+        try {
+          const t = doc.data();
+          const dataStr = t.data?.toDate ? new Date(t.data.toDate()).toLocaleDateString() : 'N/A';
+          context += `- ${t.tipo || 'N/A'} em ${dataStr}: ${t.tonelagem || 0}t, R$ ${((t.valorRecebidoCentavos || 0) / 100).toFixed(2)}\n`;
+        } catch {
+          // Ignorar documento com formato inválido
+        }
       });
     }
 
@@ -337,17 +397,23 @@ class IAService {
       return response; // Sem valores numéricos, OK
     }
 
-    // Buscar todos os valores do Firestore para validação
-    const trabalhos = await admin.firestore()
-      .collection(`companies/${companyId}/trabalhos`)
-      .get();
+    try {
+      // Buscar todos os valores do Firestore para validação (com timeout)
+      const trabalhos = await Promise.race([
+        admin.firestore()
+          .collection(`companies/${companyId}/trabalhos`)
+          .get(),
+        new Promise<never>((_, reject) => 
+          setTimeout(() => reject(new Error('Timeout validação')), 10000)
+        )
+      ]);
 
     const validValues = new Set<string>();
     trabalhos.forEach(doc => {
       const t = doc.data();
-      validValues.add((t.valorRecebidoCentavos / 100).toFixed(2));
-      validValues.add((t.totalPagoCentavos / 100).toFixed(2));
-      validValues.add((t.lucroCentavos / 100).toFixed(2));
+      validValues.add(((t.valorRecebidoCentavos || 0) / 100).toFixed(2));
+      validValues.add(((t.totalPagoCentavos || 0) / 100).toFixed(2));
+      validValues.add(((t.lucroCentavos || 0) / 100).toFixed(2));
     });
 
     // Se a resposta contém valores que não existem no Firestore, retornar mensagem padrão
@@ -359,6 +425,10 @@ class IAService {
     }
 
     return response;
+    } catch (error) {
+      console.warn('[IA] ⚠️ Validação de resposta falhou, retornando resposta sem validação');
+      return response;
+    }
   }
 
   async getFallbackMessage(companyId: string): Promise<string> {
@@ -411,16 +481,19 @@ class IAService {
       .get();
 
     const config = companyDoc.data()?.config;
-    const costLimitCentavos = config?.iaCostLimitCentavos;
+    // iaCostLimit é salvo em reais pelo frontend (1-500)
+    const costLimitReais = config?.iaCostLimit;
 
-    if (!costLimitCentavos) {
+    if (!costLimitReais) {
       return; // Sem limite configurado
     }
+
+    const costLimitCentavos = costLimitReais * 100;
 
     // Calcular custo total do mês
     const totalCostCentavos = await this.getTotalCostByCompany(companyId, month, year);
 
-    // Se atingiu ou ultrapassou o limite, criar alerta
+    // Se atingiu ou ultrapassou o limite, criar alerta e bloquear
     if (totalCostCentavos >= costLimitCentavos) {
       await admin.firestore()
         .collection('logs')
@@ -437,6 +510,8 @@ class IAService {
           },
           timestamp: admin.firestore.FieldValue.serverTimestamp()
         });
+
+      throw new Error(`Limite de custo mensal atingido (R$ ${costLimitReais}). Uso atual: R$ ${(totalCostCentavos / 100).toFixed(2)}`);
     }
   }
 }

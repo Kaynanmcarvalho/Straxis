@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Power, Smartphone, Clock, AlertCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Power, Smartphone, Clock, AlertCircle, Settings } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { whatsappService } from '../services/whatsapp.service';
 import { Dock } from '../components/core/Dock';
@@ -14,6 +15,7 @@ interface ConnectionStatus {
 
 const WhatsAppPageCore: React.FC = () => {
   const toast = useToast();
+  const navigate = useNavigate();
   
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>({
     status: 'disconnected',
@@ -221,6 +223,33 @@ const WhatsAppPageCore: React.FC = () => {
     
     setQrCode(null);
     setQrTimeout(null);
+  };
+
+  const handleDisconnect = async () => {
+    try {
+      setLoading(true);
+      await whatsappService.forceDisconnect();
+      setConnectionStatus({
+        status: 'disconnected',
+        phoneNumber: undefined,
+        accountName: undefined,
+        lastSync: null,
+      });
+      setSessionId(null);
+      setQrCode(null);
+      toast.success({
+        title: 'Desconectado',
+        message: 'WhatsApp desconectado com sucesso',
+      });
+    } catch (err: any) {
+      console.error('Erro ao desconectar:', err);
+      toast.error({
+        title: 'Erro',
+        message: 'Erro ao desconectar. Tente novamente.',
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const isDisconnected = connectionStatus.status === 'disconnected';
@@ -588,6 +617,7 @@ const WhatsAppPageCore: React.FC = () => {
               Conecte o WhatsApp para ativar a secretária automática
             </p>
 
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
             <button 
               onClick={handleConnect}
               disabled={loading}
@@ -639,6 +669,38 @@ const WhatsAppPageCore: React.FC = () => {
                 </>
               )}
             </button>
+
+            <button 
+              onClick={() => navigate('/app/ia-settings')}
+              style={{
+                height: '48px',
+                padding: '0 28px',
+                border: '2px solid #000',
+                borderRadius: '12px',
+                background: '#fff',
+                color: '#000',
+                fontSize: '15px',
+                fontWeight: 500,
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                letterSpacing: '-0.01em'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = '#000';
+                e.currentTarget.style.color = '#fff';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = '#fff';
+                e.currentTarget.style.color = '#000';
+              }}
+            >
+              <Settings size={18} strokeWidth={2} />
+              <span>Configurações de IA e WhatsApp</span>
+            </button>
+            </div>
           </div>
         )}
 
@@ -684,10 +746,94 @@ const WhatsAppPageCore: React.FC = () => {
               lineHeight: '1.5',
               fontWeight: 400,
               letterSpacing: '-0.01em',
-              margin: 0
+              margin: '0 0 40px 0'
             }}>
               Secretária automática operacional
             </p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
+            <button 
+              onClick={handleDisconnect}
+              disabled={loading}
+              style={{
+                height: '48px',
+                padding: '0 28px',
+                border: '2px solid #dc2626',
+                borderRadius: '12px',
+                background: '#fff',
+                color: '#dc2626',
+                fontSize: '15px',
+                fontWeight: 500,
+                cursor: loading ? 'not-allowed' : 'pointer',
+                opacity: loading ? 0.6 : 1,
+                transition: 'all 0.2s',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                letterSpacing: '-0.01em'
+              }}
+              onMouseEnter={(e) => {
+                if (!loading) {
+                  e.currentTarget.style.background = '#dc2626';
+                  e.currentTarget.style.color = '#fff';
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = '#fff';
+                e.currentTarget.style.color = '#dc2626';
+              }}
+            >
+              {loading ? (
+                <>
+                  <div style={{
+                    width: '16px',
+                    height: '16px',
+                    border: '2px solid rgba(220,38,38,0.3)',
+                    borderTopColor: '#dc2626',
+                    borderRadius: '50%',
+                    animation: 'spin 0.8s linear infinite'
+                  }} />
+                  <span>Desconectando...</span>
+                </>
+              ) : (
+                <>
+                  <Power size={18} strokeWidth={2} />
+                  <span>Desconectar</span>
+                </>
+              )}
+            </button>
+
+            <button 
+              onClick={() => navigate('/app/ia-settings')}
+              style={{
+                height: '48px',
+                padding: '0 28px',
+                border: '2px solid #000',
+                borderRadius: '12px',
+                background: '#fff',
+                color: '#000',
+                fontSize: '15px',
+                fontWeight: 500,
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                letterSpacing: '-0.01em'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = '#000';
+                e.currentTarget.style.color = '#fff';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = '#fff';
+                e.currentTarget.style.color = '#000';
+              }}
+            >
+              <Settings size={18} strokeWidth={2} />
+              <span>Configurações de IA e WhatsApp</span>
+            </button>
+            </div>
           </div>
         )}
       </div>

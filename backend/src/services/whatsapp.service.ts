@@ -37,77 +37,202 @@ export class WhatsAppService {
   private static authDir = path.join(__dirname, '../../whatsapp-auth');
 
   /**
-   * Verifica se está em cooldown (bloqueio temporário)
+   * Normaliza número BR removendo formatação e gerando variações com/sem 9
+   * Ex: "6294510649" gera ["5562994510649", "556294510649"]
    */
-  private static checkCooldown(): { inCooldown: boolean; remainingTime?: number } {
-    const cooldownFile = path.join(__dirname, '../../.whatsapp-cooldown');
-    
-    if (fs.existsSync(cooldownFile)) {
-      const cooldownUntil = parseInt(fs.readFileSync(cooldownFile, 'utf-8'));
-      const now = Date.now();
-      
-      if (now < cooldownUntil) {
-        const remainingMs = cooldownUntil - now;
-        const remainingHours = Math.ceil(remainingMs / (1000 * 60 * 60));
-        return { inCooldown: true, remainingTime: remainingHours };
-      } else {
-        // Cooldown expirou, remover arquivo
-        fs.unlinkSync(cooldownFile);
-      }
+  static generateBRNumberVariations(input: string): string[] {
+    // Limpar tudo que não é dígito
+    const clean = input.replace(/[^0-9]/g, '');
+    if (!clean) return [];
+
+    const variations = new Set<string>();
+
+    // Determinar o número base (sem código do país)
+    let national = clean;
+    if (national.startsWith('55') && national.length >= 12) {
+      national = national.substring(2);
     }
-    
-    return { inCooldown: false };
+
+    // Extrair DDD e número local
+    let ddd = '';
+    let local = '';
+
+    if (national.length === 10) {
+      // Sem o 9: DDD(2) + 8 dígitos
+      ddd = national.substring(0, 2);
+      local = national.substring(2); // 8 dígitos
+    } else if (national.length === 11) {
+      // Com o 9: DDD(2) + 9 + 8 dígitos
+      ddd = national.substring(0, 2);
+      local = national.substring(2); // 9 dígitos
+    } else if (national.length === 8) {
+      // Só o número local sem DDD - não dá pra gerar variações completas
+      return [clean];
+    } else if (national.length === 9) {
+      // Número local com 9 sem DDD
+      return [clean];
+    } else {
+      return [clean];
+    }
+
+    // Gerar variação sem o 9 (8 dígitos locais)
+    const localSem9 = local.length === 9 && local.startsWith('9') ? local.substring(1) : local;
+    // Gerar variação com o 9 (9 dígitos locais)
+    const localCom9 = local.length === 8 ? '9' + local : local;
+
+    // Formato WhatsApp: 55 + DDD + número + @s.whatsapp.net
+    // Variações: com 55, sem 55, com 9, sem 9
+    variations.add(`55${ddd}${localCom9}`);
+    variations.add(`55${ddd}${localSem9}`);
+    variations.add(`${ddd}${localCom9}`);
+    variations.add(`${ddd}${localSem9}`);
+
+    return Array.from(variations);
   }
 
   /**
-   * Aplica cooldown de 48 horas após erro 515
+   * Verifica se um JID do WhatsApp deve ser ignorado baseado na config da empresa
    */
-  private static applyCooldown(): void {
-    const cooldownFile = path.join(__dirname, '../../.whatsapp-cooldown');
-    const cooldownUntil = Date.now() + (48 * 60 * 60 * 1000); // 48 horas
-    fs.writeFileSync(cooldownFile, cooldownUntil.toString());
-    
-    const releaseDate = new Date(cooldownUntil).toLocaleString('pt-BR');
-    console.log(`\n🔒 COOLDOWN APLICADO até ${releaseDate}`);
+  private static async shouldIgnoreMessage(companyId: string, fromJid: string): Promise<boolean> {
+    try {
+      const company = await FirestoreService.getDoc('companies', companyId) as any;
+      const config = company?.config || {};
+
+      // Ignorar status (status@broadcast)
+      if (config.iaIgnoreStatus !== false && fromJid === 'status@broadcast') {
+        console.log(`🚫 [WhatsApp] Ignorando status broadcast para empresa ${companyId}`);
+        return true;
+      }
+
+      // Ignorar grupos (@g.us)
+      if (config.iaIgnoreGroups !== false && fromJid.endsWith('@g.us')) {
+        console.log(`🚫 [WhatsApp] Ignorando grupo ${fromJid} para empresa ${companyId}`);
+        return true;
+      }
+
+      // Ignorar números específicos
+      const ignoredNumbers: string[] = config.iaIgnoredNumbers || [];
+      if (ignoredNumbers.length > 0) {
+        // Extrair número do JID (remover @s.whatsapp.net)
+        const fromNumber = fromJid.replace('@s.whatsapp.net', '').replace('@c.us', '');
+
+        // Gerar variações de cada número ignorado e comparar
+        for (const ignored of ignoredNumbers) {
+          const variations = this.generateBRNumberVariations(ignored);
+          if (variations.some(v => fromNumber.includes(v) || v.includes(fromNumber))) {
+            console.log(`🚫 [WhatsApp] Ignorando número ${fromNumber} (match: ${ignored}) para empresa ${companyId}`);
+            return true;
+          }
+        }
+      }
+
+      return false;
+    } catch (error) {
+      console.error('Erro ao verificar filtros de mensagem:', error);
+      return false; // Em caso de erro, não ignorar
+    }
+  }
+
+  /**
+   * Restaura todas as sessões WhatsApp salvas ao iniciar o servidor.
+   * Busca no Firestore empresas com whatsappEnabled e tenta reconectar
+   * usando as credenciais salvas em whatsapp-auth/
+   */
+  static async restoreAllSessions(): Promise<void> {
+    try {
+      console.log('\n🔄 [WhatsApp] Restaurando sessões salvas...');
+
+      // Verificar se existe diretório de auth
+      if (!fs.existsSync(this.authDir)) {
+        console.log('📂 [WhatsApp] Nenhum diretório de auth encontrado');
+        return;
+      }
+
+      const sessionDirs = fs.readdirSync(this.authDir).filter(f => {
+        const fullPath = path.join(this.authDir, f);
+        return f.startsWith('session_') && fs.statSync(fullPath).isDirectory();
+      });
+
+      if (sessionDirs.length === 0) {
+        console.log('📂 [WhatsApp] Nenhuma sessão salva encontrada');
+        return;
+      }
+
+      // Agrupar por companyId e pegar a mais recente de cada
+      const companySessionMap = new Map<string, string>();
+      for (const dir of sessionDirs) {
+        // Formato: session_{companyId}_{timestamp}
+        const parts = dir.split('_');
+        if (parts.length >= 3) {
+          const companyId = parts.slice(1, -1).join('_');
+          const existing = companySessionMap.get(companyId);
+          if (!existing || dir > existing) {
+            companySessionMap.set(companyId, dir);
+          }
+        }
+      }
+
+      console.log(`📊 [WhatsApp] Encontradas ${companySessionMap.size} empresa(s) com sessões salvas`);
+
+      // Tentar reconectar cada empresa
+      let restored = 0;
+      let failed = 0;
+
+      for (const [companyId, sessionDir] of companySessionMap) {
+        try {
+          // Verificar se empresa ainda existe e tem WhatsApp habilitado
+          const company = await FirestoreService.getDoc('companies', companyId) as any;
+          if (!company) {
+            console.log(`⚠️  [WhatsApp] Empresa ${companyId} não encontrada, pulando...`);
+            continue;
+          }
+
+          console.log(`🔌 [WhatsApp] Reconectando empresa ${companyId}...`);
+
+          const result = await this.recoverSession(companyId);
+          if (result) {
+            restored++;
+            console.log(`✅ [WhatsApp] Empresa ${companyId} reconectada (${result.sessionId})`);
+
+            // Atualizar status no Firestore
+            await FirestoreService.update('companies', companyId, {
+              'whatsapp.connected': true,
+              'whatsapp.lastReconnect': new Date(),
+            });
+          } else {
+            failed++;
+            console.log(`❌ [WhatsApp] Falha ao reconectar empresa ${companyId}`);
+
+            // Marcar como desconectado no Firestore
+            await FirestoreService.update('companies', companyId, {
+              'whatsapp.connected': false,
+              'whatsapp.lastReconnectAttempt': new Date(),
+            });
+          }
+
+          // Delay entre reconexões pra não sobrecarregar
+          await new Promise(resolve => setTimeout(resolve, 2000));
+        } catch (error) {
+          failed++;
+          console.error(`❌ [WhatsApp] Erro ao restaurar empresa ${companyId}:`, error);
+        }
+      }
+
+      console.log(`\n📊 [WhatsApp] Restauração concluída: ${restored} reconectada(s), ${failed} falha(s)`);
+    } catch (error) {
+      console.error('❌ [WhatsApp] Erro ao restaurar sessões:', error);
+    }
   }
 
   /**
    * Conecta ao WhatsApp e gera QR Code
-   * Se já existir sessão ativa, retorna erro
-   * 
-   * MULTI-TENANT: Cada empresa (companyId) tem suas próprias sessões isoladas
+   * Estilo BRC: sem cooldown, com reconexão automática e tratamento Bad MAC
    */
   static async connect(companyId: string): Promise<{ qrCode: string; sessionId: string }> {
     try {
-      // VERIFICAR COOLDOWN PRIMEIRO
-      const cooldownCheck = this.checkCooldown();
-      if (cooldownCheck.inCooldown) {
-        const errorMsg = `
-╔══════════════════════════════════════════════════════════════════════╗
-║                    🚨 COOLDOWN ATIVO - NÃO TENTE CONECTAR 🚨          ║
-╚══════════════════════════════════════════════════════════════════════╝
-
-⏱️  Tempo restante: ${cooldownCheck.remainingTime} horas
-
-❌ SEU NÚMERO ESTÁ EM COOLDOWN POR ERRO 515
-
-📋 O QUE FAZER:
-   1. AGUARDE ${cooldownCheck.remainingTime} horas
-   2. Use WhatsApp normalmente no celular
-   3. Desconecte TODOS os dispositivos
-   4. Tente novamente após o cooldown
-
-⚠️  CADA TENTATIVA PIORA A SITUAÇÃO!
-
-📚 Leia: WHATSAPP_ERROR_515_SOLUTION.md
-`;
-        console.error(errorMsg);
-        throw new Error(`Cooldown ativo. Aguarde ${cooldownCheck.remainingTime} horas antes de tentar novamente.`);
-      }
-
       console.log(`\n🏢 [WhatsApp] Empresa: ${companyId}`);
       console.log(`📊 [WhatsApp] Sessões ativas no sistema: ${this.sessions.size}`);
-      
+
       // Verificar se já existe sessão ativa E conectada
       const existingSession = await this.getActiveSession(companyId);
       if (existingSession && existingSession.socket?.user) {
@@ -139,7 +264,6 @@ export class WhatsAppService {
         fs.mkdirSync(this.authDir, { recursive: true });
       }
 
-      let qrCodeData = '';
       let qrCount = 0;
       let resolveQR: (value: string) => void;
       let rejectQR: (error: Error) => void;
@@ -152,20 +276,7 @@ export class WhatsAppService {
       const { state, saveCreds } = await useMultiFileAuthState(authPath);
       const { version } = await fetchLatestBaileysVersion();
 
-      // Gerar user agent realista baseado em navegadores reais
-      const browsers = [
-        ['Chrome (Windows)', 'Windows', '10.0'],
-        ['Chrome (MacOS)', 'Mac OS X', '10_15_7'],
-        ['Edge (Windows)', 'Windows', '10.0'],
-        ['Firefox (Windows)', 'Windows', '10.0'],
-      ];
-      const randomBrowser = browsers[Math.floor(Math.random() * browsers.length)];
-      
-      // Versões realistas de Chrome/Edge (2026)
-      const chromeVersions = ['131.0.0.0', '130.0.0.0', '129.0.0.0', '128.0.0.0'];
-      const randomVersion = chromeVersions[Math.floor(Math.random() * chromeVersions.length)];
-
-      // Criar socket do WhatsApp com configurações anti-detecção
+      // Criar socket - browser estilo BRC (Torq System)
       const sock = makeWASocket({
         version,
         auth: {
@@ -173,154 +284,172 @@ export class WhatsAppService {
           keys: makeCacheableSignalKeyStore(state.keys, console as any),
         },
         printQRInTerminal: false,
-        // Browser realista - parece dispositivo legítimo
-        browser: [randomBrowser[0], randomBrowser[1], randomVersion],
-        // Comportamento mais humano
-        syncFullHistory: false, // Não sincronizar tudo (suspeito)
-        markOnlineOnConnect: false, // Não marcar online imediatamente (bot behavior)
-        generateHighQualityLinkPreview: true, // Comportamento normal de usuário
-        // Timeouts mais realistas (não muito rápido)
-        defaultQueryTimeoutMs: 60000,
-        connectTimeoutMs: 60000,
-        keepAliveIntervalMs: 25000, // Variação natural
-        // Configurações anti-spam
-        emitOwnEvents: false,
-        fireInitQueries: true,
+        browser: ['Torq System', 'Chrome', '1.0.0'],
+        syncFullHistory: false,
         getMessage: async () => undefined,
-        shouldIgnoreJid: (jid: string) => jid.endsWith('@broadcast'),
-        // Retry mais conservador (evita flood)
-        retryRequestDelayMs: 500, // Delay maior entre retries
-        maxMsgRetryCount: 3, // Menos tentativas
-        // Configurações adicionais anti-detecção
-        qrTimeout: 60000, // 60s para escanear QR (tempo humano)
-        linkPreviewImageThumbnailWidth: 192,
-        transactionOpts: { maxCommitRetries: 10, delayBetweenTriesMs: 3000 },
       });
 
-      // Handler para QR Code
+      // Handler de conexão - estilo BRC com reconexão e tratamento Bad MAC
       sock.ev.on('connection.update', async (update) => {
         const { connection, lastDisconnect, qr } = update;
 
         if (qr) {
           qrCount++;
-          console.log(`📱 QR Code gerado (${qrCount}/3)`);
-          
-          // Limitar a 3 QR codes
-          if (qrCount > 3) {
-            console.log('⚠️ Limite de 3 QR codes atingido. Encerrando tentativa de conexão.');
-            sock.end(new Error('QR code limit reached'));
-            this.sessions.delete(sessionId);
-            
-            // Limpar sessão do Firestore
-            const sessions = await FirestoreService.querySubcollection(
-              'companies',
-              companyId,
-              'whatsappSessions',
-              [{ field: 'sessionId', operator: '==', value: sessionId }]
-            );
-            
-            if (sessions.length > 0) {
-              const session = sessions[0] as any;
-              await FirestoreService.deleteSubcollectionDoc(
-                'companies',
-                companyId,
-                'whatsappSessions',
-                session.id
-              );
-            }
-            
-            if (qrCount === 4) {
-              rejectQR(new Error('Limite de 3 QR codes atingido. Tente novamente mais tarde.'));
-            }
-            return;
-          }
-          
-          qrCodeData = qr;
-          
-          // Resolver promise apenas no primeiro QR
+          console.log(`📱 QR Code gerado (${qrCount}/5)`);
+          session.qrCodeData = qr;
+
           if (qrCount === 1) {
             resolveQR(qr);
           }
-          
+
           // Atualizar QR no Firestore
           const sessions = await FirestoreService.querySubcollection(
-            'companies',
-            companyId,
-            'whatsappSessions',
+            'companies', companyId, 'whatsappSessions',
             [{ field: 'sessionId', operator: '==', value: sessionId }]
           );
-
           if (sessions.length > 0) {
-            const session = sessions[0] as any;
+            const sess = sessions[0] as any;
             await FirestoreService.updateSubcollectionDoc(
-              'companies',
-              companyId,
-              'whatsappSessions',
-              session.id,
-              { 
-                qrCode: qr, 
-                lastActivity: new Date(),
-                qrCount 
-              }
+              'companies', companyId, 'whatsappSessions', sess.id,
+              { qrCode: qr, lastActivity: new Date(), qrCount }
+            );
+          }
+        }
+
+        if (connection === 'open') {
+          console.log(`✅ [WhatsApp] Empresa ${companyId} - Conectado!`);
+          console.log(`📊 [WhatsApp] Total de empresas conectadas: ${this.sessions.size}`);
+
+          // Atualizar status no Firestore
+          const sessions = await FirestoreService.querySubcollection(
+            'companies', companyId, 'whatsappSessions',
+            [{ field: 'sessionId', operator: '==', value: sessionId }]
+          );
+          if (sessions.length > 0) {
+            const sess = sessions[0] as any;
+            await FirestoreService.updateSubcollectionDoc(
+              'companies', companyId, 'whatsappSessions', sess.id,
+              { connected: true, qrCode: null, lastActivity: new Date(), connectedAt: new Date() }
             );
           }
         }
 
         if (connection === 'close') {
           const statusCode = (lastDisconnect?.error as Boom)?.output?.statusCode;
+          const errorMessage = lastDisconnect?.error?.message || '';
           const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
-          
+
           console.log(`❌ [WhatsApp] Empresa ${companyId} - Conexão fechada. Status: ${statusCode}`);
-          
+
+          // TRATAMENTO BAD MAC - estilo BRC: não desconecta, apenas reconecta
+          if (errorMessage.includes('Bad MAC') || errorMessage.includes('decrypt')) {
+            console.log(`⚠️ Bad MAC detectado para ${companyId} - mantendo sessão ativa`);
+            console.log(`ℹ️  Mensagens corrompidas serão ignoradas automaticamente`);
+
+            this.sessions.delete(sessionId);
+
+            // Reconectar após 10 segundos
+            setTimeout(() => {
+              console.log(`🔄 Reconectando ${companyId} após Bad MAC...`);
+              this.connect(companyId).catch(err => {
+                console.error(`Erro ao reconectar após Bad MAC:`, err);
+              });
+            }, 10000);
+            return;
+          }
+
           // Limpar sessão em memória
           this.sessions.delete(sessionId);
-          console.log(`📊 [WhatsApp] Sessões ativas restantes: ${this.sessions.size}`);
-          
+
           if (statusCode === 515) {
-            console.error(`⚠️  [WhatsApp] Empresa ${companyId} - Erro 515: Número bloqueado ou banido`);
-            await this.handleError515(companyId, sessionId);
-            
-            // APLICAR COOLDOWN DE 48 HORAS
-            this.applyCooldown();
+            console.log(`🔄 [WhatsApp] Empresa ${companyId} - Erro 515 (restart esperado após pareamento). Reconectando em 5s...`);
+
+            // Reconectar silenciosamente usando credenciais salvas
+            setTimeout(async () => {
+              try {
+                console.log(`🔄 Reconectando ${companyId} com credenciais salvas...`);
+                const { state: newState, saveCreds: newSaveCreds } = await useMultiFileAuthState(authPath);
+                const { version: newVersion } = await fetchLatestBaileysVersion();
+
+                const newSock = makeWASocket({
+                  version: newVersion,
+                  auth: {
+                    creds: newState.creds,
+                    keys: makeCacheableSignalKeyStore(newState.keys, console as any),
+                  },
+                  printQRInTerminal: false,
+                  browser: ['Torq System', 'Chrome', '1.0.0'],
+                  syncFullHistory: false,
+                  getMessage: async () => undefined,
+                });
+
+                newSock.ev.on('connection.update', async (reconnUpdate) => {
+                  const { connection: reconnConn } = reconnUpdate;
+                  if (reconnConn === 'open') {
+                    console.log(`✅ [WhatsApp] Empresa ${companyId} - Reconectado com sucesso após 515!`);
+                    
+                    this.sessions.set(sessionId, { socket: newSock, sessionId, companyId });
+
+                    const sessions = await FirestoreService.querySubcollection(
+                      'companies', companyId, 'whatsappSessions',
+                      [{ field: 'sessionId', operator: '==', value: sessionId }]
+                    );
+                    if (sessions.length > 0) {
+                      const sess = sessions[0] as any;
+                      await FirestoreService.updateSubcollectionDoc(
+                        'companies', companyId, 'whatsappSessions', sess.id,
+                        { connected: true, qrCode: null, lastActivity: new Date(), connectedAt: new Date() }
+                      );
+                    }
+                  } else if (reconnConn === 'close') {
+                    const reconnStatus = (reconnUpdate.lastDisconnect?.error as Boom)?.output?.statusCode;
+                    console.log(`❌ [WhatsApp] Reconexão falhou para ${companyId}. Status: ${reconnStatus}`);
+                    if (reconnStatus !== DisconnectReason.loggedOut) {
+                      setTimeout(() => {
+                        this.connect(companyId).catch(err => console.error('Erro reconexão:', err));
+                      }, 10000);
+                    }
+                  }
+                });
+
+                newSock.ev.on('creds.update', newSaveCreds);
+
+                newSock.ev.on('messages.upsert', async ({ messages: msgs }) => {
+                  for (const msg of msgs) {
+                    if (!msg.key.fromMe && msg.message) {
+                      const from = msg.key.remoteJid || '';
+                      const text = msg.message.conversation || msg.message.extendedTextMessage?.text || '';
+                      if (text) {
+                        await this.handleIncomingMessage(companyId, from, text);
+                      }
+                    }
+                  }
+                });
+              } catch (err) {
+                console.error(`Erro ao reconectar após 515:`, err);
+              }
+            }, 5000);
+            return;
           }
-          
-          // Se QR expirou (408) ou erro de conexão, rejeitar promise
+
+          // Se QR expirou (408) ou timeout
           if (statusCode === 408 || statusCode === DisconnectReason.timedOut) {
             console.log(`⏱️  [WhatsApp] Empresa ${companyId} - QR Code expirado ou timeout`);
             if (qrCount === 0) {
               rejectQR(new Error('Timeout ao gerar QR Code'));
             }
           }
-          
-          if (!shouldReconnect) {
-            await this.gracefulDisconnect(companyId);
-          }
-        } else if (connection === 'open') {
-          console.log(`✅ [WhatsApp] Empresa ${companyId} - Conectado ao WhatsApp!`);
-          console.log(`📊 [WhatsApp] Total de empresas conectadas: ${this.sessions.size}`);
-          
-          // Atualizar status no Firestore
-          const sessions = await FirestoreService.querySubcollection(
-            'companies',
-            companyId,
-            'whatsappSessions',
-            [{ field: 'sessionId', operator: '==', value: sessionId }]
-          );
 
-          if (sessions.length > 0) {
-            const session = sessions[0] as any;
-            await FirestoreService.updateSubcollectionDoc(
-              'companies',
-              companyId,
-              'whatsappSessions',
-              session.id,
-              { 
-                connected: true, 
-                qrCode: null,
-                lastActivity: new Date(),
-                connectedAt: new Date()
-              }
-            );
+          if (shouldReconnect) {
+            // Reconectar após 5 segundos - estilo BRC
+            setTimeout(() => {
+              console.log(`🔄 Reconectando empresa ${companyId}...`);
+              this.connect(companyId).catch(err => {
+                console.error(`Erro ao reconectar:`, err);
+              });
+            }, 5000);
+          } else {
+            await this.gracefulDisconnect(companyId);
           }
         }
       });
@@ -335,7 +464,6 @@ export class WhatsAppService {
             const from = msg.key.remoteJid || '';
             const text = msg.message.conversation || 
                         msg.message.extendedTextMessage?.text || '';
-            
             if (text) {
               await this.handleIncomingMessage(companyId, from, text);
             }
@@ -344,28 +472,21 @@ export class WhatsAppService {
       });
 
       // Armazenar sessão ativa
-      this.sessions.set(sessionId, {
+      const session: any = {
         socket: sock,
         sessionId,
         companyId,
-      });
+        qrCodeData: null,
+      };
+      this.sessions.set(sessionId, session);
 
       // Salvar sessão no Firestore
       await FirestoreService.createSubcollectionDoc(
-        'companies',
-        companyId,
-        'whatsappSessions',
-        {
-          sessionId,
-          qrCode: null,
-          connected: false,
-          lastActivity: new Date(),
-          createdAt: new Date(),
-          qrCount: 0,
-        }
+        'companies', companyId, 'whatsappSessions',
+        { sessionId, qrCode: null, connected: false, lastActivity: new Date(), createdAt: new Date(), qrCount: 0 }
       );
 
-      // Aguardar QR Code ser gerado (timeout de 30 segundos)
+      // Aguardar QR Code (timeout 30s)
       const qr = await Promise.race([
         qrPromise,
         new Promise<string>((_, reject) => 
@@ -373,11 +494,7 @@ export class WhatsAppService {
         )
       ]);
 
-      // Registrar log
-      await LogService.logWhatsApp(companyId, 'Conexão WhatsApp iniciada', {
-        sessionId,
-      });
-
+      await LogService.logWhatsApp(companyId, 'Conexão WhatsApp iniciada', { sessionId });
       return { qrCode: qr, sessionId };
     } catch (error) {
       console.error('Erro ao conectar WhatsApp:', error);
@@ -389,7 +506,6 @@ export class WhatsAppService {
    * Verifica se existe sessão ativa
    */
   private static async getActiveSession(companyId: string): Promise<ActiveSession | null> {
-    // Verificar em memória
     for (const [_, session] of this.sessions) {
       if (session.companyId === companyId) {
         return session;
@@ -405,7 +521,6 @@ export class WhatsAppService {
     try {
       console.log('🔍 Procurando sessão salva...');
       
-      // Procurar diretórios de sessão
       if (!fs.existsSync(this.authDir)) {
         return null;
       }
@@ -418,16 +533,13 @@ export class WhatsAppService {
         return null;
       }
 
-      // Pegar a sessão mais recente
       const latestSession = sessionDirs.sort().reverse()[0];
       const authPath = path.join(this.authDir, latestSession);
       
       console.log(`📂 Tentando recuperar: ${latestSession}`);
 
-      // Tentar carregar credenciais
       const { state, saveCreds } = await useMultiFileAuthState(authPath);
       
-      // Verificar se tem credenciais válidas
       if (!state.creds || !state.creds.me) {
         console.log('❌ Credenciais inválidas');
         return null;
@@ -435,7 +547,6 @@ export class WhatsAppService {
 
       const { version } = await fetchLatestBaileysVersion();
 
-      // Criar socket com credenciais salvas e configurações anti-detecção
       const sock = makeWASocket({
         version,
         auth: {
@@ -443,25 +554,16 @@ export class WhatsAppService {
           keys: makeCacheableSignalKeyStore(state.keys, console as any),
         },
         printQRInTerminal: false,
-        // Browser realista
-        browser: ['Chrome', 'Windows', '131.0.0.0'],
+        browser: ['Torq System', 'Chrome', '1.0.0'],
         syncFullHistory: false,
-        markOnlineOnConnect: false, // Não marcar online imediatamente
-        generateHighQualityLinkPreview: true,
         getMessage: async () => undefined,
-        // Configurações conservadoras
-        retryRequestDelayMs: 500,
-        maxMsgRetryCount: 3,
-        keepAliveIntervalMs: 25000,
       });
 
-      // Aguardar conexão
       const connected = await new Promise<boolean>((resolve) => {
-        const timeout = setTimeout(() => resolve(false), 10000); // 10s timeout
+        const timeout = setTimeout(() => resolve(false), 10000);
 
         sock.ev.on('connection.update', async (update) => {
           const { connection } = update;
-          
           if (connection === 'open') {
             clearTimeout(timeout);
             resolve(true);
@@ -477,39 +579,25 @@ export class WhatsAppService {
         return null;
       }
 
-      // Armazenar sessão recuperada
       this.sessions.set(latestSession, {
         socket: sock,
         sessionId: latestSession,
         companyId,
       });
 
-      // Atualizar Firestore
       await FirestoreService.createSubcollectionDoc(
-        'companies',
-        companyId,
-        'whatsappSessions',
-        {
-          sessionId: latestSession,
-          qrCode: null,
-          connected: true,
-          lastActivity: new Date(),
-          createdAt: new Date(),
-          recovered: true,
-        }
+        'companies', companyId, 'whatsappSessions',
+        { sessionId: latestSession, qrCode: null, connected: true, lastActivity: new Date(), createdAt: new Date(), recovered: true }
       );
 
-      // Handler para credenciais
       sock.ev.on('creds.update', saveCreds);
 
-      // Handler para mensagens
       sock.ev.on('messages.upsert', async ({ messages }) => {
         for (const msg of messages) {
           if (!msg.key.fromMe && msg.message) {
             const from = msg.key.remoteJid || '';
             const text = msg.message.conversation || 
                         msg.message.extendedTextMessage?.text || '';
-            
             if (text) {
               await this.handleIncomingMessage(companyId, from, text);
             }
@@ -526,25 +614,19 @@ export class WhatsAppService {
   }
 
   /**
-   * Limpa sessões antigas e arquivos de autenticação
+   * Limpa sessões antigas
    */
   private static async cleanOldSessions(companyId: string): Promise<void> {
     try {
       console.log('🧹 Limpando sessões antigas...');
       
-      // Limpar sessões ativas em memória
       for (const [sessionId, session] of this.sessions) {
         if (session.companyId === companyId) {
-          try {
-            await session.socket.logout();
-          } catch (err) {
-            console.error('Erro ao deslogar sessão:', err);
-          }
+          try { await session.socket.logout(); } catch {}
           this.sessions.delete(sessionId);
         }
       }
 
-      // Limpar diretórios de autenticação antigos (mais de 1 hora)
       if (fs.existsSync(this.authDir)) {
         const files = fs.readdirSync(this.authDir);
         const oneHourAgo = Date.now() - (60 * 60 * 1000);
@@ -553,7 +635,6 @@ export class WhatsAppService {
           if (file.startsWith(`session_${companyId}_`)) {
             const filePath = path.join(this.authDir, file);
             const stats = fs.statSync(filePath);
-            
             if (stats.mtimeMs < oneHourAgo) {
               console.log(`🗑️ Removendo sessão antiga: ${file}`);
               fs.rmSync(filePath, { recursive: true, force: true });
@@ -561,53 +642,9 @@ export class WhatsAppService {
           }
         }
       }
-
       console.log('✅ Limpeza concluída');
     } catch (error) {
       console.error('Erro ao limpar sessões antigas:', error);
-    }
-  }
-
-  /**
-   * Handler para erro 515 (número bloqueado ou já conectado)
-   */
-  private static async handleError515(companyId: string, sessionId: string): Promise<void> {
-    try {
-      console.error(`\n🚨 ========== ERRO 515 - DIAGNÓSTICO ========== 🚨`);
-      console.error(`📱 Empresa: ${companyId}`);
-      console.error(`🔑 Sessão: ${sessionId}`);
-      console.error(`\n❌ CAUSAS POSSÍVEIS:`);
-      console.error(`   1. Número já conectado em outro dispositivo/aplicação`);
-      console.error(`   2. Número temporariamente bloqueado pelo WhatsApp`);
-      console.error(`   3. Sessão corrompida ou conflitante`);
-      console.error(`\n✅ SOLUÇÕES:`);
-      console.error(`   1. Desconecte TODOS os dispositivos no celular:`);
-      console.error(`      WhatsApp → Configurações → Aparelhos conectados`);
-      console.error(`   2. Execute: node clean-whatsapp-sessions-force.js`);
-      console.error(`   3. Aguarde 5-10 minutos`);
-      console.error(`   4. Tente conectar novamente`);
-      console.error(`\n⏱️  Se o erro persistir, aguarde 1-2 horas (cooldown do WhatsApp)`);
-      console.error(`================================================\n`);
-      
-      await LogService.logWhatsApp(companyId, 'Erro 515 - Conexão rejeitada', {
-        sessionId,
-        message: 'Número já conectado em outro lugar OU temporariamente bloqueado. Desconecte outros dispositivos e aguarde 5-10 minutos.',
-        solutions: [
-          'Desconectar todos os dispositivos no celular',
-          'Limpar sessões antigas (clean-whatsapp-sessions-force.js)',
-          'Aguardar 5-10 minutos',
-          'Se persistir, aguardar 1-2 horas'
-        ]
-      });
-
-      // Limpar sessão
-      const authPath = path.join(this.authDir, sessionId);
-      if (fs.existsSync(authPath)) {
-        console.log(`🗑️  Removendo sessão corrompida: ${sessionId}`);
-        fs.rmSync(authPath, { recursive: true, force: true });
-      }
-    } catch (error) {
-      console.error('Erro ao processar erro 515:', error);
     }
   }
 
@@ -616,39 +653,26 @@ export class WhatsAppService {
    */
   static async disconnect(companyId: string, sessionId: string): Promise<void> {
     try {
-      // Desconectar socket se existir
       const activeSession = this.sessions.get(sessionId);
       if (activeSession) {
         await activeSession.socket.logout();
         this.sessions.delete(sessionId);
       }
 
-      // Limpar diretório de autenticação
       const authPath = path.join(this.authDir, sessionId);
       if (fs.existsSync(authPath)) {
         fs.rmSync(authPath, { recursive: true, force: true });
       }
 
-      // Atualizar sessão no Firestore
       const sessions = await FirestoreService.querySubcollection(
-        'companies',
-        companyId,
-        'whatsappSessions',
+        'companies', companyId, 'whatsappSessions',
         [{ field: 'sessionId', operator: '==', value: sessionId }]
       );
-
       if (sessions.length > 0) {
         const session = sessions[0] as any;
         await FirestoreService.updateSubcollectionDoc(
-          'companies',
-          companyId,
-          'whatsappSessions',
-          session.id,
-          {
-            connected: false,
-            disconnectedAt: new Date(),
-            lastActivity: new Date(),
-          }
+          'companies', companyId, 'whatsappSessions', session.id,
+          { connected: false, disconnectedAt: new Date(), lastActivity: new Date() }
         );
       }
 
@@ -660,25 +684,19 @@ export class WhatsAppService {
   }
 
   /**
-   * Força desconexão de todas as sessões de uma empresa
+   * Força desconexão de todas as sessões
    */
   static async forceDisconnect(companyId: string): Promise<void> {
     try {
       console.log(`🔌 Forçando desconexão de todas as sessões de ${companyId}...`);
       
-      // Limpar todas as sessões em memória desta empresa
       for (const [sessionId, session] of this.sessions) {
         if (session.companyId === companyId) {
-          try {
-            await session.socket.logout();
-          } catch (err) {
-            console.error('Erro ao deslogar:', err);
-          }
+          try { await session.socket.logout(); } catch {}
           this.sessions.delete(sessionId);
         }
       }
 
-      // Limpar todos os diretórios de autenticação desta empresa
       if (fs.existsSync(this.authDir)) {
         const files = fs.readdirSync(this.authDir);
         for (const file of files) {
@@ -689,41 +707,30 @@ export class WhatsAppService {
           }
         }
       }
-
       console.log('✅ Desconexão forçada concluída');
     } catch (error) {
       console.error('Erro ao forçar desconexão:', error);
     }
   }
+
   /**
-   * Desconexão graciosa (quando WhatsApp desconecta inesperadamente)
+   * Desconexão graciosa
    */
   static async gracefulDisconnect(companyId: string): Promise<void> {
     try {
-      // Atualizar todas as sessões ativas para desconectadas
       const sessions = await FirestoreService.querySubcollection(
-        'companies',
-        companyId,
-        'whatsappSessions',
+        'companies', companyId, 'whatsappSessions',
         [{ field: 'connected', operator: '==', value: true }]
       );
 
       for (const session of sessions) {
         const sess = session as any;
         await FirestoreService.updateSubcollectionDoc(
-          'companies',
-          companyId,
-          'whatsappSessions',
-          sess.id,
-          {
-            connected: false,
-            disconnectedAt: new Date(),
-            lastActivity: new Date(),
-          }
+          'companies', companyId, 'whatsappSessions', sess.id,
+          { connected: false, disconnectedAt: new Date(), lastActivity: new Date() }
         );
       }
 
-      // Registrar log (sem notificação para evitar erro de userId undefined)
       await LogService.logWhatsApp(companyId, 'Desconexão graciosa WhatsApp', {
         reason: 'unexpected_disconnect',
         sessionsAffected: sessions.length
@@ -732,7 +739,6 @@ export class WhatsAppService {
       console.log(`📴 Desconexão graciosa concluída para ${companyId}`);
     } catch (error) {
       console.error('Erro na desconexão graciosa WhatsApp:', error);
-      // Não fazer throw para não crashar o servidor
     }
   }
 
@@ -745,7 +751,6 @@ export class WhatsAppService {
     message: string
   ): Promise<void> {
     try {
-      // Buscar sessão ativa
       let activeSession: ActiveSession | undefined;
       for (const [_, session] of this.sessions) {
         if (session.companyId === companyId) {
@@ -758,45 +763,31 @@ export class WhatsAppService {
         throw new Error('Nenhuma sessão ativa encontrada. Conecte-se ao WhatsApp primeiro.');
       }
 
-      // Formatar número (adicionar @s.whatsapp.net se necessário)
       const formattedNumber = to.includes('@') ? to : `${to}@s.whatsapp.net`;
 
-      // ANTI-SPAM: Delay aleatório entre 2-5 segundos (comportamento humano)
-      const humanDelay = Math.floor(Math.random() * 3000) + 2000; // 2000-5000ms
-      console.log(`⏱️  Aguardando ${humanDelay}ms antes de enviar (comportamento humano)...`);
+      // ANTI-SPAM: Delay aleatório entre 2-5 segundos
+      const humanDelay = Math.floor(Math.random() * 3000) + 2000;
+      console.log(`⏱️  Aguardando ${humanDelay}ms antes de enviar...`);
       await new Promise(resolve => setTimeout(resolve, humanDelay));
 
-      // Simular "digitando" antes de enviar (mais realista)
+      // Simular "digitando"
       try {
         await activeSession.socket.sendPresenceUpdate('composing', formattedNumber);
-        await new Promise(resolve => setTimeout(resolve, Math.random() * 2000 + 1000)); // 1-3s digitando
+        await new Promise(resolve => setTimeout(resolve, Math.random() * 2000 + 1000));
         await activeSession.socket.sendPresenceUpdate('paused', formattedNumber);
       } catch (presenceError) {
         console.warn('Erro ao enviar presença (não crítico):', presenceError);
       }
 
-      // Enviar mensagem
       await activeSession.socket.sendMessage(formattedNumber, { text: message });
 
-      // Salvar mensagem no Firestore
       await FirestoreService.createSubcollectionDoc(
-        'companies',
-        companyId,
-        'whatsappMessages',
-        {
-          from: 'system',
-          to: formattedNumber,
-          message,
-          type: 'sent',
-          processedByIA: false,
-          timestamp: new Date(),
-        }
+        'companies', companyId, 'whatsappMessages',
+        { from: 'system', to: formattedNumber, message, type: 'sent', processedByIA: false, timestamp: new Date() }
       );
 
-      // Registrar log
       await LogService.logWhatsApp(companyId, 'Mensagem enviada', {
-        to: formattedNumber,
-        messageLength: message.length,
+        to: formattedNumber, messageLength: message.length,
       });
       
       console.log(`✅ Mensagem enviada com sucesso para ${formattedNumber}`);
@@ -816,28 +807,20 @@ export class WhatsAppService {
     userId?: string
   ): Promise<void> {
     try {
-      // Salvar mensagem recebida no Firestore
+      // Verificar se deve ignorar esta mensagem (status, grupo, número bloqueado)
+      if (await this.shouldIgnoreMessage(companyId, from)) {
+        return;
+      }
+
       await FirestoreService.createSubcollectionDoc(
-        'companies',
-        companyId,
-        'whatsappMessages',
-        {
-          from,
-          to: 'system',
-          message,
-          type: 'received',
-          processedByIA: false,
-          timestamp: new Date(),
-        }
+        'companies', companyId, 'whatsappMessages',
+        { from, to: 'system', message, type: 'received', processedByIA: false, timestamp: new Date() }
       );
 
-      // Registrar log
       await LogService.logWhatsApp(companyId, 'Mensagem recebida', {
-        from,
-        messageLength: message.length,
+        from, messageLength: message.length,
       });
 
-      // Verificar se IA está ativada e processar mensagem
       await this.processWithIA(companyId, from, message, userId);
     } catch (error) {
       console.error('Erro ao processar mensagem recebida:', error);
@@ -855,31 +838,28 @@ export class WhatsAppService {
     userId?: string
   ): Promise<void> {
     try {
-      // Importar dinamicamente para evitar dependência circular
       const { iaService } = await import('./ia.service');
       const { FirestoreService } = await import('./firestore.service');
       
-      // Buscar configuração da empresa
       const company = await FirestoreService.getDoc('companies', companyId) as any;
       const config = company?.config || {};
 
-      // Verificar se IA está ativada
       if (!config.iaEnabled) {
         return;
       }
 
-      // Processar com IA (usar userId do sistema se não fornecido)
       const systemUserId = userId || 'system';
       const result = await iaService.processQuery(message, companyId, systemUserId);
 
-      // Enviar resposta via WhatsApp
+      // Se IA desativada, erro ou resposta vazia, não enviar nada
+      if (!result.response || result.model === 'disabled' || result.model === 'error') {
+        return;
+      }
+
       await this.sendMessage(companyId, from, result.response);
 
-      // Atualizar mensagem como processada por IA
       const messages = await FirestoreService.querySubcollection(
-        'companies',
-        companyId,
-        'whatsappMessages',
+        'companies', companyId, 'whatsappMessages',
         [
           { field: 'from', operator: '==', value: from },
           { field: 'message', operator: '==', value: message }
@@ -890,50 +870,36 @@ export class WhatsAppService {
       if (messages.length > 0) {
         const msg = messages[0] as any;
         await FirestoreService.updateSubcollectionDoc(
-          'companies',
-          companyId,
-          'whatsappMessages',
-          msg.id,
+          'companies', companyId, 'whatsappMessages', msg.id,
           { processedByIA: true }
         );
       }
     } catch (error) {
       console.error('Erro ao processar mensagem com IA:', error);
-      
-      // Enviar mensagem de fallback
-      try {
-        const { iaService } = await import('./ia.service');
-        const fallbackMessage = await iaService.getFallbackMessage(companyId);
-        await this.sendMessage(companyId, from, fallbackMessage);
-      } catch (fallbackError) {
-        console.error('Erro ao enviar mensagem de fallback:', fallbackError);
-      }
+      // Não enviar mensagem de fallback - apenas logar o erro
     }
   }
 
   /**
-   * Obtém status do cooldown
+   * Obtém status do cooldown (mantido para compatibilidade, sempre retorna false)
    */
   static getCooldownStatus(): { 
     inCooldown: boolean; 
     remainingHours?: number;
     releaseDate?: string;
   } {
-    const cooldownCheck = this.checkCooldown();
-    
-    if (cooldownCheck.inCooldown) {
-      const cooldownFile = path.join(__dirname, '../../.whatsapp-cooldown');
-      const cooldownUntil = parseInt(fs.readFileSync(cooldownFile, 'utf-8'));
-      const releaseDate = new Date(cooldownUntil).toLocaleString('pt-BR');
-      
-      return {
-        inCooldown: true,
-        remainingHours: cooldownCheck.remainingTime,
-        releaseDate,
-      };
-    }
-    
     return { inCooldown: false };
+  }
+
+  /**
+   * Remove cooldown (mantido para compatibilidade)
+   */
+  static removeCooldown(): void {
+    const cooldownFile = path.join(__dirname, '../../.whatsapp-cooldown');
+    if (fs.existsSync(cooldownFile)) {
+      fs.unlinkSync(cooldownFile);
+      console.log('✅ Cooldown removido');
+    }
   }
 
   /**
@@ -944,43 +910,26 @@ export class WhatsAppService {
     lastActivity: Date | null;
   }> {
     try {
-      // Verificar se a empresa existe
       const company = await FirestoreService.getDoc('companies', companyId);
       if (!company) {
-        console.warn(`Empresa ${companyId} não encontrada, retornando status desconectado`);
-        return {
-          connected: false,
-          lastActivity: null,
-        };
+        return { connected: false, lastActivity: null };
       }
 
       const sessions = await FirestoreService.querySubcollection(
-        'companies',
-        companyId,
-        'whatsappSessions',
+        'companies', companyId, 'whatsappSessions',
         [{ field: 'connected', operator: '==', value: true }],
         { orderBy: { field: 'lastActivity', direction: 'desc' }, limit: 1 }
       );
 
       if (sessions.length > 0) {
         const session = sessions[0] as any;
-        return {
-          connected: true,
-          lastActivity: session.lastActivity,
-        };
+        return { connected: true, lastActivity: session.lastActivity };
       }
 
-      return {
-        connected: false,
-        lastActivity: null,
-      };
+      return { connected: false, lastActivity: null };
     } catch (error) {
       console.error('Erro ao obter status WhatsApp:', error);
-      // Retornar status desconectado em caso de erro ao invés de lançar exceção
-      return {
-        connected: false,
-        lastActivity: null,
-      };
+      return { connected: false, lastActivity: null };
     }
   }
 
@@ -992,17 +941,13 @@ export class WhatsAppService {
     limit: number = 50
   ): Promise<WhatsAppMessage[]> {
     try {
-      // Verificar se a empresa existe
       const company = await FirestoreService.getDoc('companies', companyId);
       if (!company) {
-        console.warn(`Empresa ${companyId} não encontrada, retornando lista vazia`);
         return [];
       }
 
       const messages = await FirestoreService.querySubcollection(
-        'companies',
-        companyId,
-        'whatsappMessages',
+        'companies', companyId, 'whatsappMessages',
         [],
         { orderBy: { field: 'timestamp', direction: 'desc' }, limit }
       );
@@ -1010,7 +955,6 @@ export class WhatsAppService {
       return messages as any[];
     } catch (error) {
       console.error('Erro ao listar mensagens WhatsApp:', error);
-      // Retornar lista vazia em caso de erro ao invés de lançar exceção
       return [];
     }
   }
